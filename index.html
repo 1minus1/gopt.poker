@@ -106,14 +106,9 @@
       gap: 0.75em;
       flex-wrap: wrap;
     }
-    .current-season-button {
-      border: 1px solid #111;
-      cursor: pointer;
-      font-family: 'Roboto Serif', serif;
-      font-size: 1.1em;
-      font-weight: bold;
-      min-width: 11em;
-      padding: 0.3em 0.65em;
+    .season-filter-controls a {
+      color: #0645ad;
+      text-decoration: underline;
     }
     #standings-title {
       box-sizing: border-box;
@@ -139,7 +134,7 @@
     <main>
       <section style="margin-bottom: 1em;">
         <div class="season-filter-controls">
-          <button type="button" id="current-season-button" class="current-season-button" hidden>Current Season</button>
+          <a href="#current-season" id="current-season-link" hidden>Current season</a>
           <div class="season-filter-row">
             <label for="season-filter" style="font-size: 1.2em; font-weight: bold;">Other Seasons:</label>
             <select id="season-filter" style="font-size: 1.2em; padding: 0.25em 0.5em;"></select>
@@ -310,7 +305,7 @@
         });
 
         const seasonFilter = document.getElementById('season-filter');
-        const currentSeasonButton = document.getElementById('current-season-button');
+        const currentSeasonLink = document.getElementById('current-season-link');
         const standingsTitle = document.getElementById('standings-title');
         let seasonColors = {};
         // Add "All Time" as the first option
@@ -330,8 +325,8 @@
         });
 
         if (currentSeason) {
-          currentSeasonButton.hidden = false;
-          currentSeasonButton.textContent = `Current Season: ${currentSeason}`;
+          currentSeasonLink.hidden = false;
+          currentSeasonLink.textContent = `Current season: ${currentSeason}`;
         }
 
         function updateStackedTable(seasonFilterValue) {
@@ -740,13 +735,13 @@
           if (!currentSeason) return;
 
           if (seasonFilter.value === currentSeason) {
-            currentSeasonButton.textContent = "All Time Standings";
-            currentSeasonButton.setAttribute('aria-label', 'Show all time standings');
-            applyColorToElement(currentSeasonButton, null);
+            currentSeasonLink.textContent = "All time standings";
+            currentSeasonLink.href = "#all-time";
+            currentSeasonLink.setAttribute('aria-label', 'Show all time standings');
           } else {
-            currentSeasonButton.textContent = `Current Season: ${currentSeason}`;
-            currentSeasonButton.setAttribute('aria-label', `Show ${currentSeason} standings`);
-            applyColorToElement(currentSeasonButton, seasonColors[currentSeason]);
+            currentSeasonLink.textContent = `Current season: ${currentSeason}`;
+            currentSeasonLink.href = "#current-season";
+            currentSeasonLink.setAttribute('aria-label', `Show ${currentSeason} standings`);
           }
         }
 
@@ -775,7 +770,8 @@
           applySeasonSelection(seasonFilter.value);
         });
 
-        currentSeasonButton.addEventListener('click', () => {
+        currentSeasonLink.addEventListener('click', event => {
+          event.preventDefault();
           if (currentSeason) {
             applySeasonSelection(seasonFilter.value === currentSeason ? "All Time" : currentSeason);
           }
