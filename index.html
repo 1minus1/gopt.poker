@@ -542,9 +542,9 @@
                 <tr>
                   <th>Player</th>
                   <th>Points</th>
-                  ${showChampColumn ? '<th>Champ</th>' : ''}
-                  <th>Bracelets</th>
-                  <th>Majors</th>
+                  ${showChampColumn ? '<th>👑</th>' : ''}
+                  <th>⭕</th>
+                  <th>🎉</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -564,10 +564,11 @@
             })
             .forEach(([player, { points, bracelets, majorBracelets }]) => {
               const tr = document.createElement('tr');
+              const displayPlayer = `${player}${seasonFilterValue === "All Time" && player === "Siri" ? ' 🐐' : ''}${player === selectedSeasonChampion ? ' 👑' : ''}`;
               tr.innerHTML = `
-                <td>${player}${player === selectedSeasonChampion ? ' 👑' : ''}</td>
+                <td>${displayPlayer}</td>
                 <td>${points.toFixed(2)}</td>
-                ${showChampColumn ? `<td>${'👑'.repeat(championCounts[player] || 0)}</td>` : ''}
+                ${showChampColumn ? `<td>${championCounts[player] || 0}</td>` : ''}
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
               `;
