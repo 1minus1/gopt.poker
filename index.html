@@ -6,7 +6,7 @@
   <title>GOPT Standings</title>
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=dark-nav-gray-deeper-20260505" />
+  <link rel="stylesheet" href="styles.css?v=light-only-20260505" />
   <style>
     body {
       font-family: 'Roboto Serif', serif;
@@ -525,9 +525,8 @@
           const rows = Array.from(table.querySelectorAll('tbody tr'));
           let lastDate = null;
           let toggle = false;
-          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const stripeOne = prefersDark ? '#242424' : '#e0e0e0';
-          const stripeTwo = prefersDark ? '#181818' : '#ffffff';
+          const stripeOne = '#e0e0e0';
+          const stripeTwo = '#ffffff';
 
           rows.forEach(row => {
             const dateCell = row.cells[0];
@@ -612,16 +611,6 @@
             applySeasonSelection(seasonFilter.value === currentSeason ? "All Time" : currentSeason);
           }
         });
-
-        const colorSchemeQuery = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-        if (colorSchemeQuery) {
-          const repaintForColorScheme = () => applySeasonSelection(seasonFilter.value || "All Time");
-          if (colorSchemeQuery.addEventListener) {
-            colorSchemeQuery.addEventListener('change', repaintForColorScheme);
-          } else if (colorSchemeQuery.addListener) {
-            colorSchemeQuery.addListener(repaintForColorScheme);
-          }
-        }
 
         fetch('files/seasoncolors.txt')
           .then(res => res.text())
