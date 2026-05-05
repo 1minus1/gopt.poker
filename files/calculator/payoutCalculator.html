@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="en" manifest="gopt.appcache">
+   <head>
+      <title>G.O.P.T.</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />
+
+
+<link rel="stylesheet" href="./style.css" type="text/css" media="all" />
+<script src="addtohomescreen.js"></script>
+<script src="jquery.min.js"></script>
+<script src="jquery.knob.js"></script>
+<link rel="stylesheet" type="text/css" href="addtohomescreen.css">
+
+<script type="text/javascript">
+if ( document.readyState === 'complete' ) {
+addToHomescreen();
+}
+
+$(document).bind(
+  'touchmove',
+  function(e) {
+    e.preventDefault();
+  }
+);
+</script>
+</head>
+   <body><center>
+<div id="pay" style="position:absolute; top: 20px;">Payout:</div>
+<div id="ival" class = "ival" style="position:absolute; top: 70px;">0</div>
+</center>
+
+<div>
+
+		<div id = "wrap" style="text-align:center; position:absolute; top: 200px; margin-left: auto;margin-right: auto;left: 0;right: 0;">
+<div class = "box"><div>Buy In</div><input type="text" value="20" class="d_buyin" data-width="150" ></div>
+<div class = "box"><div>Players</div><input type="text" value="8" class="d_playas" data-width="150" ></div>
+		</div>
+		
+		
+		
+		<div style="text-align:center; position:absolute;top: 390px;margin-left: auto;margin-right: auto;left: 0;right: 0;">
+<div class = "box"><div>Tourney 1</div><input type="text" value="1" class="d_place1" data-width="150" ></div>
+<div class = "box"><div>Tourney 2</div><input type="text" value="1" class="d_place2" data-width="150" ></div>
+		</div>
+</div>	
+
+		<script>
+		
+		var playas = 8;
+		var buyin = 20;
+		var place1 = 1;
+		var place2 = 1;
+		var payout = 0;
+		var payout_i = 0;
+		//var bgColor = "#e0e9dd";
+		//var fgColor = "#7bb4ea";
+		var bgColor = "#888888";
+		var fgColor = "#A00000";
+		var initialize = function () {
+		buyin = $("input.d_buyin").val();
+		playas = $("input.d_playas").val();
+		place1 = $("input.d_place1").val();
+		place2 = $("input.d_place2").val();
+		upd();
+		chg_max();
+		};
+		var upd = function() {
+			if (playas > 1) {payout = buyin*(2*playas-place1-place2)/(playas-1);}
+			else
+			{payout = 1.0*buyin;}
+			
+			payout_i = payout.toFixed(2);
+			$ival.html('$' + payout_i);
+			};
+		var $ival = $("div.ival");
+		var chg_max = function () {
+		if (place1 > playas){place1 = playas; $(".d_place1").val(playas).trigger("change");}
+		if (place2 > playas){place2 = playas; $(".d_place2").val(playas).trigger("change");}
+		$(".d_place1").trigger('configure',{'max':playas}).trigger("change");
+		$(".d_place2").trigger('configure',{'max':playas}).trigger("change");
+		}
+		
+
+
+
+		$(function() {
+$(".d_buyin").knob({
+	        fgColor: fgColor,
+			bgColor: bgColor,
+			min : 1,
+			max : 30,
+			
+			change : function () {	buyin = this.cv; upd();	},
+			release : function () {	buyin = this.cv; upd();	}
+			});
+$(".d_playas").knob({
+	        fgColor: fgColor,
+			bgColor: bgColor,
+			min : 1,
+			max : 20,
+			
+			change : function () {	playas = this.cv; 	console.log(playas);upd();	chg_max();},
+			release : function () {	playas = this.cv; 	upd();	chg_max();}
+			});
+$(".d_place1").knob({
+	        fgColor: fgColor,
+			bgColor: bgColor,
+			min : 1,
+			max : playas,
+			
+			change: function () {	place1 = this.cv; upd();},
+			release : function () {	place1 = this.cv; upd();}
+			});
+$(".d_place2").knob({
+	        fgColor: fgColor,
+			bgColor: bgColor,
+			min : 1,
+			max : playas,
+			
+			change : function () {place2 = this.cv; upd();},
+			release : function () {place2 = this.cv; upd();}
+			});			
+
+			initialize();
+
+ 
+});
+		
+		</script>
+
+   </body>
+</html>

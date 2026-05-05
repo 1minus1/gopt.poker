@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOPT Standings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=dark-nav-gray-deeper-20260505" />
+  <style>
+    body {
+      font-family: 'Roboto Serif', serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Cal Sans', sans-serif;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    table {
+      margin: 1em 2em;
+    }
+    h2, h1 {
+      text-align: center;
+      width: 100%;
+    }
+    #content-container {
+      margin-left: 6em;
+      margin-right: 6em;
+    }
+    @media (max-width: 768px) {
+      .table-container {
+        font-size: 0.75em;
+        overflow-x: auto;
+      }
+      #content-container {
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+    }
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Make the summary table fit small screens without wrapping */
+    #summary-table {
+      font-size: 0.75em;
+      white-space: nowrap;   /* prevent cell wrapping */
+    }
+
+    @media (max-width: 768px) {
+      #summary-table {
+        font-size: 0.6em;    /* shrink further on phones */
+      }
+    }
+    .season-filter-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55em;
+    }
+    .season-filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75em;
+      flex-wrap: wrap;
+    }
+    .current-season-button {
+      border: 1px solid #111;
+      cursor: pointer;
+      font-family: 'Roboto Serif', serif;
+      font-size: 1.1em;
+      font-weight: bold;
+      min-width: 11em;
+      padding: 0.3em 0.65em;
+    }
+    #standings-title {
+      box-sizing: border-box;
+      margin-top: 0;
+      padding: 0.35em 0.5em;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+  </style>
+</head>
+<body>
+  <header style="text-align: center;">
+    <img src="assets/logo.GIF" alt="GOPT Logo" class="logo" />
+    <nav style="background-color: black; padding: 0.5em;">
+      <a href="index.html" style="color: white; text-decoration: none; margin: 0 1em; font-weight: bold;">Standings</a>
+      <a href="record.html" style="color: white; text-decoration: none; margin: 0 1em;">Record</a>
+      <a href="rules.html" style="color: white; text-decoration: none; margin: 0 1em;">Rules</a>
+      <a href="technote.html" style="color: white; text-decoration: none; margin: 0 1em;">Tech Note</a>
+      <a href="upload.html" style="color: white; text-decoration: none; margin: 0 1em;">Admin</a>
+    </nav>
+    <h1 id="standings-title">All Time Standings</h1>
+  </header>
+  <div id="content-container">
+    <main>
+      <section style="margin-bottom: 1em;">
+        <div class="season-filter-controls">
+          <button type="button" id="current-season-button" class="current-season-button" hidden>Current Season</button>
+          <div class="season-filter-row">
+            <label for="season-filter" style="font-size: 1.2em; font-weight: bold;">Other Seasons:</label>
+            <select id="season-filter" style="font-size: 1.2em; padding: 0.25em 0.5em;"></select>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2 id="season-header" style="display: none;">Tournament Data</h2>
+        <div class="table-container">
+          <table id="standings-table" style="display: none;">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <!-- <h2>Stacked Tournament Results</h2> -->
+        <div class="table-container">
+          <table id="stacked-table" style="display: none;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Season</th>
+                <th>IsMajor</th>
+                <th>MajorName</th>
+                <th>PointsAtStake</th>
+                <th>Player Count</th>
+                <th>Place</th>
+                <th>Player</th>
+                <th>Points Earned</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    function looksLikeHistoryFile(text) {
+      return /^\d+\s*(\n|$)/.test(text.trim());
+    }
+
+    function fetchHistoryText(sources = ['api/history/current', 'api/history-current.php', 'files/GOPThistory.txt']) {
+      const [source, ...remaining] = sources;
+      return fetch(source, { cache: 'no-store' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Could not load ${source}.`);
+          }
+          return response.text();
+        })
+        .then(text => {
+          if (!looksLikeHistoryFile(text)) {
+            throw new Error(`${source} did not return a GOPThistory file.`);
+          }
+          return text;
+        })
+        .catch(error => {
+          if (!remaining.length) throw error;
+          return fetchHistoryText(remaining);
+        });
+    }
+
+    fetchHistoryText()
+      .then(data => {
+        const lines = data.trim().split('\n');
+        const table = document.getElementById('standings-table');
+        const thead = table.querySelector('thead');
+        const tbody = table.querySelector('tbody');
+
+        // Skip the first line as version header
+        // Define new headers
+        const headers = [
+          "League",
+          "Season",
+          "Date",
+          "IsMajor",
+          "MajorName",
+          "PointsAtStake",
+          "1", "2", "3", "4", "5",
+          "6", "7", "8", "9", "10",
+          "11", "12", "13", "14", "15"
+        ];
+        headers.splice(6, 0, "Player Count");
+
+        // Create header row
+        const headerRow = document.createElement('tr');
+        headers.forEach(header => {
+          const th = document.createElement('th');
+          th.textContent = header.trim();
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        if (headerRow.cells[0]) headerRow.cells[0].style.display = 'none';
+
+        for (let i = 1; i < lines.length; i++) {
+          const row = document.createElement('tr');
+          const cells = lines[i]
+            .split(',')
+            .map(c => (c.trim() === 'Mrs. Clay Matthews' ? 'Mrs. Clay' : c.trim()));
+
+          // Append fixed columns (up to 21)
+          for (let j = 0; j < 21 && j < cells.length; j++) {
+            const td = document.createElement('td');
+            if (j === 2) {
+              const timestamp = parseInt(cells[2].trim(), 10) * 1000;
+              const date = new Date(timestamp);
+              td.textContent = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              });
+            } else {
+              td.textContent = cells[j].trim();
+            }
+            row.appendChild(td);
+          }
+
+          // Append additional player columns dynamically if present
+          for (let k = 21; k < cells.length; k++) {
+            const td = document.createElement('td');
+            td.textContent = cells[k].trim();
+            row.appendChild(td);
+          }
+
+          const playerCount = cells.slice(6).filter(name => name.trim() !== '').length;
+          const countTd = document.createElement('td');
+          countTd.textContent = playerCount;
+          row.insertBefore(countTd, row.children[6]);
+
+          if (row.cells[0]) row.cells[0].style.display = 'none';
+          tbody.appendChild(row);
+        }
+
+        // After table is built, remove empty columns
+        const allRows = [...table.rows];
+        if (allRows.length > 1) {
+          const colCount = allRows[0].cells.length;
+          const colsToRemove = [];
+
+          for (let colIndex = 0; colIndex < colCount; colIndex++) {
+            let empty = true;
+            for (let rowIndex = 1; rowIndex < allRows.length; rowIndex++) {
+              const cellText = allRows[rowIndex].cells[colIndex]?.textContent.trim();
+              if (cellText) {
+                empty = false;
+                break;
+              }
+            }
+            if (empty) colsToRemove.push(colIndex);
+          }
+
+          // Remove cells from bottom to top to preserve correct indices
+          for (let i = colsToRemove.length - 1; i >= 0; i--) {
+            const index = colsToRemove[i];
+            allRows.forEach(row => {
+              if (row.cells[index]) row.deleteCell(index);
+            });
+          }
+        }
+
+        const seasonDateMap = {};
+        document.querySelectorAll('#standings-table tbody tr').forEach(row => {
+          const season = row.cells[1].textContent.trim();
+          const date = new Date(row.cells[2].textContent.trim());
+          if (!seasonDateMap[season] || date > seasonDateMap[season]) {
+            seasonDateMap[season] = date;
+          }
+        });
+
+        const seasonFilter = document.getElementById('season-filter');
+        const currentSeasonButton = document.getElementById('current-season-button');
+        const standingsTitle = document.getElementById('standings-title');
+        let seasonColors = {};
+        // Add "All Time" as the first option
+        const allTimeOption = document.createElement('option');
+        allTimeOption.value = "All Time";
+        allTimeOption.textContent = "All Time";
+        seasonFilter.appendChild(allTimeOption);
+
+        const sortedSeasons = Object.entries(seasonDateMap)
+          .sort((a, b) => b[1] - a[1]);  // Most recent first
+        const currentSeason = sortedSeasons[0]?.[0];
+
+        sortedSeasons.forEach(([season]) => {
+          const option = document.createElement('option');
+          option.value = option.textContent = season;
+          seasonFilter.appendChild(option);
+        });
+
+        if (currentSeason) {
+          currentSeasonButton.hidden = false;
+          currentSeasonButton.textContent = `Current Season: ${currentSeason}`;
+        }
+
+        function updateStackedTable(seasonFilterValue) {
+          const existingSummary = document.getElementById('summary-table');
+          if (existingSummary) {
+            // just clear its body instead of removing the whole section
+            existingSummary.querySelector('tbody').innerHTML = '';
+          }
+
+          const stackedBody = document.querySelector('#stacked-table tbody');
+          stackedBody.innerHTML = '';
+          document.querySelectorAll('#standings-table tbody tr').forEach(row => {
+            const rowSeason = row.cells[1]?.textContent.trim();
+            if (seasonFilterValue !== "All Time" && rowSeason !== seasonFilterValue) return;
+
+            const date = row.cells[2]?.textContent.trim();
+            const season = rowSeason;
+            const isMajor = row.cells[3]?.textContent.trim();
+            const majorName = row.cells[4]?.textContent.trim();
+            const pointsAtStake = row.cells[5]?.textContent.trim();
+            const playerCount = row.cells[6]?.textContent.trim();
+
+            for (let i = 7; i < row.cells.length; i++) {
+              const player = row.cells[i]?.textContent.trim();
+              if (player) {
+                const place = i - 6;
+                const n = parseInt(playerCount);
+                const B = parseFloat(pointsAtStake);
+                const base = 0.5 * n - 0.5;
+                let points = B * (n - place) / base;
+                if (isMajor.trim().toUpperCase() === 'NO') {
+                  points /= 2;
+                }
+                if (isNaN(points)) {
+                  points = 0;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${date}</td>
+                  <td>${season}</td>
+                  <td>${isMajor}</td>
+                  <td>${majorName}</td>
+                  <td>${pointsAtStake}</td>
+                  <td>${playerCount}</td>
+                  <td>${place}</td>
+                  <td>${player}</td>
+                  <td>${points.toFixed(4)}</td>`;
+                stackedBody.appendChild(tr);
+              }
+            }
+          });
+          generateSummaryTable();
+          applyStripingByDate('stacked-table');
+        }
+
+        function generateSummaryTable() {
+          const existingStandings = document.getElementById('season-standings-table');
+          if (existingStandings) {
+            existingStandings.parentElement.remove();
+          }
+
+          // Re‑use the Summary table if it already exists; otherwise build it once.
+          let summaryTable = document.getElementById('summary-table');
+          let summaryBody;
+
+          if (!summaryTable) {
+            const summarySection = document.createElement('section');
+            summarySection.innerHTML = `
+              <h2>Summary by Date and Player</h2>
+              <div class="table-container">
+                <table id="summary-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Player</th>
+                      <th>Points</th>
+                      <th>Places</th>
+                      <th>Final</th>
+                      <th>Bracelet</th>
+                      <th>Major Name</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            `;
+            document.querySelector('main').appendChild(summarySection);
+            summaryTable = summarySection.querySelector('#summary-table');
+          }
+
+          summaryBody = summaryTable.querySelector('tbody');
+          summaryBody.innerHTML = '';   // clear previous rows
+
+          const summary = {};
+          const rows = document.querySelectorAll('#stacked-table tbody tr');
+
+          rows.forEach(row => {
+            const date = row.cells[0]?.textContent.trim();
+            const player = row.cells[7]?.textContent.trim();
+            const points = parseFloat(row.cells[8]?.textContent.trim());
+            const isMajor = row.cells[2]?.textContent.trim();
+            const majorName = row.cells[3]?.textContent.trim();
+            const key = `${date}|${player}`;
+            if (!summary[key]) {
+              summary[key] = { date, player, points: 0, places: [], isMajor, majorName };
+            }
+            summary[key].points += points;
+            // Add the place to the places array
+            summary[key].places.push(row.cells[6]?.textContent.trim());
+          });
+
+          let lastDate = null;
+          let firstForDate = true;
+          Object.values(summary)
+            .sort((a, b) => {
+              const dateA = new Date(a.date);
+              const dateB = new Date(b.date);
+              if (dateA.getTime() !== dateB.getTime()) {
+                return dateB - dateA;
+              }
+              const roundedPointsA = parseFloat(a.points.toFixed(2));
+              const roundedPointsB = parseFloat(b.points.toFixed(2));
+              if (roundedPointsA !== roundedPointsB) {
+                return roundedPointsB - roundedPointsA;
+              }
+              const lastPlaceA = parseInt(a.places[a.places.length - 1], 10);
+              const lastPlaceB = parseInt(b.places[b.places.length - 1], 10);
+              return lastPlaceA - lastPlaceB;
+            })
+            .forEach(entry => {
+              if (entry.date !== lastDate) {
+                lastDate = entry.date;
+                firstForDate = true;
+              } else {
+                firstForDate = false;
+              }
+              // Format the date using Intl.DateTimeFormat
+              const formattedDate = new Intl.DateTimeFormat('en-US', { year: '2-digit', month: 'numeric', day: 'numeric' }).format(new Date(entry.date));
+              const tr = document.createElement('tr');
+              tr.dataset.isMajor = entry.isMajor;
+              tr.innerHTML = `
+                <td data-label="Date">${formattedDate}</td>
+                <td data-label="Player">${entry.player}</td>
+                <td data-label="Points">${entry.points.toFixed(2)}</td>
+                <td data-label="Places">${entry.places.join(', ')}</td>
+                <td data-label="Final">${entry.places[entry.places.length - 1]}</td>
+                <td data-label="Bracelet">${firstForDate ? '1' : ''}</td>
+                <td data-label="Major Name">${entry.majorName || ''}</td>
+              `;
+              summaryBody.appendChild(tr);
+            });
+          applyStripingByDate('summary-table');
+          generateSeasonStandingsTable(document.getElementById('season-filter').value);
+        }
+
+        function generateSeasonStandingsTable(seasonFilterValue) {
+          // Track points plus bracelet totals by event type.
+          const playerTotals = {};
+          const rows = document.querySelectorAll('#summary-table tbody tr');
+
+          rows.forEach(row => {
+            const player = row.cells[1]?.textContent.trim();
+            const points = parseFloat(row.cells[2]?.textContent.trim());
+            const bracelet = row.cells[5]?.textContent.trim() === '1' ? 1 : 0;
+            const isMajor = row.dataset.isMajor?.trim().toUpperCase() === 'YES';
+
+            if (!playerTotals[player]) {
+              playerTotals[player] = { points: 0, bracelets: 0, majorBracelets: 0, standardBracelets: 0 };
+            }
+            playerTotals[player].points += points;
+            playerTotals[player].bracelets += bracelet;
+            if (bracelet) {
+              if (isMajor) {
+                playerTotals[player].majorBracelets += 1;
+              } else {
+                playerTotals[player].standardBracelets += 1;
+              }
+            }
+          });
+
+          const standingsSection = document.createElement('section');
+          standingsSection.innerHTML = `
+            <h2>Point and Bracelet Standings</h2>
+            <table id="season-standings-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Points</th>
+                  <th>Total Bracelets</th>
+                  <th>Major Bracelets</th>
+                  <th>Standard Night Bracelets</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          `;
+          // Insert standingsSection after the filter section at the top of main
+          const main = document.querySelector('main');
+          const firstSection = main.querySelector('section');
+          main.insertBefore(standingsSection, firstSection.nextSibling);
+
+          const standingsBody = document.querySelector('#season-standings-table tbody');
+          Object.entries(playerTotals)
+            .sort(([, a], [, b]) => {
+              return seasonFilterValue === "All Time"
+                ? b.bracelets - a.bracelets
+                : b.points - a.points;
+            })
+            .forEach(([player, { points, bracelets, majorBracelets, standardBracelets }]) => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${player}</td>
+                <td>${points.toFixed(2)}</td>
+                <td>${bracelets}</td>
+                <td>${majorBracelets}</td>
+                <td>${standardBracelets}</td>
+              `;
+              standingsBody.appendChild(tr);
+            });
+
+          applyStripingByDate('season-standings-table');
+        }
+
+        function applyStripingByDate(tableId) {
+          const table = document.getElementById(tableId);
+          const rows = Array.from(table.querySelectorAll('tbody tr'));
+          let lastDate = null;
+          let toggle = false;
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const stripeOne = prefersDark ? '#242424' : '#e0e0e0';
+          const stripeTwo = prefersDark ? '#181818' : '#ffffff';
+
+          rows.forEach(row => {
+            const dateCell = row.cells[0];
+            if (!dateCell) return;
+            const currentDate = dateCell.textContent.trim();
+
+            if (currentDate !== lastDate) {
+              toggle = !toggle;
+              lastDate = currentDate;
+            }
+
+            row.style.backgroundColor = toggle ? stripeOne : stripeTwo;
+          });
+        }
+
+        function getTextColorForRgb(rgb) {
+          const [r, g, b] = rgb.match(/\d+/g).map(Number);
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          return brightness < 128 ? 'white' : 'black';
+        }
+
+        function applyColorToElement(element, rgb) {
+          if (!rgb) {
+            element.style.backgroundColor = '';
+            element.style.color = '';
+            return;
+          }
+
+          element.style.backgroundColor = rgb;
+          element.style.color = getTextColorForRgb(rgb);
+        }
+
+        function updateSeasonColors() {
+          const selected = seasonFilter.value;
+          applyColorToElement(seasonFilter, seasonColors[selected]);
+          applyColorToElement(standingsTitle, seasonColors[selected]);
+
+          updateSeasonToggleButton();
+        }
+
+        function updateSeasonToggleButton() {
+          if (!currentSeason) return;
+
+          if (seasonFilter.value === currentSeason) {
+            currentSeasonButton.textContent = "All Time Standings";
+            currentSeasonButton.setAttribute('aria-label', 'Show all time standings');
+            applyColorToElement(currentSeasonButton, null);
+          } else {
+            currentSeasonButton.textContent = `Current Season: ${currentSeason}`;
+            currentSeasonButton.setAttribute('aria-label', `Show ${currentSeason} standings`);
+            applyColorToElement(currentSeasonButton, seasonColors[currentSeason]);
+          }
+        }
+
+        function getStandingsTitle(season) {
+          return season === "All Time" ? "All Time Standings" : `${season} Standings`;
+        }
+
+        function applySeasonSelection(selected) {
+          seasonFilter.value = selected;
+          document.querySelectorAll('#standings-table tbody tr').forEach(row => {
+            const season = row.cells[1].textContent.trim();
+            row.style.display = selected === "All Time" || season === selected ? "" : "none";
+          });
+          standingsTitle.textContent = getStandingsTitle(selected);
+          document.title = `${getStandingsTitle(selected)} | GOPT`;
+          document.getElementById('season-header').textContent = `Tournament Data for ${selected}`;
+          updateStackedTable(selected);
+          updateSeasonColors();
+        }
+
+        // Default to All Time.
+        applySeasonSelection("All Time");
+
+        // Add filtering logic for the main table based on season selection
+        seasonFilter.addEventListener('change', () => {
+          applySeasonSelection(seasonFilter.value);
+        });
+
+        currentSeasonButton.addEventListener('click', () => {
+          if (currentSeason) {
+            applySeasonSelection(seasonFilter.value === currentSeason ? "All Time" : currentSeason);
+          }
+        });
+
+        const colorSchemeQuery = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        if (colorSchemeQuery) {
+          const repaintForColorScheme = () => applySeasonSelection(seasonFilter.value || "All Time");
+          if (colorSchemeQuery.addEventListener) {
+            colorSchemeQuery.addEventListener('change', repaintForColorScheme);
+          } else if (colorSchemeQuery.addListener) {
+            colorSchemeQuery.addListener(repaintForColorScheme);
+          }
+        }
+
+        fetch('files/seasoncolors.txt')
+          .then(res => res.text())
+          .then(colorData => {
+            const colorLines = colorData.trim().split('\n');
+            seasonColors = {};
+            colorLines.forEach(line => {
+              const [season, r, g, b] = line.split(',');
+              seasonColors[season.trim()] = `rgb(${r},${g},${b})`;
+            });
+
+            updateSeasonColors();
+
+            const rows = document.querySelectorAll('#standings-table tbody tr');
+            rows.forEach(row => {
+              const seasonCell = row.cells[1];
+              if (!seasonCell) return;
+              const season = seasonCell.textContent.trim();
+              if (seasonColors[season]) {
+                const rgb = seasonColors[season];
+                seasonCell.style.backgroundColor = rgb;
+                seasonCell.style.color = getTextColorForRgb(rgb);
+              }
+            });
+          })
+          .catch(err => {
+            console.error('Error loading season colors:', err);
+          });
+      })
+    .catch(error => {
+      const table = document.getElementById('standings-table');
+      table.innerHTML = "<caption>Failed to load standings.</caption>";
+      console.error('Error loading data:', error);
+    });
+  </script>
+  <script src="wachs-action.js"></script>
+  
+</body>
+</html>

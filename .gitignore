@@ -1,0 +1,8 @@
+.DS_Store
+deploy/
+gopt-history-store/
+.history-backups/
+.history-store/
+!files/GOPTpayouttechnote.pdf
+.admin.local.php
+.deploy.local.json

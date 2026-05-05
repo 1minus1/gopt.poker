@@ -1,0 +1,313 @@
+271
+GOPT,2026,1775134825,YES,AC Baby 2026,40,Coach,Screech,Masta Pussy,No Limit,Moe,Junior
+GOPT,2026,1772665510,NO,NO,20,Andre,Moe,Siri,Waxcuses,Screech,Mrs. Clay Matthews,No Limit,Masta Pussy,Coach
+GOPT,2026,1772665510,NO,NO,20,Siri,Coach,Moe,Waxcuses,Masta Pussy,No Limit,Mrs. Clay Matthews,Andre,Screech
+GOPT,2026,1771548264,NO,NO,20,Waxcuses,Coach,Masta Pussy,Screech,Junior,Mrs. Clay Matthews,Andre,No Limit,Moe
+GOPT,2026,1771548264,NO,NO,20,Moe,Mrs. Clay Matthews,Andre,Masta Pussy,Screech,Junior,Coach,No Limit,Waxcuses
+GOPT,2026,1768518310,NO,NO,20,Moe,Coach,No Limit,Siri,Mrs. Clay Matthews,Masta Pussy,Waxcuses,Andre,Flo Rida
+GOPT,2026,1768518310,NO,NO,20,Mrs. Clay Matthews,Coach,Andre,Siri,No Limit,Masta Pussy,Moe,Waxcuses,Flo Rida
+GOPT,2025,1764721265,YES,Hold'em for the Holidays,40,Moe,Coach,Mrs. Clay Matthews,Screech,Andre,Junior,Masta Pussy,Waxcuses,Siri,Flo Rida,No Limit
+GOPT,2025,1762818425,NO,NO,20,Junior,Andre,Screech,Moe,Flo Rida,No Limit,Siri,Mrs. Clay Matthews,Coach
+GOPT,2025,1762818425,NO,NO,20,Coach,Siri,Moe,Andre,Junior,Flo Rida,No Limit,Mrs. Clay Matthews,Screech
+GOPT,2025,1761000858,NO,NO,20,Coach,Screech,Siri,Flo Rida,No Limit,Waxcuses,Andre,Moe,Mrs. Clay Matthews,Junior
+GOPT,2025,1761000858,NO,NO,20,Siri,No Limit,Mrs. Clay Matthews,Junior,Coach,Waxcuses,Flo Rida,Screech,Andre,Moe
+GOPT,2025,1757544903,NO,NO,20,Moe,Mrs. Clay Matthews,Junior,Coach,Waxcuses,Screech,No Limit,Siri,Andre
+GOPT,2025,1757544903,NO,NO,20,Waxcuses,Siri,Mrs. Clay Matthews,Andre,No Limit,Coach,Junior,Moe,Screech
+GOPT,2025,1756334844,NO,NO,20,Moe,Screech,Junior,Coach,Waxcuses,Siri,No Limit,Andre
+GOPT,2025,1756334844,NO,NO,20,Junior,Screech,No Limit,Waxcuses,Andre,Siri,Coach,Moe
+GOPT,2025,1752097062,NO,NO,20,Screech,Andre,Moe,The Bieb,Flo Rida,No Limit,Siri,Coach
+GOPT,2025,1752097062,NO,NO,20,The Bieb,Coach,Moe,No Limit,Flo Rida,Siri,Screech,Andre
+GOPT,2025,1749597064,NO,NO,20,Screech,No Limit,Siri,Masta Pussy,Coach,Moe,Mrs. Clay Matthews,Andre,Flo Rida,Waxcuses
+GOPT,2025,1749597064,NO,NO,20,Masta Pussy,Screech,Mrs. Clay Matthews,Flo Rida,Moe,Waxcuses,No Limit,Andre,Siri,Coach
+GOPT,2025,1747781487,NO,NO,20,Screech,Coach,Waxcuses,Mrs. Clay Matthews,Siri,Andre,Moe,No Limit
+GOPT,2025,1747781487,NO,NO,20,Moe,Coach,Mrs. Clay Matthews,No Limit,Siri,Andre,Waxcuses,Screech
+GOPT,2025,1745280737,YES,AC Baby 2025,40,Moe,Screech,No Limit,Masta Pussy,Coach
+GOPT,2025,1742503946,NO,NO,20,Coach,Masta Pussy,Screech,Moe,Andre,Siri,Waxcuses
+GOPT,2025,1742503946,NO,NO,20,Coach,Andre,Waxcuses,Masta Pussy,Moe,Screech,Siri
+GOPT,2025,1740098481,NO,NO,20,Siri,Masta Pussy,Coach,Moe,Screech,Andre
+GOPT,2025,1740098481,NO,NO,20,Masta Pussy,Andre,Moe,Screech,Siri,Coach
+GOPT,2025,1737075006,NO,NO,20,Siri,Masta Pussy,Moe,Mrs. Clay Matthews,Waxcuses,Coach,Flo Rida,Andre,Junior,Screech
+GOPT,2025,1737075006,NO,NO,20,Andre,Screech,Flo Rida,Mrs. Clay Matthews,Junior,Masta Pussy,Coach,Moe,Siri,Waxcuses
+GOPT,2024,1733273861,YES,Hold'em for the Holidays,40,Coach,Mrs. Clay Matthews,Masta Pussy,Moe,Flo Rida,Screech,Siri,Andre,Waxcuses
+GOPT,2024,1730765138,NO,NO,20,Flo Rida,Moe,Waxcuses,Coach,Screech,Andre,Mrs. Clay Matthews,Masta Pussy,The Bieb,Siri
+GOPT,2024,1730765138,NO,NO,20,Masta Pussy,Waxcuses,Mrs. Clay Matthews,Screech,Coach,Andre,Siri,The Bieb,Flo Rida,Moe
+GOPT,2024,1729814828,NO,NO,20,Andre,Siri,Masta Pussy,Waxcuses,Screech,Moe,Mrs. Clay Matthews
+GOPT,2024,1729814828,NO,NO,20,Mrs. Clay Matthews,Siri,Masta Pussy,Moe,Andre,Screech,Waxcuses
+GOPT,2024,1727391456,NO,NO,20,Masta Pussy,Coach,Moe,Andre,Waxcuses,Mrs. Clay Matthews,Screech,Siri
+GOPT,2024,1727391456,NO,NO,20,Mrs. Clay Matthews,Screech,Andre,Coach,Moe,Waxcuses,Masta Pussy,Siri
+GOPT,2024,1724716889,NO,NO,20,Andre,Siri,Waxcuses,The Bieb,Coach,Moe,Screech,Masta Pussy,Junior,Mrs. Clay Matthews
+GOPT,2024,1724716889,NO,NO,20,Screech,Masta Pussy,Junior,The Bieb,Coach,Mrs. Clay Matthews,Siri,Moe,Andre,Waxcuses
+GOPT,2024,1722297821,NO,NO,20,Screech,Mrs. Clay Matthews,Coach,The Bieb,Junior,Andre,Flo Rida
+GOPT,2024,1722297821,NO,NO,20,Screech,Coach,The Bieb,Mrs. Clay Matthews,Flo Rida,Junior,Andre
+GOPT,2024,1718151474,NO,NO,20,Screech,Coach,Waxcuses,Andre,Moe
+GOPT,2024,1718151474,NO,NO,20,Andre,Screech,Moe,Waxcuses,Coach
+GOPT,2024,1716338664,NO,NO,20,Siri,Flo Rida,Mrs. Clay Matthews,Waxcuses,Moe,The Bieb,Andre,Coach,Screech
+GOPT,2024,1716338664,NO,NO,20,Waxcuses,Mrs. Clay Matthews,Flo Rida,Siri,Moe,Andre,Screech,Coach,The Bieb
+GOPT,2024,1713912179,NO,NO,20,Screech,Mrs. Clay Matthews,Siri,Coach,Andre,Moe,Waxcuses,Junior,Masta Pussy
+GOPT,2024,1713912179,NO,NO,20,Masta Pussy,Siri,Moe,Andre,Junior,Waxcuses,Mrs. Clay Matthews,Coach,Screech
+GOPT,2024,1709928310,YES,AC Baby,40,Masta Pussy,Coach,Moe,Flo Rida,The Bieb,Screech
+GOPT,2024,1709249910,NO,NO,20,Siri,Screech,Andre,Masta Pussy,The Bieb,Coach,Mrs. Clay Matthews,Flo Rida,Moe,Junior
+GOPT,2024,1709249910,NO,NO,20,Moe,Mrs. Clay Matthews,The Bieb,Junior,Masta Pussy,Andre,Siri,Screech,Coach,Flo Rida
+GOPT,2024,1705621187,NO,NO,20,Junior,Mrs. Clay Matthews,Moe,Coach,Andre,Waxcuses,Siri,Masta Pussy
+GOPT,2024,1705621187,NO,NO,20,Moe,Masta Pussy,Coach,Andre,Mrs. Clay Matthews,Siri,Waxcuses,Junior
+GOPT,2023,1702945974,NO,NO,20,Screech,Waxcuses,Andre,Junior,Coach,Moe
+GOPT,2023,1702945974,NO,NO,20,Screech,Moe,Andre,Waxcuses,Junior,Coach
+GOPT,2023,1701390962,NO,NO,20,Waxcuses,Andre,Coach,Moe,Screech,Masta Pussy
+GOPT,2023,1701390962,NO,NO,20,Masta Pussy,Moe,Waxcuses,Coach,Andre,Screech
+GOPT,2023,1698190870,NO,NO,20,Screech,Coach,Masta Pussy,Moe,Siri,Mrs. Clay Matthews,Andre
+GOPT,2023,1698190870,NO,NO,20,Moe,Siri,Screech,Andre,Coach,Masta Pussy,Mrs. Clay Matthews
+GOPT,2023,1695761239,NO,NO,20,Screech,Waxcuses,Siri,Mrs. Clay Matthews,Coach,Andre,Moe
+GOPT,2023,1695761239,NO,NO,20,Waxcuses,Andre,Mrs. Clay Matthews,Siri,Coach,Moe,Screech
+GOPT,2023,1693264505,NO,NO,20,Waxcuses,Andre,Coach,Mrs. Clay Matthews,Screech,Moe,Junior
+GOPT,2023,1693264505,NO,NO,20,Mrs. Clay Matthews,Andre,Coach,Screech,Waxcuses,Junior,Moe
+GOPT,2023,1690328054,NO,NO,20,The Bieb,Mrs. Clay Matthews,Junior,Coach,Moe,Screech,Siri
+GOPT,2023,1690328054,NO,NO,20,Moe,Siri,Mrs. Clay Matthews,The Bieb,Screech,Junior,Coach
+GOPT,2023,1686698460,NO,NO,20,Andre,Screech,Junior,Siri,Coach,The Bieb,Moe
+GOPT,2023,1686698460,NO,NO,20,Junior,Coach,The Bieb,Moe,Andre,Siri,Screech
+GOPT,2023,1682037486,NO,NO,20,Moe,Andre,Mrs. Clay Matthews,Coach,Junior,Siri,Waxcuses,Screech
+GOPT,2023,1682037486,NO,NO,20,Siri,Junior,Screech,Andre,Mrs. Clay Matthews,Coach,Moe,Waxcuses
+GOPT,2023,1680908429,YES,AC Baby,40,Coach,Screech,Moe,Masta Pussy
+GOPT,2023,1679615067,NO,NO,20,Andre,Screech,Moe,Waxcuses,Masta Pussy,Siri,Coach
+GOPT,2023,1679615067,NO,NO,20,Coach,Siri,Andre,Masta Pussy,Screech,Moe,Waxcuses
+GOPT,2023,1677636000,NO,NO,20,Junior,Screech,Moe,Masta Pussy,Andre,Mrs. Clay Matthews,Coach
+GOPT,2023,1677636000,NO,NO,20,Coach,Screech,Moe,Masta Pussy,Mrs. Clay Matthews,Andre,Junior
+GOPT,2023,1674154800,NO,NO,20,Masta Pussy,Coach,Mrs. Clay Matthews,Screech,Moe,Andre,Siri
+GOPT,2023,1674154800,NO,NO,20,Masta Pussy,Siri,Mrs. Clay Matthews,Coach,Moe,Andre,Screech
+GOPT,2022,1670458524,NO,NO,20,Siri,Mrs. Clay Matthews,Coach,Moe,Screech,Andre,Junior
+GOPT,2022,1670458524,NO,NO,20,Coach,Andre,Mrs. Clay Matthews,Screech,Siri,Junior,Moe
+GOPT,2022,1668694522,NO,NO,20,Waxcuses,Siri,Moe,Masta Pussy,Coach,Screech
+GOPT,2022,1668694522,NO,NO,20,Waxcuses,Screech,Coach,Siri,Masta Pussy,Moe
+GOPT,2022,1665509497,NO,NO,20,Screech,Moe,Waxcuses,Masta Pussy,Mrs. Clay Matthews,Siri,Andre,Coach
+GOPT,2022,1665509497,NO,NO,20,Screech,Siri,Coach,Andre,Moe,Waxcuses,Mrs. Clay Matthews,Masta Pussy
+GOPT,2022,1663864499,NO,NO,20,Moe,Coach,Mrs. Clay Matthews,Andre,Screech
+GOPT,2022,1663864499,NO,NO,20,Moe,Coach,Mrs. Clay Matthews,Andre,Screech
+GOPT,2022,1661900574,NO,NO,20,Mrs. Clay Matthews,Junior,The Bieb,Coach,Waxcuses,Andre,Moe,Siri,Masta Pussy,Screech
+GOPT,2022,1661900574,NO,NO,20,Coach,Screech,Junior,The Bieb,Moe,Mrs. Clay Matthews,Siri,Andre,Masta Pussy,Waxcuses
+GOPT,2022,1658358641,NO,NO,20,Screech,Coach,Junior,Moe,Siri,The Bieb
+GOPT,2022,1658358641,NO,NO,20,Screech,Junior,Coach,Siri,Moe,The Bieb
+GOPT,2022,1656532800,NO,NO,20,Junior,Screech,Siri,Moe,Masta Pussy,The Bieb
+GOPT,2022,1656532800,NO,NO,20,Junior,Moe,Screech,The Bieb,Siri,Masta Pussy
+GOPT,2022,1654300542,NO,NO,20,The Bieb,Junior,Waxcuses,Siri,Coach,Mrs. Clay Matthews,Moe,Screech
+GOPT,2022,1654300542,NO,NO,20,Screech,Siri,Coach,Junior,Moe,The Bieb,Waxcuses,Mrs. Clay Matthews
+GOPT,2022,1651099545,NO,NO,20,Screech,Junior,Mrs. Clay Matthews,Waxcuses,Moe,Andre,Siri
+GOPT,2022,1651099545,NO,NO,20,Screech,Moe,Junior,Andre,Siri,Mrs. Clay Matthews,Waxcuses
+GOPT,2022,1648594280,NO,NO,20,Andre,Siri,Moe,Coach,Screech,Masta Pussy,Junior,Waxcuses,Mrs. Clay Matthews
+GOPT,2022,1648594280,NO,NO,20,Moe,Coach,Andre,Screech,Masta Pussy,Waxcuses,Siri,Junior,Mrs. Clay Matthews
+GOPT,2022,1645134972,NO,NO,20,Moe,Screech,Andre,Coach,Siri,Masta Pussy,The Bieb,Mrs. Clay Matthews
+GOPT,2022,1645134972,NO,NO,20,Screech,Moe,The Bieb,Siri,Mrs. Clay Matthews,Andre,Masta Pussy,Coach
+GOPT,2020-2021,1636588712,NO,NO,20,Junior,Moe,Screech,Andre,Mrs. Clay Matthews,Waxcuses,Coach
+GOPT,2020-2021,1636588712,NO,NO,20,Screech,Mrs. Clay Matthews,Coach,Moe,Junior,Waxcuses,Andre
+GOPT,2020-2021,1635460220,NO,NO,20,Junior,Mrs. Clay Matthews,Coach,Siri,Waxcuses,Moe,Screech,Masta Pussy
+GOPT,2020-2021,1635460220,NO,NO,20,Screech,Coach,Waxcuses,Siri,Moe,Mrs. Clay Matthews,Junior,Masta Pussy
+GOPT,2020-2021,1628036541,NO,NO,20,Junior,Moe,Screech,Coach,Mrs. Clay Matthews,The Bieb,Siri,Masta Pussy
+GOPT,2020-2021,1628036541,NO,NO,20,Junior,Coach,Siri,The Bieb,Moe,Screech,Masta Pussy,Mrs. Clay Matthews
+GOPT,2020-2021,1625018952,NO,NO,20,Coach,Moe,Junior,Screech,Siri,Mrs. Clay Matthews
+GOPT,2020-2021,1625018952,NO,NO,20,Screech,Junior,Moe,Mrs. Clay Matthews,Siri,Coach
+GOPT,2020-2021,1621902393,NO,NO,20,Junior,Coach,Screech,Waxcuses,Moe,Siri,The Bieb,Andre,Mrs. Clay Matthews
+GOPT,2020-2021,1621902393,NO,NO,20,Andre,Screech,Siri,The Bieb,Moe,Coach,Junior,Waxcuses,Mrs. Clay Matthews
+GOPT,2020-2021,1619144086,NO,NO,20,Waxcuses,Masta Pussy,Siri,Moe,Coach,Mrs. Clay Matthews,Junior,Screech
+GOPT,2020-2021,1619144086,NO,NO,20,Screech,Junior,Masta Pussy,Moe,Waxcuses,Coach,Mrs. Clay Matthews,Siri
+GOPT,2020-2021,1615941544,NO,NO,20,Screech,Coach,Andre,The Bieb,Masta Pussy,Junior,Moe,Mrs. Clay Matthews
+GOPT,2020-2021,1615941544,NO,NO,20,Junior,Coach,The Bieb,Screech,Masta Pussy,Andre,Moe,Mrs. Clay Matthews
+GOPT,2020-2021,1614299668,NO,NO,20,Siri,Screech,Masta Pussy,Andre,Moe,Junior,Coach,Waxcuses,The Bieb,Mrs. Clay Matthews
+GOPT,2020-2021,1614299668,NO,NO,20,Masta Pussy,The Bieb,Junior,Waxcuses,Coach,Moe,Siri,Andre,Screech,Mrs. Clay Matthews
+GOPT,2020-2021,1611274086,NO,NO,20,Moe,Screech,Junior,Coach,The Bieb,Waxcuses,Andre,Mrs. Clay Matthews,Masta Pussy,Siri
+GOPT,2020-2021,1611274086,NO,NO,20,Coach,The Bieb,Mrs. Clay Matthews,Screech,Andre,Siri,Waxcuses,Moe,Masta Pussy,Junior
+GOPT,2020-2021,1607472539,NO,NO,20,Screech,Andre,Moe,Siri,Junior,Mrs. Clay Matthews,Masta Pussy,Coach,The Bieb
+GOPT,2020-2021,1607472539,NO,NO,20,Screech,Masta Pussy,The Bieb,Siri,Moe,Coach,Andre,Junior,Mrs. Clay Matthews
+GOPT,2019-2020,1599784643,NO,NO,20,Siri,Junior,The Bieb,Moe,Screech,Mrs. Clay Matthews
+GOPT,2019-2020,1599784643,NO,NO,20,Junior,Moe,Siri,Screech,The Bieb,Mrs. Clay Matthews
+GOPT,2019-2020,1594775163,NO,NO,20,Siri,Screech,Moe,The Bieb,Junior,Coach,Masta Pussy,Mrs. Clay Matthews
+GOPT,2019-2020,1594775163,NO,NO,20,Junior,Masta Pussy,Screech,Siri,The Bieb,Mrs. Clay Matthews,Coach,Moe
+GOPT,2019-2020,1591227466,NO,NO,20,Moe,The Bieb,Siri,Junior,Coach,Andre,Masta Pussy,Mrs. Clay Matthews,Screech
+GOPT,2019-2020,1591227466,NO,NO,20,Masta Pussy,Junior,The Bieb,Coach,Siri,Mrs. Clay Matthews,Andre,Moe,Screech
+GOPT,2019-2020,1588723314,NO,NO,20,The Bieb,Siri,Moe,Masta Pussy,Screech,Coach,Andre,Mrs. Clay Matthews,Junior
+GOPT,2019-2020,1588723314,NO,NO,20,Siri,Coach,Masta Pussy,Mrs. Clay Matthews,The Bieb,Junior,Andre,Moe,Screech
+GOPT,2019-2020,1586476279,NO,NO,20,Siri,Junior,Screech,Mrs. Clay Matthews,Moe,Waxcuses,Coach,Masta Pussy,Andre,The Bieb
+GOPT,2019-2020,1586476279,NO,NO,20,Waxcuses,Andre,Screech,Moe,Mrs. Clay Matthews,Siri,Junior,Coach,The Bieb,Masta Pussy
+GOPT,2019-2020,1585177846,NO,NO,20,Moe,Junior,The Bieb,Mrs. Clay Matthews,Coach,Masta Pussy,Siri,Andre
+GOPT,2019-2020,1585177846,NO,NO,20,Masta Pussy,Coach,Siri,Mrs. Clay Matthews,Junior,Moe,Andre,The Bieb
+GOPT,2019-2020,1582675537,NO,NO,20,Siri,Mrs. Clay Matthews,Andre,The Bieb,Moe,Coach,Junior,Masta Pussy
+GOPT,2019-2020,1582675537,NO,NO,20,The Bieb,Coach,Masta Pussy,Junior,Mrs. Clay Matthews,Moe,Andre,Siri
+GOPT,2019-2020,1580168851,NO,NO,20,Junior,The Bieb,Masta Pussy,Andre,Siri,Mrs. Clay Matthews,Coach,Moe
+GOPT,2019-2020,1580168851,NO,NO,20,Siri,Moe,The Bieb,Coach,Masta Pussy,Mrs. Clay Matthews,Andre,Junior
+GOPT,2019-2020,1575940420,NO,NO,20,Siri,Waxcuses,Andre,Mrs. Clay Matthews,Junior,Moe,Coach
+GOPT,2019-2020,1575940420,NO,NO,20,Siri,Moe,Andre,Junior,Coach,Waxcuses,Mrs. Clay Matthews
+GOPT,2019-2020,1574354609,NO,NO,20,Andre,The Bieb,Waxcuses,Mrs. Clay Matthews,Moe,Coach
+GOPT,2019-2020,1574354609,NO,NO,20,Andre,Mrs. Clay Matthews,The Bieb,Moe,Waxcuses,Coach
+GOPT,2019-2020,1572479136,NO,NO,20,Junior,Moe,Siri,Andre,Waxcuses,Coach
+GOPT,2019-2020,1572479136,NO,NO,20,Moe,Andre,Coach,Waxcuses,Junior,Siri
+GOPT,2019-2020,1568848253,NO,NO,20,Moe,Waxcuses,Coach,Andre,Mrs. Clay Matthews,Junior
+GOPT,2019-2020,1568848253,NO,NO,20,Andre,Junior,Moe,Coach,Waxcuses,Mrs. Clay Matthews
+GOPT,2018-2019,1566947442,NO,NO,20,Junior,Coach,Andre,Moe,Siri,The Bieb
+GOPT,2018-2019,1566947442,NO,NO,20,Moe,Siri,The Bieb,Junior,Andre,Coach
+GOPT,2018-2019,1563918944,NO,NO,20,The Bieb,Siri,Andre,Coach,Junior,Mrs. Clay Matthews
+GOPT,2018-2019,1563918944,NO,NO,20,Coach,Junior,Mrs. Clay Matthews,Andre,Siri,The Bieb
+GOPT,2018-2019,1560566280,YES,DNO 2019,40,Moe,Coach,Siri,Andre,Masta Pussy
+GOPT,2018-2019,1559083562,NO,NO,20,Masta Pussy,Moe,Siri,Junior,Coach,Waxcuses,Andre,The Bieb
+GOPT,2018-2019,1559083562,NO,NO,20,Andre,Coach,The Bieb,Waxcuses,Siri,Junior,Moe,Masta Pussy
+GOPT,2018-2019,1555602930,YES,AC Baby 2019,40,Moe,Junior,Siri,Coach,Waxcuses
+GOPT,2018-2019,1553813440,NO,NO,20,Mrs. Clay Matthews,Coach,Andre,Moe,Siri,Waxcuses,Junior
+GOPT,2018-2019,1553813440,NO,NO,20,Junior,Moe,Siri,Andre,Mrs. Clay Matthews,Coach,Waxcuses
+GOPT,2018-2019,1550011202,NO,NO,20,Siri,The Bieb,Masta Pussy,Mrs. Clay Matthews,Moe,Andre,Coach
+GOPT,2018-2019,1550011202,NO,NO,20,Siri,The Bieb,Mrs. Clay Matthews,Coach,Moe,Andre,Masta Pussy
+GOPT,2018-2019,1548092304,YES,Harrah's,40,Siri,Coach,Junior,Masta Pussy,Mrs. Clay Matthews
+GOPT,2018-2019,1547164745,NO,NO,20,Waxcuses,Andre,Coach,Mrs. Clay Matthews,Moe,Junior,Siri,Masta Pussy
+GOPT,2018-2019,1547164745,NO,NO,20,Siri,Andre,Mrs. Clay Matthews,Waxcuses,Junior,Moe,Masta Pussy,Coach
+GOPT,2018-2019,1542671740,NO,NO,20,Siri,Coach,Moe,Junior,Andre,Waxcuses,Masta Pussy
+GOPT,2018-2019,1542671740,NO,NO,20,Siri,Masta Pussy,Waxcuses,Junior,Andre,Coach,Moe
+GOPT,2018-2019,1540427561,NO,NO,20,Mrs. Clay Matthews,Waxcuses,Moe,Coach,Siri,Junior,Andre
+GOPT,2018-2019,1540427561,NO,NO,20,Junior,Waxcuses,Coach,Mrs. Clay Matthews,Moe,Andre,Siri
+GOPT,2018-2019,1538606273,NO,NO,20,Siri,Moe,Coach,Junior,Andre,The Bieb,Mrs. Clay Matthews
+GOPT,2018-2019,1538606273,NO,NO,20,Moe,Mrs. Clay Matthews,Junior,Andre,Coach,The Bieb,Siri
+GOPT,2017-2018,1535590609,NO,NO,20,Siri,Coach,Masta Pussy,Waxcuses,Andre,Moe,Junior,Mrs. Clay Matthews
+GOPT,2017-2018,1535590609,NO,NO,20,Siri,Waxcuses,Moe,Junior,Coach,Andre,Masta Pussy,Mrs. Clay Matthews
+GOPT,2017-2018,1533164931,NO,NO,20,Andre,Siri,Moe,Junior,Coach,Mrs. Clay Matthews
+GOPT,2017-2018,1533164931,NO,NO,20,Siri,Mrs. Clay Matthews,Moe,Junior,Andre,Coach
+GOPT,2017-2018,1529103092,YES,DNO 2018,40,Masta Pussy,Moe,Junior,Coach,Siri
+GOPT,2017-2018,1527717718,NO,NO,20,Moe,Andre,The Bieb,Coach,Mrs. Clay Matthews,Waxcuses,Siri
+GOPT,2017-2018,1527717718,NO,NO,20,Waxcuses,The Bieb,Andre,Moe,Mrs. Clay Matthews,Siri,Coach
+GOPT,2017-2018,1524786076,NO,NO,20,Siri,Coach,Moe,Junior,Mrs. Clay Matthews,The Bieb
+GOPT,2017-2018,1524786076,NO,NO,20,The Bieb,Coach,Junior,Mrs. Clay Matthews,Moe,Siri
+GOPT,2017-2018,1522336774,YES,AC Baby,40,Junior,Coach,Masta Pussy,Moe
+GOPT,2017-2018,1521154433,NO,NO,20,Moe,Andre,Mrs. Clay Matthews,Waxcuses,Junior,Coach,Siri
+GOPT,2017-2018,1521154433,NO,NO,20,Junior,Waxcuses,Mrs. Clay Matthews,Coach,Andre,Siri,Moe
+GOPT,2017-2018,1519087787,NO,NO,20,Junior,Coach,Siri,Masta Pussy,Mrs. Clay Matthews,Moe,Andre,Waxcuses
+GOPT,2017-2018,1519087787,NO,NO,20,Moe,Waxcuses,Andre,Junior,Mrs. Clay Matthews,Coach,Siri,Masta Pussy
+GOPT,2017-2018,1516146463,NO,NO,20,Andre,Waxcuses,Coach,Mrs. Clay Matthews,Siri,Junior,Moe
+GOPT,2017-2018,1516146463,NO,NO,20,Moe,Siri,Waxcuses,Junior,Andre,Coach,Mrs. Clay Matthews
+GOPT,2017-2018,1514570749,YES,DP Open 2017,40,Moe,Junior,Coach,Andre,Mrs. Clay Matthews,Masta Pussy,The Bieb,Siri
+GOPT,2017-2018,1512000852,NO,NO,20,Junior,Andre,Coach,The Bieb,Mrs. Clay Matthews,Siri
+GOPT,2017-2018,1512000852,NO,NO,20,Mrs. Clay Matthews,The Bieb,Andre,Junior,Coach,Siri
+GOPT,2017-2018,1508976865,NO,NO,20,Moe,Mrs. Clay Matthews,Siri,The Bieb,Andre,Junior
+GOPT,2017-2018,1508976865,NO,NO,20,Siri,Junior,Andre,Moe,The Bieb,Mrs. Clay Matthews
+GOPT,2017-2018,1506053114,NO,NO,20,Coach,Andre,Moe,Siri,Mrs. Clay Matthews
+GOPT,2017-2018,1506053114,NO,NO,20,Siri,Moe,Andre,Coach,Mrs. Clay Matthews
+GOPT,2016-2017,1504139746,NO,NO,20,Mrs. Clay Matthews,Moe,Waxcuses,Coach,Siri,Princess Peach,Masta Pussy,Junior,The Bieb
+GOPT,2016-2017,1504139746,NO,NO,20,Waxcuses,Coach,Moe,Masta Pussy,Siri,Mrs. Clay Matthews,Junior,Princess Peach,The Bieb
+GOPT,2016-2017,1501112229,NO,NO,20,Mrs. Clay Matthews,Andre,Moe,The Bieb,Coach,Junior,Waxcuses,Siri
+GOPT,2016-2017,1501112229,NO,NO,20,Coach,The Bieb,Waxcuses,Mrs. Clay Matthews,Andre,Junior,Moe,Siri
+GOPT,2016-2017,1497652950,YES,DNO 2017,40,Andre,Mrs. Clay Matthews,Moe,Masta Pussy,Junior
+GOPT,2016-2017,1496272347,NO,NO,20,Coach,Junior,Moe,Siri,Andre,Waxcuses
+GOPT,2016-2017,1496272347,NO,NO,20,Coach,Siri,Moe,Waxcuses,Junior,Andre
+GOPT,2016-2017,1492103037,YES,AC Baby 2017,40,Moe,Coach,The Bieb,Junior,Andre,Waxcuses,Siri,Masta Pussy
+GOPT,2016-2017,1490308665,NO,NO,20,Moe,Siri,Coach,Masta Pussy,Andre,Junior,Waxcuses
+GOPT,2016-2017,1490308665,NO,NO,20,Junior,Moe,Siri,Andre,Coach,Masta Pussy,Waxcuses
+GOPT,2016-2017,1487289361,NO,NO,20,Junior,Andre,Siri,Coach,Moe,Masta Pussy
+GOPT,2016-2017,1487289361,NO,NO,20,Moe,Coach,Masta Pussy,Andre,Junior,Siri
+GOPT,2016-2017,1485214511,NO,NO,20,The Bieb,Masta Pussy,Siri,Moe,Andre,Junior,Coach,Mrs. Clay Matthews
+GOPT,2016-2017,1485214511,NO,NO,20,Masta Pussy,Coach,Andre,Siri,Junior,Mrs. Clay Matthews,Moe,The Bieb
+GOPT,2016-2017,1483100000,YES,2016 DP Open,40,Coach,Andre,Moe,Siri,Screech,Mrs. Clay Matthews,The Bieb,Masta Pussy
+GOPT,2016-2017,1480463376,NO,NO,20,Mrs. Clay Matthews,Masta Pussy,Coach,Moe,Andre,Siri,Junior
+GOPT,2016-2017,1480463376,NO,NO,20,Masta Pussy,Moe,Andre,Siri,Coach,Junior,Mrs. Clay Matthews
+GOPT,2016-2017,1477017175,NO,NO,20,Waxcuses,Masta Pussy,The Bieb,Moe,Siri,Junior,Coach,Andre
+GOPT,2016-2017,1477017175,NO,NO,20,Andre,Waxcuses,Moe,The Bieb,Junior,Siri,Masta Pussy,Coach
+GOPT,2016-2017,1474410766,NO,NO,20,The Bieb,Masta Pussy,Moe,Mrs. Clay Matthews,Junior,Andre,Coach,Siri,Princess Peach,Waxcuses
+GOPT,2016-2017,1474410766,NO,NO,20,Waxcuses,Junior,Princess Peach,Andre,Masta Pussy,The Bieb,Moe,Siri,Coach,Mrs. Clay Matthews
+GOPT,2015-2016,1469576147,NO,NO,20,Andre,Siri,Mrs. Clay Matthews,Junior,Moe,Waxcuses,Masta Pussy
+GOPT,2015-2016,1469576147,NO,NO,20,Mrs. Clay Matthews,Junior,Andre,Moe,Masta Pussy,Siri,Waxcuses
+GOPT,2015-2016,1466201817,YES,Downtown Newark Open,40,Siri,Andre,Moe,Masta Pussy,Junior,Mrs. Clay Matthews,Coach
+GOPT,2015-2016,1464735009,NO,NO,20,Coach,Siri,Mrs. Clay Matthews,Moe,Masta Pussy,Andre,Junior
+GOPT,2015-2016,1464735009,NO,NO,20,Coach,Andre,Siri,Mrs. Clay Matthews,Junior,Masta Pussy,Moe
+GOPT,2015-2016,1461882927,NO,NO,20,Siri,Moe,Coach,Andre,Masta Pussy,The Bieb,Waxcuses,Junior
+GOPT,2015-2016,1461882927,NO,NO,20,Junior,Siri,The Bieb,Waxcuses,Andre,Moe,Masta Pussy,Coach
+GOPT,2015-2016,1458832098,YES,AC BABY 2016,40,Masta Pussy,Moe,Siri,Andre,Junior,Coach,Mrs. Clay Matthews,Waxcuses
+GOPT,2015-2016,1455234569,NO,NO,20,Moe,Princess Peach,Junior,Screech,The Bieb,Coach,Waxcuses,Andre,Mrs. Clay Matthews,Masta Pussy
+GOPT,2015-2016,1455234569,NO,NO,20,Screech,Andre,Princess Peach,Waxcuses,Masta Pussy,Junior,The Bieb,Moe,Coach,Mrs. Clay Matthews
+GOPT,2015-2016,1453420099,NO,NO,20,Moe,Masta Pussy,Siri,Andre,Mrs. Clay Matthews,The Bieb,Waxcuses,Junior,Screech
+GOPT,2015-2016,1453420099,NO,NO,20,Moe,Mrs. Clay Matthews,The Bieb,Screech,Siri,Junior,Andre,Waxcuses,Masta Pussy
+GOPT,2015-2016,1451509257,YES,DP Open 2015,40,Screech,Coach,Andre,Masta Pussy,Moe,Siri,Junior
+GOPT,2015-2016,1449704798,NO,NO,20,Coach,Masta Pussy,Mrs. Clay Matthews,Junior,Screech,Siri,Waxcuses,Andre,The Bieb
+GOPT,2015-2016,1449704798,NO,NO,20,Junior,Masta Pussy,Coach,Andre,Siri,Screech,The Bieb,Mrs. Clay Matthews,Waxcuses
+GOPT,2015-2016,1446636773,NO,NO,20,Waxcuses,Moe,The Bieb,Andre,Coach,Screech,Masta Pussy,Mrs. Clay Matthews,Siri
+GOPT,2015-2016,1446636773,NO,NO,20,Masta Pussy,Moe,Waxcuses,Coach,The Bieb,Siri,Andre,Mrs. Clay Matthews,Screech
+GOPT,2015-2016,1444777706,NO,NO,20,Screech,Moe,Coach,Junior,Siri,Waxcuses,Masta Pussy,Mrs. Clay Matthews,Andre
+GOPT,2015-2016,1444777706,NO,NO,20,Coach,Waxcuses,Screech,Mrs. Clay Matthews,Andre,Masta Pussy,Moe,Siri,Junior
+GOPT,2015-2016,1442445625,NO,NO,20,Siri,Moe,Mrs. Clay Matthews,Junior,The Bieb,Masta Pussy,Andre,Screech,Coach,Waxcuses
+GOPT,2015-2016,1442445625,NO,NO,20,Moe,Waxcuses,Siri,Screech,Andre,Coach,The Bieb,Masta Pussy,Mrs. Clay Matthews,Junior
+GOPT,2014-2015,1437520511,NO,NO,20,Screech,Moe,Mrs. Clay Matthews,Andre,Junior,The Bieb,Siri,Coach
+GOPT,2014-2015,1437520511,NO,NO,20,Siri,Coach,Junior,Screech,The Bieb,Andre,Moe,Mrs. Clay Matthews
+GOPT,2014-2015,1434495221,NO,NO,20,Siri,Coach,Junior,Andre,Masta Pussy,Moe,Screech,Mrs. Clay Matthews
+GOPT,2014-2015,1434495221,NO,NO,20,Siri,Screech,Mrs. Clay Matthews,Andre,Junior,Coach,Masta Pussy,Moe
+GOPT,2014-2015,1432076400,NO,NO,20,Junior,Mrs. Clay Matthews,Screech,Siri,Andre,Moe,The Bieb
+GOPT,2014-2015,1432076400,NO,NO,20,Moe,Andre,Junior,Siri,Screech,The Bieb,Mrs. Clay Matthews
+GOPT,2014-2015,1428016938,YES,AC Baby 2015,40,Waxcuses,Siri,Coach,Masta Pussy,Screech,Moe,Junior
+GOPT,2014-2015,1426959849,YES,ESSOP,40,Moe,The Bieb,Siri,Masta Pussy,Mrs. Clay Matthews,Andre,Junior,Screech
+GOPT,2014-2015,1426959849,YES,ESSOP,40,Moe,Junior,Masta Pussy,The Bieb,Andre,Mrs. Clay Matthews,Siri,Screech
+GOPT,2014-2015,1424391484,NO,NO,20,Screech,Moe,Junior,Andre,Waxcuses,Mrs. Clay Matthews,Siri,Masta Pussy
+GOPT,2014-2015,1424391484,NO,NO,20,Moe,Screech,Waxcuses,Masta Pussy,Siri,Mrs. Clay Matthews,Andre,Junior
+GOPT,2014-2015,1421797904,NO,NO,20,Masta Pussy,Screech,Coach,Andre,The Bieb,Junior,Siri
+GOPT,2014-2015,1421797904,NO,NO,20,Screech,Junior,Siri,Masta Pussy,The Bieb,Coach,Andre
+GOPT,2014-2015,1420215979,YES,Delaware Park,40,Siri,Moe,Andre,Coach,Masta Pussy,Screech,Mrs. Clay Matthews,Junior
+GOPT,2014-2015,1419300234,NO,NO,20,Masta Pussy,Siri,Andre,Mrs. Clay Matthews,Waxcuses,The Bieb,Moe,Junior,Coach
+GOPT,2014-2015,1419300234,NO,NO,20,Coach,Andre,The Bieb,Waxcuses,Mrs. Clay Matthews,Siri,Masta Pussy,Junior,Moe
+GOPT,2014-2015,1416845017,NO,NO,20,Junior,Mrs. Clay Matthews,Masta Pussy,Andre,Siri,Moe,The Bieb,Screech,Waxcuses,Coach
+GOPT,2014-2015,1416845017,NO,NO,20,Siri,Mrs. Clay Matthews,Waxcuses,Andre,Masta Pussy,Moe,The Bieb,Junior,Screech,Coach
+GOPT,2014-2015,1414494000,NO,NO,20,Siri,Mrs. Clay Matthews,Moe,Junior,Screech,Andre,Coach
+GOPT,2014-2015,1414494000,NO,NO,20,Siri,Junior,Andre,Moe,Mrs. Clay Matthews,Screech,Coach
+GOPT,2014-2015,1411092118,NO,NO,20,Coach,Mrs. Clay Matthews,Moe,Siri,Masta Pussy,Junior,Andre
+GOPT,2014-2015,1411092118,NO,NO,20,Mrs. Clay Matthews,Masta Pussy,Moe,Andre,Junior,Siri,Coach
+GOPT,2013-2014,1409011200,NO,NO,20,Coach
+GOPT,2013-2014,1404172800,NO,NO,20,Junior
+GOPT,2013-2014,1400630400,NO,NO,20,Junior
+GOPT,2013-2014,1397692800,NO,NO,20,Siri
+GOPT,2013-2014,1395446400,NO,NO,20,Mrs. Clay Matthews
+GOPT,2013-2014,1393459200,NO,NO,20,Coach
+GOPT,2013-2014,1391472000,NO,NO,20,Princess Peach
+GOPT,2013-2014,1389225600,NO,NO,20,Screech
+GOPT,2013-2014,1388102400,NO,NO,20,Coach
+GOPT,2013-2014,1384992000,NO,NO,20,The Bieb
+GOPT,2013-2014,1381449600,NO,NO,20,Siri
+GOPT,2013-2014,1378684800,NO,NO,20,Moe
+GOPT,2012-2013,1372204800,NO,NO,20,Siri
+GOPT,2012-2013,1368057600,NO,NO,20,Coach
+GOPT,2012-2013,1364428800,NO,NO,20,Moe
+GOPT,2012-2013,1362787200,NO,NO,20,Siri
+GOPT,2012-2013,1361491200,NO,NO,20,Masta Pussy
+GOPT,2012-2013,1358380800,NO,NO,20,Siri
+GOPT,2012-2013,1356825600,NO,NO,20,Coach
+GOPT,2012-2013,1352851200,NO,NO,20,Princess Peach
+GOPT,2012-2013,1350000000,NO,NO,20,Siri
+GOPT,2012-2013,1347321600,NO,NO,20,Moe
+GOPT,2012-2013,1344902400,NO,NO,20,Waxcuses
+GOPT,2011-2012,1340755200,NO,NO,20,Siri
+GOPT,2011-2012,1336003200,NO,NO,20,Screech
+GOPT,2011-2012,1333584000,NO,NO,20,Moe
+GOPT,2011-2012,1331942400,NO,NO,20,Moe
+GOPT,2011-2012,1328745600,NO,NO,20,Screech
+GOPT,2011-2012,1327536000,NO,NO,20,Siri
+GOPT,2011-2012,1325203200,NO,NO,20,Screech
+GOPT,2011-2012,1323302400,NO,NO,20,Princess Peach
+GOPT,2011-2012,1320883200,NO,NO,20,Siri
+GOPT,2011-2012,1317254400,NO,NO,20,Screech
+GOPT,2011-2012,1315958400,NO,NO,20,Waxcuses
+GOPT,2011-2012,1312416000,NO,NO,20,Moe
+GOPT,2010-2011,1306886400,NO,NO,20,Coach
+GOPT,2010-2011,1304812800,NO,NO,20,Masta Pussy
+GOPT,2010-2011,1303344000,NO,NO,20,Screech
+GOPT,2010-2011,1300492800,NO,NO,20,Siri
+GOPT,2010-2011,1299110400,NO,NO,20,Masta Pussy
+GOPT,2010-2011,1296086400,NO,NO,20,Coach
+GOPT,2010-2011,1293580800,NO,NO,20,Siri
+GOPT,2010-2011,1291334400,NO,NO,20,Princess Peach
+GOPT,2010-2011,1288224000,NO,NO,20,Screech
+GOPT,2010-2011,1285200000,NO,NO,20,Siri
+GOPT,2010-2011,1281657600,NO,NO,20,Masta Pussy
+GOPT,2009-2010,1277856000,NO,NO,20,Moe
+GOPT,2009-2010,1273104000,NO,NO,20,Princess Peach
+GOPT,2009-2010,1270080000,NO,NO,20,Masta Pussy
+GOPT,2009-2010,1268179200,NO,NO,20,Siri
+GOPT,2009-2010,1265241600,NO,NO,20,Norman
+GOPT,2009-2010,1262822400,NO,NO,20,Coach
+GOPT,2009-2010,1259798400,NO,NO,20,Princess Peach
+GOPT,2009-2010,1255564800,NO,NO,20,Coach
+GOPT,2009-2010,1253750400,NO,NO,20,Moe
+GOPT,2009-2010,1251676800,NO,NO,20,Waxcuses
+GOPT,2007-2009,1241654400,NO,NO,20,Princess Peach
+GOPT,2007-2009,1239494400,NO,NO,20,Siri
+GOPT,2007-2009,1236816000,NO,NO,20,Siri
+GOPT,2007-2009,1234396800,NO,NO,20,Siri
+GOPT,2007-2009,1230854400,NO,NO,20,Coach
+GOPT,2007-2009,1228348800,NO,NO,20,Moe
+GOPT,2007-2009,1214524800,NO,NO,20,Waxcuses
+GOPT,2007-2009,1194480000,NO,NO,20,Coach

@@ -1,0 +1,693 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  color: #111;
+  margin: 0;
+  background: #fff;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.logo {
+  display: block;
+  width: min(200px, 90vw);
+  height: min(222px, 99.9vw);
+  object-fit: cover;
+  object-position: center bottom;
+  margin: 1rem auto;
+}
+
+.logo.wachs-logo-trigger {
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.logo.wachs-logo-trigger:focus-visible {
+  outline: 4px solid #ff00f5;
+  outline-offset: 0.35rem;
+}
+
+.logo.wachs-logo-trigger:hover {
+  transform: rotate(-1deg) scale(1.015);
+}
+
+nav a {
+  display: inline-block;
+  line-height: 1.8;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #999;
+  padding: 0.35rem 0.55rem;
+}
+
+th {
+  background: #111;
+  color: #fff;
+}
+
+.admin-panel {
+  width: min(560px, calc(100vw - 2rem));
+  margin: 0 auto 3rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-section {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ccc;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.admin-form input,
+.admin-form select {
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #888;
+  background: #fff;
+}
+
+.admin-form button,
+.admin-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  padding: 0.65rem 1rem;
+  border: 0;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  line-height: normal;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-archive-row {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #ccc;
+}
+
+.admin-form button.danger-action {
+  border: 1px solid #8f1f1f;
+  background: #b32626;
+  color: #fff;
+}
+
+.admin-message {
+  display: none;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #888;
+}
+
+.admin-message.is-success {
+  display: block;
+  border-color: #1f7a39;
+  background: #e8f6ec;
+}
+
+.admin-message.is-error {
+  display: block;
+  border-color: #a32929;
+  background: #fae9e9;
+}
+
+.draft-message-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: 0.75rem;
+}
+
+.draft-message-actions button {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.record-shell {
+  width: min(1160px, calc(100vw - 2rem));
+  margin: 0 auto 3rem;
+}
+
+.record-section {
+  margin-bottom: 2rem;
+}
+
+.record-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.record-form > *,
+.record-grid,
+.record-grid > *,
+.record-form label,
+.preview-label {
+  min-width: 0;
+}
+
+.wide-field {
+  min-width: 0;
+}
+
+.record-form label,
+.preview-label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.record-form input,
+.record-form select,
+.preview-label textarea {
+  font: inherit;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #888;
+  background: #fff;
+}
+
+.record-form input:not([type="checkbox"]):not([type="radio"]),
+.record-form select,
+.preview-label textarea {
+  box-sizing: border-box;
+  width: 100%;
+  inline-size: 100%;
+  max-width: 100%;
+  max-inline-size: 100%;
+  min-width: 0;
+  min-inline-size: 0;
+}
+
+.record-form input[type="checkbox"],
+.record-form input[type="radio"] {
+  flex: 0 0 auto;
+  width: auto;
+  inline-size: auto;
+  margin: 0;
+  padding: 0;
+}
+
+#night-datetime {
+  display: block;
+  min-width: 0;
+  min-inline-size: 0;
+}
+
+#night-datetime::-webkit-date-and-time-value,
+#night-datetime::-webkit-datetime-edit {
+  min-width: 0;
+  min-inline-size: 0;
+}
+
+.derived-points {
+  padding: 0.55rem 0;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-heading-row h2,
+.section-heading-row h3 {
+  margin-bottom: 0.25rem;
+}
+
+.muted {
+  color: #555;
+  margin-top: 0;
+}
+
+.inline-actions,
+.finish-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.add-player-row {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem) max-content;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: center;
+  justify-content: start;
+}
+
+.add-player-row input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.add-player-row button {
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.55rem;
+}
+
+.player-list label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #ccc;
+  font-weight: 400;
+}
+
+.tournament-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.tournament-panel {
+  border: 1px solid #999;
+  padding: 1rem;
+  min-width: 0;
+}
+
+.available-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.rank-list {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 3rem;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border: 1px solid #bbb;
+  background: #fff;
+}
+
+.rank-item.is-dragging {
+  opacity: 0.55;
+}
+
+.drag-handle {
+  cursor: grab;
+  font-weight: 700;
+}
+
+.rank-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rank-place {
+  display: block;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.primary-action,
+.record-form button,
+.inline-actions button,
+.finish-row button,
+.available-players button,
+.rank-item button,
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-action,
+.button-link {
+  background: #111;
+  color: #fff;
+}
+
+.secondary-action {
+  background: #fff !important;
+  color: #111 !important;
+  border-color: #777 !important;
+  font-weight: 400 !important;
+}
+
+.lock-details-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.lock-details-action {
+  min-height: 3rem;
+  padding: 0.75rem 1.35rem;
+  font-size: 1.1rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.upload-results-section {
+  margin: 2rem 0 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #ccc;
+}
+
+#history-preview {
+  min-height: 16rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+}
+
+.wachs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(1rem, 4vw, 4rem);
+  background: var(--wachs-bg, #fff200);
+  color: var(--wachs-fg, #ff00f5);
+}
+
+.wachs-modal::before,
+.wachs-modal::after {
+  position: absolute;
+  inset: -12%;
+  content: "";
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 2rem,
+      var(--wachs-stripe, #00f5ff) 2rem 3.25rem
+    );
+  mix-blend-mode: multiply;
+  opacity: 0.45;
+  animation: wachs-spin 2.4s linear infinite;
+}
+
+.wachs-modal::after {
+  animation-direction: reverse;
+  transform: rotate(90deg);
+}
+
+.wachs-modal-text {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 12ch;
+  font-family: 'Cal Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(3.8rem, 15vw, 12rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.78;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow:
+    0.045em 0.045em 0 var(--wachs-shadow-one, #00ff00),
+    -0.045em -0.045em 0 var(--wachs-shadow-two, #ff5a00),
+    0 0 0.08em #000;
+  animation:
+    wachs-blink 0.34s steps(1, end) infinite,
+    wachs-shudder 0.8s linear infinite;
+}
+
+body.wachs-modal-open {
+  overflow: hidden;
+}
+
+@keyframes wachs-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+
+  49%,
+  68% {
+    opacity: 0.08;
+  }
+
+  69%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes wachs-shudder {
+  0% {
+    transform: translate(-0.03em, 0) rotate(-1deg) scale(1);
+  }
+
+  25% {
+    transform: translate(0.035em, -0.02em) rotate(1deg) scale(1.02);
+  }
+
+  50% {
+    transform: translate(-0.02em, 0.025em) rotate(0deg) scale(0.99);
+  }
+
+  75% {
+    transform: translate(0.025em, 0) rotate(1.5deg) scale(1.01);
+  }
+
+  100% {
+    transform: translate(-0.03em, 0) rotate(-1deg) scale(1);
+  }
+}
+
+@keyframes wachs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    color: #f2efe8;
+    background: #151515;
+  }
+
+  a {
+    color: #8ec7ff;
+  }
+
+  nav {
+    background-color: #707070 !important;
+  }
+
+  nav a {
+    color: #111 !important;
+  }
+
+  .logo {
+    box-sizing: content-box;
+    padding: 0 0.65rem 0.65rem;
+    background: #fff;
+  }
+
+  table {
+    color: inherit;
+  }
+
+  th,
+  td {
+    border-color: #555;
+  }
+
+  th {
+    background: #f2efe8;
+    color: #151515;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .admin-form input,
+  .admin-form select,
+  .record-form input,
+  .record-form select,
+  .preview-label textarea {
+    border-color: #666;
+    background: #1f1f1f;
+    color: #f2efe8;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #aaa;
+  }
+
+  input::file-selector-button {
+    border: 1px solid #d8d3c7;
+    background: #242424;
+    color: #f2efe8;
+  }
+
+  .admin-section,
+  .admin-archive-row,
+  .upload-results-section {
+    border-top-color: #444;
+  }
+
+  .admin-message {
+    border-color: #666;
+    background: #202020;
+    color: #f2efe8;
+  }
+
+  .admin-message.is-success {
+    border-color: #56a86c;
+    background: #183b24;
+    color: #e5f7ea;
+  }
+
+  .admin-message.is-error {
+    border-color: #d46a6a;
+    background: #3f1f1f;
+    color: #ffe8e8;
+  }
+
+  .draft-message-actions button,
+  .record-form button,
+  .inline-actions button,
+  .finish-row button,
+  .available-players button,
+  .rank-item button,
+  .admin-form button,
+  .admin-link-button,
+  .button-link,
+  .primary-action,
+  #current-season-button.current-season-button {
+    border-color: #d8d3c7;
+    background: #242424;
+    color: #f2efe8;
+  }
+
+  .primary-action,
+  .button-link,
+  .admin-form button,
+  .admin-link-button {
+    background: #f2efe8;
+    color: #151515;
+  }
+
+  .secondary-action {
+    background: #242424 !important;
+    color: #f2efe8 !important;
+    border-color: #777 !important;
+  }
+
+  .admin-form button.danger-action {
+    border-color: #ff9a9a;
+    background: #7f2424;
+    color: #fff;
+  }
+
+  .muted,
+  .rank-place {
+    color: #b8b2a6;
+  }
+
+  .player-list label,
+  .tournament-panel,
+  .rank-item {
+    border-color: #555;
+    background: #1f1f1f;
+  }
+
+  #history-preview {
+    background: #111;
+  }
+}
+
+@media (max-width: 768px) {
+  nav a {
+    margin: 0 0.45rem !important;
+  }
+
+  .rank-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .rank-item button[data-move-up],
+  .rank-item button[data-move-down] {
+    display: none;
+  }
+
+  .wachs-modal-text {
+    font-size: clamp(3.1rem, 19vw, 8rem);
+  }
+}

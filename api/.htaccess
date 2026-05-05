@@ -1,0 +1,3 @@
+<FilesMatch "^(admin-config|history-lib)\.php$">
+  Require all denied
+</FilesMatch>

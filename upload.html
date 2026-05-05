@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=dark-nav-gray-deeper-20260505" />
+  <style>
+    body {
+      font-family: 'Roboto Serif', serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Cal Sans', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <header style="text-align: center;">
+    <img src="assets/logo.GIF" alt="GOPT Logo" class="logo" />
+    <nav style="background-color: black; padding: 0.5em;">
+      <a href="index.html" style="color: white; text-decoration: none; margin: 0 1em;">Standings</a>
+      <a href="record.html" style="color: white; text-decoration: none; margin: 0 1em;">Record</a>
+      <a href="rules.html" style="color: white; text-decoration: none; margin: 0 1em;">Rules</a>
+      <a href="technote.html" style="color: white; text-decoration: none; margin: 0 1em;">Tech Note</a>
+      <a href="upload.html" style="color: white; text-decoration: none; margin: 0 1em; font-weight: bold;">Admin</a>
+    </nav>
+    <h1>Admin</h1>
+  </header>
+
+  <main class="admin-panel">
+    <div id="upload-message" class="admin-message" role="status" aria-live="polite"></div>
+
+    <form class="admin-form" action="upload-history" method="post" enctype="multipart/form-data">
+      <label>
+        Username
+        <input name="username" type="text" autocomplete="username" required />
+      </label>
+
+      <label>
+        Password
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+
+      <label>
+        History file
+        <input name="historyFile" type="file" accept=".txt,text/plain" required />
+      </label>
+
+      <button type="submit">Upload History</button>
+    </form>
+
+    <section class="admin-section">
+      <div class="section-heading-row">
+        <div>
+          <h2>History Versions</h2>
+          <p id="history-version-summary" class="muted"></p>
+        </div>
+      </div>
+
+      <form id="revert-history-form" class="admin-form">
+        <label>
+          Previous version
+          <select id="history-version-select" required></select>
+        </label>
+
+        <label>
+          Username
+          <input id="revert-username" type="text" autocomplete="username" required />
+        </label>
+
+        <label>
+          Password
+          <input id="revert-password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <div class="admin-action-row">
+          <button type="submit">Restore Selected Version</button>
+          <button type="button" id="delete-history-version" class="danger-action" disabled>Delete the Selected Version</button>
+        </div>
+        <p id="delete-history-note" class="muted"></p>
+      </form>
+
+      <div class="admin-archive-row">
+        <a id="download-history-archive" class="admin-link-button" href="api/history/versions.zip" download>Download All Versions (.zip)</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const message = document.getElementById('upload-message');
+    const versionSelect = document.getElementById('history-version-select');
+    const versionSummary = document.getElementById('history-version-summary');
+    const revertForm = document.getElementById('revert-history-form');
+    const revertUsername = document.getElementById('revert-username');
+    const revertPassword = document.getElementById('revert-password');
+    const deleteVersion = document.getElementById('delete-history-version');
+    const deleteNote = document.getElementById('delete-history-note');
+    let selectableVersions = [];
+
+    if (status === 'success') {
+      const rows = params.get('rows') || '0';
+      const versionNumber = params.get('versionNumber') || 'unknown';
+      message.className = 'admin-message is-success';
+      message.textContent = `History uploaded. ${rows} data rows accepted. Current history is now version ${versionNumber}.`;
+    } else if (status === 'error') {
+      message.className = 'admin-message is-error';
+      message.textContent = params.get('message') || 'Upload failed.';
+    }
+
+    function showUploadMessage(text, type = 'success') {
+      message.className = `admin-message is-${type}`;
+      message.textContent = text;
+    }
+
+    function formatVersion(version, options = {}) {
+      const created = new Date(version.createdAt).toLocaleString();
+      const current = options.showCurrent !== false && version.isCurrent ? 'Current - ' : '';
+      return `${current}${created} | file v${version.versionNumber} | ${version.rowCount} rows`;
+    }
+
+    function getSelectedVersion() {
+      return selectableVersions.find(version => version.id === versionSelect.value);
+    }
+
+    async function fetchJson(endpoints, options = {}) {
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, options);
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.message || `Could not load ${endpoint}.`);
+          }
+          return await response.json();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Could not reach the history API.');
+    }
+
+    function updateDeleteVersionState() {
+      const selected = getSelectedVersion();
+      const isOldest = Boolean(selected?.isOldest);
+      deleteVersion.disabled = versionSelect.disabled || !selected || isOldest;
+      deleteVersion.title = isOldest
+        ? 'The oldest history version is kept as a permanent baseline.'
+        : '';
+      deleteNote.textContent = isOldest
+        ? 'The oldest history version is kept as a permanent baseline and cannot be deleted.'
+        : '';
+    }
+
+    async function loadHistoryVersions() {
+      const data = await fetchJson(['api/history/versions', 'api/history-versions.php'], { cache: 'no-store' });
+      const current = data.versions.find(version => version.isCurrent);
+      const previous = data.versions.filter(version => !version.isCurrent);
+
+      versionSummary.textContent = current
+        ? `Current: ${formatVersion(current, { showCurrent: false })}`
+        : 'No current history version found.';
+
+      versionSelect.innerHTML = '';
+      selectableVersions = previous;
+      if (!previous.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No previous versions available';
+        versionSelect.appendChild(option);
+        versionSelect.disabled = true;
+        updateDeleteVersionState();
+        return;
+      }
+
+      versionSelect.disabled = false;
+      previous.forEach(version => {
+        const option = document.createElement('option');
+        option.value = version.id;
+        option.textContent = formatVersion(version);
+        versionSelect.appendChild(option);
+      });
+      updateDeleteVersionState();
+    }
+
+    revertForm.addEventListener('submit', event => {
+      event.preventDefault();
+
+      fetchJson(['api/history/revert', 'api/history-revert.php'], {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: revertUsername.value,
+          password: revertPassword.value,
+          versionId: versionSelect.value,
+        }),
+      })
+        .then(async result => {
+          if (result.status !== 'success') throw new Error(result.message || 'Restore failed.');
+          revertPassword.value = '';
+          await loadHistoryVersions();
+          showUploadMessage(`Restored current history to version ${result.versionNumber}.`, 'success');
+        })
+        .catch(error => {
+          showUploadMessage(error.message, 'error');
+        });
+    });
+
+    versionSelect.addEventListener('change', updateDeleteVersionState);
+
+    deleteVersion.addEventListener('click', () => {
+      const versionId = versionSelect.value;
+      const selectedVersion = getSelectedVersion();
+      const selectedLabel = versionSelect.selectedOptions[0]?.textContent || 'the selected version';
+
+      if (!versionId) {
+        showUploadMessage('Choose a history version to delete.', 'error');
+        return;
+      }
+
+      if (selectedVersion?.isOldest) {
+        showUploadMessage('The oldest history version cannot be deleted.', 'error');
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Delete this history version?\n\n${selectedLabel}\n\nThis removes the version from the history database and cannot be undone from this page.`
+      );
+      if (!confirmed) return;
+
+      fetchJson(['api/history/delete', 'api/history-delete.php'], {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: revertUsername.value,
+          password: revertPassword.value,
+          versionId,
+        }),
+      })
+        .then(async result => {
+          if (result.status !== 'success') throw new Error(result.message || 'Delete failed.');
+          revertPassword.value = '';
+          await loadHistoryVersions();
+          showUploadMessage(`Deleted history version ${result.versionNumber}.`, 'success');
+        })
+        .catch(error => {
+          showUploadMessage(error.message, 'error');
+        });
+    });
+
+    loadHistoryVersions().catch(error => {
+      showUploadMessage(error.message, 'error');
+    });
+  </script>
+  <script src="wachs-action.js"></script>
+</body>
+</html>

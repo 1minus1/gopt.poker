@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Record Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=dark-nav-gray-deeper-20260505" />
+  <style>
+    body {
+      font-family: 'Roboto Serif', serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Cal Sans', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <header style="text-align: center;">
+    <img src="assets/logo.GIF" alt="GOPT Logo" class="logo" />
+    <nav style="background-color: black; padding: 0.5em;">
+      <a href="index.html" style="color: white; text-decoration: none; margin: 0 1em;">Standings</a>
+      <a href="record.html" style="color: white; text-decoration: none; margin: 0 1em; font-weight: bold;">Record</a>
+      <a href="rules.html" style="color: white; text-decoration: none; margin: 0 1em;">Rules</a>
+      <a href="technote.html" style="color: white; text-decoration: none; margin: 0 1em;">Tech Note</a>
+      <a href="upload.html" style="color: white; text-decoration: none; margin: 0 1em;">Admin</a>
+    </nav>
+    <h1>Record Results</h1>
+  </header>
+
+  <main class="record-shell">
+    <div id="record-message" class="admin-message" role="status" aria-live="polite"></div>
+
+    <section id="setup-section" class="record-section">
+      <h2>Night Setup</h2>
+      <form id="setup-form" class="record-form">
+        <div class="record-grid">
+          <label>
+            Season
+            <select id="season-select" required></select>
+          </label>
+
+          <label id="new-season-field" hidden>
+            New season
+            <input id="new-season-input" type="text" placeholder="2027" />
+          </label>
+
+          <label class="wide-field">
+            Night date/time
+            <input id="night-datetime" type="datetime-local" required />
+          </label>
+
+          <label>
+            Night type
+            <select id="major-select">
+              <option value="NO">Standard night</option>
+              <option value="YES">Major</option>
+            </select>
+          </label>
+
+          <label id="major-name-field" hidden>
+            Major name
+            <input id="major-name-input" type="text" placeholder="AC Baby" />
+          </label>
+
+          <label>
+            Tournaments
+            <input id="tournament-count" type="number" min="1" max="10" value="2" required />
+          </label>
+
+          <label>
+            Buy-in
+            <input id="buy-in" type="text" inputmode="numeric" pattern="[0-9]+(\\.[0-9]+)?" value="20" required />
+          </label>
+
+          <div class="derived-points">
+            Points at stake: <strong id="points-at-stake">20</strong>
+          </div>
+        </div>
+
+        <section class="player-picker">
+          <div class="section-heading-row">
+            <h3>Select Players</h3>
+            <div class="inline-actions">
+              <button type="button" id="clear-players">Clear</button>
+            </div>
+          </div>
+
+          <div id="player-list" class="player-list"></div>
+
+          <div class="add-player-row">
+            <input id="new-player-input" type="text" placeholder="New player name" />
+            <button type="button" id="add-player" class="secondary-action">Add Player</button>
+          </div>
+        </section>
+
+        <div class="lock-details-row">
+          <button type="submit" class="primary-action lock-details-action">Lock Details</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="ranking-section" class="record-section" hidden>
+      <div class="section-heading-row">
+        <div>
+          <h2>Rank Tournaments</h2>
+          <p id="locked-summary" class="muted"></p>
+        </div>
+        <button type="button" id="edit-details">Edit Details</button>
+      </div>
+
+      <div id="tournament-panels" class="tournament-grid"></div>
+
+      <div class="finish-row">
+        <p id="finish-status" class="muted"></p>
+        <button type="button" id="finish-night" class="primary-action" disabled>Finished</button>
+      </div>
+    </section>
+
+    <section id="generated-section" class="record-section" hidden>
+      <h2>Generated History File</h2>
+      <p class="muted">A copy downloads automatically when results are finished. Use the download button if you need another copy.</p>
+
+      <div class="finish-row">
+        <a id="download-history" class="button-link" download="GOPThistory.txt">Download GOPThistory.txt</a>
+        <button type="button" id="unlock-results">Edit Results</button>
+      </div>
+
+      <section class="upload-results-section">
+        <h2>Upload Results</h2>
+        <p class="muted">This creates the current server version using the same admin login as Admin.</p>
+        <form id="replace-form" class="record-form">
+          <div class="record-grid">
+            <label>
+              Username
+              <input id="replace-username" type="text" autocomplete="username" required />
+            </label>
+            <label>
+              Password
+              <input id="replace-password" type="password" autocomplete="current-password" required />
+            </label>
+          </div>
+          <button type="submit" class="primary-action">Upload Results</button>
+        </form>
+      </section>
+
+      <label class="preview-label">
+        File preview
+        <textarea id="history-preview" readonly></textarea>
+      </label>
+    </section>
+  </main>
+
+  <script src="record.js?v=record-php-backend-20260505"></script>
+  <script src="wachs-action.js"></script>
+</body>
+</html>
