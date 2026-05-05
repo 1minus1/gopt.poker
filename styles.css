@@ -545,6 +545,11 @@ body.wachs-modal-open {
 }
 
 @media (max-width: 768px) {
+  .logo {
+    width: min(100px, 45vw);
+    height: min(111px, 49.95vw);
+  }
+
   nav {
     gap: 0.65rem;
     padding-right: 0.35rem !important;
