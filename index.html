@@ -291,7 +291,7 @@
 
         const sortedSeasons = Object.entries(seasonDateMap)
           .sort((a, b) => b[1] - a[1]);  // Most recent first
-        const currentSeason = sortedSeasons[0]?.[0];
+        const currentSeason = sortedSeasons.find(([season]) => season === String(new Date().getFullYear()))?.[0];
 
         sortedSeasons.forEach(([season]) => {
           const option = document.createElement('option');
@@ -405,9 +405,10 @@
             const points = parseFloat(row.cells[8]?.textContent.trim());
             const isMajor = row.cells[2]?.textContent.trim();
             const majorName = row.cells[3]?.textContent.trim();
-            const key = `${date}|${player}`;
+            const season = row.cells[1]?.textContent.trim();
+            const key = `${season}|${date}|${player}`;
             if (!summary[key]) {
-              summary[key] = { date, player, points: 0, places: [], isMajor, majorName };
+              summary[key] = { date, season, player, points: 0, places: [], isMajor, majorName };
             }
             summary[key].points += points;
             // Add the place to the places array
@@ -443,6 +444,7 @@
               const formattedDate = new Intl.DateTimeFormat('en-US', { year: '2-digit', month: 'numeric', day: 'numeric' }).format(new Date(entry.date));
               const tr = document.createElement('tr');
               tr.dataset.isMajor = entry.isMajor;
+              tr.dataset.season = entry.season;
               tr.innerHTML = `
                 <td data-label="Date">${formattedDate}</td>
                 <td data-label="Player">${entry.player}</td>
@@ -462,6 +464,7 @@
           // Track points plus bracelet totals by event type.
           const playerTotals = {};
           const rows = document.querySelectorAll('#summary-table tbody tr');
+          const showChampColumn = seasonFilterValue === "All Time";
 
           rows.forEach(row => {
             const player = row.cells[1]?.textContent.trim();
@@ -479,6 +482,58 @@
             }
           });
 
+          function getChampionCounts() {
+            const seasonTotals = {};
+            rows.forEach(row => {
+              const season = row.dataset.season;
+              const player = row.cells[1]?.textContent.trim();
+              const points = parseFloat(row.cells[2]?.textContent.trim());
+              if (!season || season === currentSeason || !player || !Number.isFinite(points)) return;
+
+              if (!seasonTotals[season]) {
+                seasonTotals[season] = {};
+              }
+              seasonTotals[season][player] = (seasonTotals[season][player] || 0) + points;
+            });
+
+            const championCounts = {};
+            Object.values(seasonTotals).forEach(totals => {
+              let champion = '';
+              let championPoints = -Infinity;
+              Object.entries(totals).forEach(([player, points]) => {
+                if (points > championPoints) {
+                  champion = player;
+                  championPoints = points;
+                }
+              });
+              if (champion) {
+                championCounts[champion] = (championCounts[champion] || 0) + 1;
+              }
+            });
+
+            return championCounts;
+          }
+
+          function getSelectedSeasonChampion() {
+            if (seasonFilterValue === "All Time" || seasonFilterValue === currentSeason) {
+              return '';
+            }
+
+            let champion = '';
+            let championPoints = -Infinity;
+            Object.entries(playerTotals).forEach(([player, totals]) => {
+              if (totals.points > championPoints) {
+                champion = player;
+                championPoints = totals.points;
+              }
+            });
+
+            return champion;
+          }
+
+          const championCounts = showChampColumn ? getChampionCounts() : {};
+          const selectedSeasonChampion = getSelectedSeasonChampion();
+
           const standingsSection = document.createElement('section');
           standingsSection.innerHTML = `
             <h2>Point and Bracelet Standings</h2>
@@ -487,8 +542,9 @@
                 <tr>
                   <th>Player</th>
                   <th>Points</th>
-                  <th>Total Bracelets</th>
-                  <th>Major Bracelets</th>
+                  ${showChampColumn ? '<th>Champ</th>' : ''}
+                  <th>Bracelets</th>
+                  <th>Majors</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -509,8 +565,9 @@
             .forEach(([player, { points, bracelets, majorBracelets }]) => {
               const tr = document.createElement('tr');
               tr.innerHTML = `
-                <td>${player}</td>
+                <td>${player}${player === selectedSeasonChampion ? ' 👑' : ''}</td>
                 <td>${points.toFixed(2)}</td>
+                ${showChampColumn ? `<td>${'👑'.repeat(championCounts[player] || 0)}</td>` : ''}
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
               `;
