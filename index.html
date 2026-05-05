@@ -82,12 +82,15 @@
       display: none;
     }
     .bracelet-marker {
+      border: 0.18em solid currentColor;
+      border-radius: 50%;
+      box-sizing: border-box;
       color: #d01818;
-      font-size: 1.25em;
-      font-weight: 900;
-      line-height: 1;
-      margin-left: 0.3em;
-      vertical-align: -0.05em;
+      display: inline-block;
+      height: 2em;
+      margin-left: 0.4em;
+      vertical-align: -0.55em;
+      width: 2em;
     }
     .season-filter-controls {
       display: flex;
@@ -413,7 +416,6 @@
           const marker = document.createElement('span');
           marker.className = 'bracelet-marker';
           marker.dataset.season = season;
-          marker.textContent = '○';
           marker.title = 'Bracelet winner';
           marker.setAttribute('aria-label', 'Bracelet winner');
           if (seasonColors[season]) {
