@@ -537,18 +537,20 @@
           const standingsSection = document.createElement('section');
           standingsSection.innerHTML = `
             <h2>Point and Bracelet Standings</h2>
-            <table id="season-standings-table">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Points</th>
-                  ${showChampColumn ? '<th>👑</th>' : ''}
-                  <th>⭕</th>
-                  <th>🎉</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+            <div class="table-container">
+              <table id="season-standings-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Points</th>
+                    ${showChampColumn ? '<th>👑</th>' : ''}
+                    <th>⭕</th>
+                    <th>🎉</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           `;
           // Insert standingsSection after the filter section at the top of main
           const main = document.querySelector('main');
