@@ -59,8 +59,35 @@
       min-width: 0;
     }
 
-    #summary-table {
+    .summary-table {
       white-space: nowrap;
+    }
+    .summary-night {
+      margin-top: 1.25em;
+    }
+    .summary-night-heading {
+      font-size: 1.05em;
+      margin: 1.1em 0 0.25em;
+      text-align: center;
+    }
+    .summary-table tbody tr:nth-child(odd) {
+      background-color: #e0e0e0;
+    }
+    .summary-table tbody tr:nth-child(even) {
+      background-color: #ffffff;
+    }
+    .summary-date-column,
+    .summary-bracelet-column,
+    .summary-major-column {
+      display: none;
+    }
+    .bracelet-marker {
+      color: #d01818;
+      font-size: 1.25em;
+      font-weight: 900;
+      line-height: 1;
+      margin-left: 0.3em;
+      vertical-align: -0.05em;
     }
     .season-filter-controls {
       display: flex;
@@ -305,11 +332,9 @@
         }
 
         function updateStackedTable(seasonFilterValue) {
-          const existingSummary = document.getElementById('summary-table');
-          if (existingSummary) {
-            // just clear its body instead of removing the whole section
-            existingSummary.querySelector('tbody').innerHTML = '';
-          }
+          document.querySelectorAll('[data-generated-section="summary"]').forEach(section => {
+            section.remove();
+          });
 
           const stackedBody = document.querySelector('#stacked-table tbody');
           stackedBody.innerHTML = '';
@@ -358,7 +383,50 @@
           applyStripingByDate('stacked-table');
         }
 
+        function formatSummaryDate(date) {
+          return new Intl.DateTimeFormat('en-US', {
+            year: '2-digit',
+            month: 'numeric',
+            day: 'numeric'
+          }).format(new Date(date));
+        }
+
+        function getNightLabel(group) {
+          if (group.isMajor?.trim().toUpperCase() === 'YES') {
+            return group.majorName || 'Major Poker Night';
+          }
+
+          return 'Standard Poker Night';
+        }
+
+        function createSummaryCell(label, value, className = '') {
+          const td = document.createElement('td');
+          td.dataset.label = label;
+          td.textContent = value;
+          if (className) {
+            td.className = className;
+          }
+          return td;
+        }
+
+        function createBraceletMarker(season) {
+          const marker = document.createElement('span');
+          marker.className = 'bracelet-marker';
+          marker.dataset.season = season;
+          marker.textContent = '○';
+          marker.title = 'Bracelet winner';
+          marker.setAttribute('aria-label', 'Bracelet winner');
+          if (seasonColors[season]) {
+            marker.style.color = seasonColors[season];
+          }
+          return marker;
+        }
+
         function generateSummaryTable() {
+          document.querySelectorAll('[data-generated-section="summary"]').forEach(section => {
+            section.remove();
+          });
+
           document.querySelectorAll('[data-generated-section="season-standings"]').forEach(section => {
             section.remove();
           });
@@ -372,38 +440,6 @@
               existingStandings.parentElement.remove();
             }
           }
-
-          // Re‑use the Summary table if it already exists; otherwise build it once.
-          let summaryTable = document.getElementById('summary-table');
-          let summaryBody;
-
-          if (!summaryTable) {
-            const summarySection = document.createElement('section');
-            summarySection.innerHTML = `
-              <h2>Summary by Date and Player</h2>
-              <div class="table-container">
-                <table id="summary-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Player</th>
-                      <th>Points</th>
-                      <th>Places</th>
-                      <th>Final</th>
-                      <th>Bracelet</th>
-                      <th>Major Name</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
-            `;
-            document.querySelector('main').appendChild(summarySection);
-            summaryTable = summarySection.querySelector('#summary-table');
-          }
-
-          summaryBody = summaryTable.querySelector('tbody');
-          summaryBody.innerHTML = '';   // clear previous rows
 
           const summary = {};
           const rows = document.querySelectorAll('#stacked-table tbody tr');
@@ -424,9 +460,7 @@
             summary[key].places.push(row.cells[6]?.textContent.trim());
           });
 
-          let lastDate = null;
-          let firstForDate = true;
-          Object.values(summary)
+          const summaryEntries = Object.values(summary)
             .sort((a, b) => {
               const dateA = new Date(a.date);
               const dateB = new Date(b.date);
@@ -441,38 +475,94 @@
               const lastPlaceA = parseInt(a.places[a.places.length - 1], 10);
               const lastPlaceB = parseInt(b.places[b.places.length - 1], 10);
               return lastPlaceA - lastPlaceB;
-            })
-            .forEach(entry => {
-              if (entry.date !== lastDate) {
-                lastDate = entry.date;
-                firstForDate = true;
-              } else {
-                firstForDate = false;
-              }
-              // Format the date using Intl.DateTimeFormat
-              const formattedDate = new Intl.DateTimeFormat('en-US', { year: '2-digit', month: 'numeric', day: 'numeric' }).format(new Date(entry.date));
+            });
+
+          const summarySection = document.createElement('section');
+          summarySection.dataset.generatedSection = 'summary';
+          const summaryHeading = document.createElement('h2');
+          summaryHeading.textContent = 'Summary by Date and Player';
+          const summaryList = document.createElement('div');
+          summaryList.className = 'summary-night-list';
+          summarySection.append(summaryHeading, summaryList);
+
+          const groupedEntries = [];
+          summaryEntries.forEach(entry => {
+            const lastGroup = groupedEntries[groupedEntries.length - 1];
+            const groupKey = `${entry.season}|${entry.date}`;
+            if (!lastGroup || lastGroup.key !== groupKey) {
+              groupedEntries.push({
+                key: groupKey,
+                date: entry.date,
+                season: entry.season,
+                isMajor: entry.isMajor,
+                majorName: entry.majorName,
+                entries: []
+              });
+            }
+            groupedEntries[groupedEntries.length - 1].entries.push(entry);
+          });
+
+          groupedEntries.forEach(group => {
+            const nightSection = document.createElement('div');
+            nightSection.className = 'summary-night';
+
+            const nightHeading = document.createElement('h3');
+            nightHeading.className = 'summary-night-heading';
+            nightHeading.textContent = `${formatSummaryDate(group.date)} (Season: ${group.season}): ${getNightLabel(group)}`;
+
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'table-container';
+            const table = document.createElement('table');
+            table.className = 'summary-table';
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th class="summary-date-column">Date</th>
+                  <th>Player</th>
+                  <th>Points</th>
+                  <th>Places</th>
+                  <th>Final</th>
+                  <th class="summary-bracelet-column">Bracelet</th>
+                  <th class="summary-major-column">Major Name</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            `;
+
+            const summaryBody = table.querySelector('tbody');
+            group.entries.forEach((entry, index) => {
               const tr = document.createElement('tr');
               tr.dataset.isMajor = entry.isMajor;
               tr.dataset.season = entry.season;
-              tr.innerHTML = `
-                <td data-label="Date">${formattedDate}</td>
-                <td data-label="Player">${entry.player}</td>
-                <td data-label="Points">${entry.points.toFixed(2)}</td>
-                <td data-label="Places">${entry.places.join(', ')}</td>
-                <td data-label="Final">${entry.places[entry.places.length - 1]}</td>
-                <td data-label="Bracelet">${firstForDate ? '1' : ''}</td>
-                <td data-label="Major Name">${entry.majorName || ''}</td>
-              `;
+              tr.appendChild(createSummaryCell('Date', formatSummaryDate(entry.date), 'summary-date-column'));
+
+              const playerCell = createSummaryCell('Player', entry.player);
+              if (index === 0) {
+                playerCell.append(' ', createBraceletMarker(entry.season));
+              }
+              tr.appendChild(playerCell);
+
+              tr.appendChild(createSummaryCell('Points', entry.points.toFixed(2)));
+              tr.appendChild(createSummaryCell('Places', entry.places.join(', ')));
+              tr.appendChild(createSummaryCell('Final', entry.places[entry.places.length - 1]));
+              tr.appendChild(createSummaryCell('Bracelet', index === 0 ? '1' : '', 'summary-bracelet-column'));
+              tr.appendChild(createSummaryCell('Major Name', entry.majorName || '', 'summary-major-column'));
               summaryBody.appendChild(tr);
             });
-          applyStripingByDate('summary-table');
+
+            tableContainer.appendChild(table);
+            nightSection.append(nightHeading, tableContainer);
+            summaryList.appendChild(nightSection);
+          });
+
+          document.querySelector('main').appendChild(summarySection);
           generateSeasonStandingsTable(document.getElementById('season-filter').value);
         }
 
         function generateSeasonStandingsTable(seasonFilterValue) {
           // Track points plus bracelet totals by event type.
           const playerTotals = {};
-          const rows = document.querySelectorAll('#summary-table tbody tr');
+          const rows = document.querySelectorAll('.summary-table tbody tr');
           const showChampColumn = seasonFilterValue === "All Time";
 
           rows.forEach(row => {
@@ -629,10 +719,17 @@
           element.style.color = getTextColorForRgb(rgb);
         }
 
+        function applySeasonColorsToBraceletMarkers() {
+          document.querySelectorAll('.bracelet-marker[data-season]').forEach(marker => {
+            marker.style.color = seasonColors[marker.dataset.season] || '';
+          });
+        }
+
         function updateSeasonColors() {
           const selected = seasonFilter.value;
           applyColorToElement(seasonFilter, seasonColors[selected]);
           applyColorToElement(standingsTitle, seasonColors[selected]);
+          applySeasonColorsToBraceletMarkers();
 
           updateSeasonToggleButton();
         }
