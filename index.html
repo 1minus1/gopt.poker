@@ -464,16 +464,12 @@
             const isMajor = row.dataset.isMajor?.trim().toUpperCase() === 'YES';
 
             if (!playerTotals[player]) {
-              playerTotals[player] = { points: 0, bracelets: 0, majorBracelets: 0, standardBracelets: 0 };
+              playerTotals[player] = { points: 0, bracelets: 0, majorBracelets: 0 };
             }
             playerTotals[player].points += points;
             playerTotals[player].bracelets += bracelet;
-            if (bracelet) {
-              if (isMajor) {
-                playerTotals[player].majorBracelets += 1;
-              } else {
-                playerTotals[player].standardBracelets += 1;
-              }
+            if (bracelet && isMajor) {
+              playerTotals[player].majorBracelets += 1;
             }
           });
 
@@ -487,7 +483,6 @@
                   <th>Points</th>
                   <th>Total Bracelets</th>
                   <th>Major Bracelets</th>
-                  <th>Standard Night Bracelets</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -505,14 +500,13 @@
                 ? b.bracelets - a.bracelets
                 : b.points - a.points;
             })
-            .forEach(([player, { points, bracelets, majorBracelets, standardBracelets }]) => {
+            .forEach(([player, { points, bracelets, majorBracelets }]) => {
               const tr = document.createElement('tr');
               tr.innerHTML = `
                 <td>${player}</td>
                 <td>${points.toFixed(2)}</td>
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
-                <td>${standardBracelets}</td>
               `;
               standingsBody.appendChild(tr);
             });
