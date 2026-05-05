@@ -359,9 +359,18 @@
         }
 
         function generateSummaryTable() {
+          document.querySelectorAll('[data-generated-section="season-standings"]').forEach(section => {
+            section.remove();
+          });
+
           const existingStandings = document.getElementById('season-standings-table');
           if (existingStandings) {
-            existingStandings.parentElement.remove();
+            const existingStandingsSection = existingStandings.closest('section');
+            if (existingStandingsSection) {
+              existingStandingsSection.remove();
+            } else {
+              existingStandings.parentElement.remove();
+            }
           }
 
           // Re‑use the Summary table if it already exists; otherwise build it once.
@@ -535,6 +544,7 @@
           const selectedSeasonChampion = getSelectedSeasonChampion();
 
           const standingsSection = document.createElement('section');
+          standingsSection.dataset.generatedSection = 'season-standings';
           standingsSection.innerHTML = `
             <h2>Point and Bracelet Standings</h2>
             <div class="table-container">
