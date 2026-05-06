@@ -25,7 +25,7 @@
 - `points_at_stake`: points-at-stake value from the original history row.
 - `tournament_number`: 1-based tournament number within a poker night.
 - `is_ordered`: whether the finisher list should be treated as complete ordered finishes.
-- `finisher_1` through `finisher_11`: ordered finisher list from the original history row.
+- `finisher_1` through `finisher_20`: ordered finisher list from the original history row, with blank cells reserved for future larger games.
 
 ## Current Reviewed Date Conflicts
 

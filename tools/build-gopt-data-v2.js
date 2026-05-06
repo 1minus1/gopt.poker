@@ -7,6 +7,7 @@ const ROOT = path.resolve(__dirname, '..');
 const HISTORY_PATH = path.join(ROOT, 'files', 'GOPThistory.txt');
 const HOSTS_PATH = path.join(ROOT, 'files', 'hosts.csv');
 const OUTPUT_PATH = path.join(ROOT, 'data', 'GOPTdatav2.csv');
+const FINISHER_COLUMN_COUNT = 20;
 
 const ALLOW_DATE_CONFLICTS = process.argv.includes('--allow-date-conflicts');
 
@@ -218,7 +219,11 @@ function validateCorrespondence(nights, hosts) {
 
 function buildRows(historyVersion, nights, hosts) {
   const maxFinishers = Math.max(...nights.flatMap(night => night.rows.map(row => row.finishers.length)));
-  const finisherHeaders = Array.from({ length: maxFinishers }, (_, index) => `finisher_${index + 1}`);
+  if (maxFinishers > FINISHER_COLUMN_COUNT) {
+    throw new Error(`A row has ${maxFinishers} finishers, but v2 supports ${FINISHER_COLUMN_COUNT}.`);
+  }
+
+  const finisherHeaders = Array.from({ length: FINISHER_COLUMN_COUNT }, (_, index) => `finisher_${index + 1}`);
   const headers = [
     'history_version',
     'league',
