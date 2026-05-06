@@ -123,10 +123,10 @@
   <main>
     <p id="data-message" class="data-message">Loading current history...</p>
     <section class="chart-section" aria-labelledby="bracelet-chart-heading">
-      <h2 id="bracelet-chart-heading">Cumulative Bracelets Over Time</h2>
+      <h2 id="bracelet-chart-heading">Top 8 Cumulative Bracelets Over Time</h2>
       <div class="chart-frame">
-        <svg id="bracelet-chart" viewBox="0 0 900 430" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
-          <title id="bracelet-chart-title">Cumulative bracelets over time for the top four all-time bracelet earners</title>
+        <svg id="bracelet-chart" viewBox="0 0 900 540" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
+          <title id="bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
           <desc id="bracelet-chart-description">A line chart will appear after the current history file loads.</desc>
         </svg>
       </div>
@@ -301,7 +301,7 @@
       return element;
     }
 
-    function getTopBraceletPlayers(rows, limit = 4) {
+    function getTopBraceletPlayers(rows, limit = 8) {
       const totals = rows.reduce((counts, row) => {
         if (!row.winner) return counts;
         counts[row.winner] = (counts[row.winner] || 0) + 1;
@@ -348,7 +348,7 @@
       svg.replaceChildren();
 
       const title = createSvgElement('title', { id: 'bracelet-chart-title' });
-      title.textContent = 'Cumulative bracelets over time for the top four all-time bracelet earners';
+      title.textContent = 'Cumulative bracelets over time for the top eight all-time bracelet earners';
       const description = createSvgElement('desc', { id: 'bracelet-chart-description' });
       svg.append(title, description);
 
@@ -364,10 +364,10 @@
         return;
       }
 
-      const palette = ['#005bbb', '#d1495b', '#007f5f', '#8f2d56'];
+      const palette = ['#005bbb', '#d1495b', '#007f5f', '#8f2d56', '#f28e2b', '#4e79a7', '#59a14f', '#b07aa1'];
       const width = 900;
-      const height = 430;
-      const margin = { top: 34, right: 42, bottom: 64, left: 56 };
+      const height = 540;
+      const margin = { top: 34, right: 42, bottom: 138, left: 56 };
       const plotWidth = width - margin.left - margin.right;
       const plotHeight = height - margin.top - margin.bottom;
       const minTime = Math.min(...rows.map(row => row.timestamp));
@@ -446,7 +446,7 @@
       });
       addSvgText(svg, 'Year', {
         x: margin.left + plotWidth,
-        y: height - 18,
+        y: margin.top + plotHeight + 48,
         'text-anchor': 'end',
         class: 'chart-title-label chart-label',
       });
@@ -476,21 +476,22 @@
       });
       svg.appendChild(lineGroup);
 
-      const legend = createSvgElement('g', { transform: 'translate(56 392)' });
+      const legend = createSvgElement('g', { transform: 'translate(56 468)' });
       series.forEach((playerSeries, index) => {
-        const x = index * 205;
+        const x = (index % 4) * 205;
+        const y = Math.floor(index / 4) * 32;
         const color = palette[index % palette.length];
         legend.appendChild(createSvgElement('line', {
           x1: x,
-          y1: 0,
+          y1: y,
           x2: x + 26,
-          y2: 0,
+          y2: y,
           stroke: color,
           class: 'chart-line',
         }));
         addSvgText(legend, `${playerSeries.player} (${playerSeries.total})`, {
           x: x + 34,
-          y: 5,
+          y: y + 5,
           class: 'chart-label',
         });
       });
