@@ -310,6 +310,38 @@
       return element;
     }
 
+    const CHART_COLORS = [
+      '#005bbb',
+      '#d1495b',
+      '#007f5f',
+      '#8f2d56',
+      '#f28e2b',
+      '#4e79a7',
+      '#59a14f',
+      '#b07aa1',
+      '#9c755f',
+      '#e15759',
+      '#76b7b2',
+      '#edc948',
+    ];
+
+    function buildPlayerColorMap(...seriesGroups) {
+      const playerColors = {};
+      let colorIndex = 0;
+
+      seriesGroups.flat().forEach(playerSeries => {
+        if (playerColors[playerSeries.player]) return;
+        playerColors[playerSeries.player] = CHART_COLORS[colorIndex % CHART_COLORS.length];
+        colorIndex += 1;
+      });
+
+      return function getPlayerColor(player) {
+        if (playerColors[player]) return playerColors[player];
+        const hash = player.split('').reduce((total, character) => total + character.charCodeAt(0), 0);
+        return CHART_COLORS[hash % CHART_COLORS.length];
+      };
+    }
+
     function getTopWinners(rows, shouldCountRow, limit = 8) {
       const totals = rows.reduce((counts, row) => {
         if (!row.winner || !shouldCountRow(row)) return counts;
@@ -370,6 +402,7 @@
         yAxisLabel,
         unitSingular,
         unitPlural,
+        getPlayerColor,
       } = options;
       const svg = document.getElementById(svgId);
       svg.replaceChildren();
@@ -390,7 +423,6 @@
         return;
       }
 
-      const palette = ['#005bbb', '#d1495b', '#007f5f', '#8f2d56', '#f28e2b', '#4e79a7', '#59a14f', '#b07aa1'];
       const width = 900;
       const height = 540;
       const margin = { top: 34, right: 42, bottom: 138, left: 56 };
@@ -478,8 +510,8 @@
       });
 
       const lineGroup = createSvgElement('g');
-      series.forEach((playerSeries, index) => {
-        const color = palette[index % palette.length];
+      series.forEach(playerSeries => {
+        const color = getPlayerColor(playerSeries.player);
         const pathData = playerSeries.points.map((point, pointIndex) => {
           const command = pointIndex === 0 ? 'M' : 'L';
           return `${command}${xScale(point.timestamp).toFixed(2)},${yScale(point.total).toFixed(2)}`;
@@ -506,7 +538,7 @@
       series.forEach((playerSeries, index) => {
         const x = (index % 4) * 205;
         const y = Math.floor(index / 4) * 32;
-        const color = palette[index % palette.length];
+        const color = getPlayerColor(playerSeries.player);
         legend.appendChild(createSvgElement('line', {
           x1: x,
           y1: y,
@@ -531,37 +563,42 @@
         .join(' ');
     }
 
-    function renderBraceletChart(rows) {
+    function renderBraceletChart(rows, series, getPlayerColor) {
       renderCumulativeChart({
         svgId: 'bracelet-chart',
         rows,
-        series: buildBraceletSeries(rows),
+        series,
         chartTitle: 'Cumulative bracelets over time for the top eight all-time bracelet earners',
         emptyMessage: 'No bracelet data available.',
         yAxisLabel: 'Bracelets',
         unitSingular: 'bracelet',
         unitPlural: 'bracelets',
+        getPlayerColor,
       });
     }
 
-    function renderMajorChart(rows) {
+    function renderMajorChart(rows, series, getPlayerColor) {
       renderCumulativeChart({
         svgId: 'major-chart',
         rows,
-        series: buildMajorSeries(rows),
+        series,
         chartTitle: 'Cumulative major wins over time for the top eight all-time major winners',
         emptyMessage: 'No major win data available.',
         yAxisLabel: 'Major Wins',
         unitSingular: 'major win',
         unitPlural: 'major wins',
+        getPlayerColor,
       });
     }
 
     fetchHistoryText()
       .then(historyText => {
         const rows = buildNightRows(historyText);
-        renderBraceletChart(rows);
-        renderMajorChart(rows);
+        const braceletSeries = buildBraceletSeries(rows);
+        const majorSeries = buildMajorSeries(rows);
+        const getPlayerColor = buildPlayerColorMap(braceletSeries, majorSeries);
+        renderBraceletChart(rows, braceletSeries, getPlayerColor);
+        renderMajorChart(rows, majorSeries, getPlayerColor);
         renderNightRows(rows);
       })
       .catch(error => {
