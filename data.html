@@ -73,6 +73,7 @@
             <th>Date</th>
             <th>Season</th>
             <th>Is Major</th>
+            <th>Major Name</th>
             <th>Winner</th>
           </tr>
         </thead>
@@ -148,6 +149,7 @@
         const season = cells[1];
         const timestamp = Number.parseInt(cells[2], 10);
         const isMajor = String(cells[3] || '').toUpperCase();
+        const majorName = isMajor === 'YES' ? cells[4] || '' : '';
         const pointsAtStake = Number.parseFloat(cells[5]);
         const players = cells.slice(6).filter(Boolean);
         const playerCount = players.length;
@@ -159,6 +161,7 @@
             season,
             timestamp,
             isMajor,
+            majorName,
             players: new Map(),
           });
         }
@@ -166,6 +169,7 @@
         const night = nights.get(key);
         if (isMajor === 'YES') {
           night.isMajor = 'YES';
+          night.majorName = majorName;
         }
 
         players.forEach((player, index) => {
@@ -189,6 +193,7 @@
             date: formatDate(night.timestamp),
             season: night.season,
             isMajor: night.isMajor,
+            majorName: night.majorName,
             winner,
           };
         });
@@ -205,6 +210,7 @@
           <td>${row.date}</td>
           <td>${row.season}</td>
           <td>${row.isMajor}</td>
+          <td>${row.majorName}</td>
           <td>${row.winner}</td>
         `;
         body.appendChild(tr);
