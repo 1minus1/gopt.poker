@@ -100,6 +100,27 @@
     const deleteVersion = document.getElementById('delete-history-version');
     const deleteNote = document.getElementById('delete-history-note');
     let selectableVersions = [];
+    let adminFocusInteracted = false;
+
+    ['pointerdown', 'keydown', 'touchstart'].forEach(eventName => {
+      window.addEventListener(eventName, () => {
+        adminFocusInteracted = true;
+      }, { capture: true, once: true });
+    });
+
+    function preventInitialTextFocus() {
+      if (adminFocusInteracted) return;
+      const active = document.activeElement;
+      if (active?.matches?.('input, textarea')) {
+        active.blur();
+      }
+    }
+
+    const deferInitialTextFocusCheck = window.requestAnimationFrame || (callback => setTimeout(callback, 0));
+    deferInitialTextFocusCheck(preventInitialTextFocus);
+    window.addEventListener('load', () => {
+      setTimeout(preventInitialTextFocus, 0);
+    });
 
     if (status === 'success') {
       const rows = params.get('rows') || '0';

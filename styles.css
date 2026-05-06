@@ -254,10 +254,6 @@ th {
   min-inline-size: 0;
 }
 
-.derived-points {
-  padding: 0.55rem 0;
-}
-
 .section-heading-row {
   display: flex;
   align-items: center;

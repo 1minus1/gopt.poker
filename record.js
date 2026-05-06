@@ -36,7 +36,6 @@ const els = {
   newSeasonInput: document.getElementById('new-season-input'),
   nightDatetime: document.getElementById('night-datetime'),
   playerList: document.getElementById('player-list'),
-  pointsAtStake: document.getElementById('points-at-stake'),
   rankingSection: document.getElementById('ranking-section'),
   replaceForm: document.getElementById('replace-form'),
   replacePassword: document.getElementById('replace-password'),
@@ -304,14 +303,6 @@ function updateMajorFields() {
     els.tournamentCount.value = defaultCount;
     els.tournamentCount.setAttribute('value', defaultCount);
   }
-
-  updateDerivedPoints();
-}
-
-function updateDerivedPoints() {
-  const buyIn = Number(els.buyIn.value || 0);
-  const points = buyIn * (els.majorSelect.value === 'YES' ? 2 : 1);
-  els.pointsAtStake.textContent = Number.isFinite(points) && points > 0 ? formatNumber(points) : '0';
 }
 
 function updateLockedSummary() {
@@ -509,18 +500,30 @@ function movePlayerByDisplayIndex(tournamentIndex, fromDisplayIndex, toDisplayIn
 }
 
 function allTournamentsComplete() {
-  return state.tournaments.length > 0 &&
-    state.tournaments.every(tournament => tournament.outOrder.length === state.details.roster.length);
+  const tournamentCount = Number(state.details?.tournamentCount);
+  if (!state.details || !Number.isInteger(tournamentCount) || state.tournaments.length !== tournamentCount) return false;
+
+  const roster = state.details.roster;
+  return state.tournaments.every(tournament =>
+    tournament.outOrder.length === roster.length &&
+    roster.every(player => tournament.outOrder.includes(player))
+  );
 }
 
 function updateFinishState() {
   if (!state.details) return;
 
-  const incomplete = state.tournaments
-    .map((tournament, index) => ({ index: index + 1, remaining: state.details.roster.length - tournament.outOrder.length }))
+  const tournamentCount = Number(state.details.tournamentCount);
+  const incomplete = Array.from({ length: tournamentCount }, (_, index) => {
+    const tournament = state.tournaments[index] || { outOrder: [] };
+    return {
+      index: index + 1,
+      remaining: Math.max(0, state.details.roster.length - tournament.outOrder.length),
+    };
+  })
     .filter(tournament => tournament.remaining > 0);
 
-  els.finishNight.disabled = incomplete.length > 0;
+  els.finishNight.disabled = !allTournamentsComplete();
   els.finishStatus.textContent = incomplete.length
     ? incomplete.map(tournament => `Tournament ${tournament.index}: ${tournament.remaining} remaining`).join(' | ')
     : 'All tournaments are complete.';
@@ -586,6 +589,27 @@ function setSeasonSelectValue(value) {
   els.seasonSelect.value = value;
 }
 
+function normalizeRestoredTournaments(tournaments, details) {
+  const source = Array.isArray(tournaments) ? tournaments : [];
+  const tournamentCount = Number(details?.tournamentCount);
+  const normalizedCount = Number.isInteger(tournamentCount) && tournamentCount > 0
+    ? tournamentCount
+    : 0;
+  const roster = Array.isArray(details?.roster) ? details.roster : [];
+  const rosterSet = new Set(roster);
+
+  return Array.from({ length: normalizedCount }, (_, index) => {
+    const restoredOrder = Array.isArray(source[index]?.outOrder) ? source[index].outOrder : [];
+    const outOrder = [];
+    restoredOrder.forEach(player => {
+      if (rosterSet.has(player) && !outOrder.includes(player)) {
+        outOrder.push(player);
+      }
+    });
+    return { outOrder };
+  });
+}
+
 function restoreDraft(draft) {
   const setup = draft.setup || {};
   const players = new Set([...state.allPlayers, ...(draft.allPlayers || []), ...(setup.selectedPlayers || [])]);
@@ -608,15 +632,11 @@ function restoreDraft(draft) {
   updateSeasonFields();
   updateMajorFields();
   els.tournamentCount.value = setup.tournamentCount || els.tournamentCount.value;
-  updateDerivedPoints();
 
   state.details = draft.details || null;
-  state.tournaments = Array.isArray(draft.tournaments)
-    ? draft.tournaments.map(tournament => ({ outOrder: Array.isArray(tournament.outOrder) ? tournament.outOrder : [] }))
+  state.tournaments = state.details
+    ? normalizeRestoredTournaments(draft.tournaments, state.details)
     : [];
-  if (state.details && !state.tournaments.length) {
-    state.tournaments = Array.from({ length: state.details.tournamentCount }, () => ({ outOrder: [] }));
-  }
 
   if (state.details) {
     els.setupSection.hidden = true;
@@ -818,7 +838,6 @@ els.majorSelect.addEventListener('change', () => {
 });
 els.majorNameInput.addEventListener('input', saveDraft);
 els.buyIn.addEventListener('input', () => {
-  updateDerivedPoints();
   saveDraft();
 });
 els.tournamentCount.addEventListener('input', () => {

@@ -397,6 +397,13 @@
           return 'Standard Poker Night';
         }
 
+        function getSummaryNightHeading(group, seasonFilterValue) {
+          const seasonLabel = seasonFilterValue === 'All Time'
+            ? ` (Season: ${group.season})`
+            : '';
+          return `${formatSummaryDate(group.date)}${seasonLabel}: ${getNightLabel(group)}`;
+        }
+
         function createSummaryCell(label, value, className = '') {
           const td = document.createElement('td');
           td.dataset.label = label;
@@ -505,7 +512,7 @@
 
             const nightHeading = document.createElement('h3');
             nightHeading.className = 'summary-night-heading';
-            nightHeading.textContent = `${formatSummaryDate(group.date)} (Season: ${group.season}): ${getNightLabel(group)}`;
+            nightHeading.textContent = getSummaryNightHeading(group, document.getElementById('season-filter').value);
 
             const tableContainer = document.createElement('div');
             tableContainer.className = 'table-container';
