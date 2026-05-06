@@ -3,6 +3,7 @@ deploy/
 gopt-history-store/
 .history-backups/
 .history-store/
+*.bkp
 !files/GOPTpayouttechnote.pdf
 .admin.local.php
 .deploy.local.json
