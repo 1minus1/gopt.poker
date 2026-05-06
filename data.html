@@ -43,6 +43,63 @@
       text-align: center;
     }
 
+    .chart-section {
+      margin: 0 auto 2rem;
+      max-width: 100%;
+    }
+
+    .chart-section h2 {
+      text-align: center;
+    }
+
+    .chart-frame {
+      box-sizing: border-box;
+      margin: 0 auto;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #bracelet-chart {
+      display: block;
+      height: auto;
+      margin: 0 auto;
+      max-width: 100%;
+      min-width: 700px;
+    }
+
+    .chart-axis,
+    .chart-grid {
+      stroke: #d7d7d7;
+      stroke-width: 1;
+    }
+
+    .chart-axis {
+      stroke: #222;
+    }
+
+    .chart-line {
+      fill: none;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .chart-point {
+      stroke: #fff;
+      stroke-width: 1.5;
+    }
+
+    .chart-label {
+      fill: #222;
+      font-family: 'Roboto Serif', serif;
+      font-size: 13px;
+    }
+
+    .chart-title-label {
+      font-family: 'Cal Sans', sans-serif;
+      font-size: 14px;
+    }
+
     @media (max-width: 768px) {
       .table-container {
         font-size: 0.82em;
@@ -65,6 +122,15 @@
 
   <main>
     <p id="data-message" class="data-message">Loading current history...</p>
+    <section class="chart-section" aria-labelledby="bracelet-chart-heading">
+      <h2 id="bracelet-chart-heading">Cumulative Bracelets Over Time</h2>
+      <div class="chart-frame">
+        <svg id="bracelet-chart" viewBox="0 0 900 430" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
+          <title id="bracelet-chart-title">Cumulative bracelets over time for the top four all-time bracelet earners</title>
+          <desc id="bracelet-chart-description">A line chart will appear after the current history file loads.</desc>
+        </svg>
+      </div>
+    </section>
     <div class="table-container">
       <table id="night-data-table">
         <thead>
@@ -191,6 +257,7 @@
           return {
             eventNumber: index + 1,
             date: formatDate(night.timestamp),
+            timestamp: night.timestamp,
             season: night.season,
             isMajor: night.isMajor,
             majorName: night.majorName,
@@ -219,9 +286,226 @@
       document.getElementById('data-message').textContent = `${rows.length} nights loaded.`;
     }
 
+    function createSvgElement(tagName, attributes = {}) {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+      Object.entries(attributes).forEach(([name, value]) => {
+        element.setAttribute(name, value);
+      });
+      return element;
+    }
+
+    function addSvgText(parent, text, attributes = {}) {
+      const element = createSvgElement('text', attributes);
+      element.textContent = text;
+      parent.appendChild(element);
+      return element;
+    }
+
+    function getTopBraceletPlayers(rows, limit = 4) {
+      const totals = rows.reduce((counts, row) => {
+        if (!row.winner) return counts;
+        counts[row.winner] = (counts[row.winner] || 0) + 1;
+        return counts;
+      }, {});
+
+      return Object.entries(totals)
+        .sort(([playerA, countA], [playerB, countB]) => {
+          if (countA !== countB) return countB - countA;
+          return playerA.localeCompare(playerB);
+        })
+        .slice(0, limit)
+        .map(([player, total]) => ({ player, total }));
+    }
+
+    function buildBraceletSeries(rows) {
+      const leaders = getTopBraceletPlayers(rows);
+      const leaderNames = leaders.map(leader => leader.player);
+      const runningTotals = Object.fromEntries(leaderNames.map(player => [player, 0]));
+      const series = Object.fromEntries(leaderNames.map(player => [player, []]));
+
+      rows.forEach(row => {
+        if (leaderNames.includes(row.winner)) {
+          runningTotals[row.winner] += 1;
+        }
+
+        leaderNames.forEach(player => {
+          series[player].push({
+            eventNumber: row.eventNumber,
+            timestamp: row.timestamp,
+            total: runningTotals[player],
+          });
+        });
+      });
+
+      return leaders.map(leader => ({
+        ...leader,
+        points: series[leader.player],
+      }));
+    }
+
+    function renderBraceletChart(rows) {
+      const svg = document.getElementById('bracelet-chart');
+      svg.replaceChildren();
+
+      const title = createSvgElement('title', { id: 'bracelet-chart-title' });
+      title.textContent = 'Cumulative bracelets over time for the top four all-time bracelet earners';
+      const description = createSvgElement('desc', { id: 'bracelet-chart-description' });
+      svg.append(title, description);
+
+      const series = buildBraceletSeries(rows);
+      if (!series.length) {
+        description.textContent = 'No bracelet data is available.';
+        addSvgText(svg, 'No bracelet data available.', {
+          x: 450,
+          y: 215,
+          'text-anchor': 'middle',
+          class: 'chart-label',
+        });
+        return;
+      }
+
+      const palette = ['#005bbb', '#d1495b', '#007f5f', '#8f2d56'];
+      const width = 900;
+      const height = 430;
+      const margin = { top: 34, right: 42, bottom: 64, left: 56 };
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const minTime = Math.min(...rows.map(row => row.timestamp));
+      const maxTime = Math.max(...rows.map(row => row.timestamp));
+      const maxBracelets = Math.max(...series.map(playerSeries => playerSeries.total));
+      const yMax = Math.max(5, Math.ceil(maxBracelets / 5) * 5);
+
+      const xScale = timestamp => {
+        if (minTime === maxTime) return margin.left + plotWidth / 2;
+        return margin.left + ((timestamp - minTime) / (maxTime - minTime)) * plotWidth;
+      };
+
+      const yScale = total => margin.top + plotHeight - (total / yMax) * plotHeight;
+
+      const gridGroup = createSvgElement('g');
+      const yStep = Math.max(1, Math.ceil(yMax / 5));
+      for (let value = 0; value <= yMax; value += yStep) {
+        const y = yScale(value);
+        gridGroup.appendChild(createSvgElement('line', {
+          x1: margin.left,
+          y1: y,
+          x2: margin.left + plotWidth,
+          y2: y,
+          class: 'chart-grid',
+        }));
+        addSvgText(gridGroup, value, {
+          x: margin.left - 10,
+          y: y + 4,
+          'text-anchor': 'end',
+          class: 'chart-label',
+        });
+      }
+      svg.appendChild(gridGroup);
+
+      svg.appendChild(createSvgElement('line', {
+        x1: margin.left,
+        y1: margin.top + plotHeight,
+        x2: margin.left + plotWidth,
+        y2: margin.top + plotHeight,
+        class: 'chart-axis',
+      }));
+      svg.appendChild(createSvgElement('line', {
+        x1: margin.left,
+        y1: margin.top,
+        x2: margin.left,
+        y2: margin.top + plotHeight,
+        class: 'chart-axis',
+      }));
+
+      const startYear = new Date(minTime * 1000).getFullYear();
+      const endYear = new Date(maxTime * 1000).getFullYear();
+      const yearStep = Math.max(1, Math.ceil((endYear - startYear) / 5));
+      for (let year = startYear; year <= endYear; year += yearStep) {
+        const timestamp = new Date(year, 0, 1).getTime() / 1000;
+        if (timestamp < minTime || timestamp > maxTime) continue;
+        const x = xScale(timestamp);
+        svg.appendChild(createSvgElement('line', {
+          x1: x,
+          y1: margin.top + plotHeight,
+          x2: x,
+          y2: margin.top + plotHeight + 6,
+          class: 'chart-axis',
+        }));
+        addSvgText(svg, year, {
+          x,
+          y: margin.top + plotHeight + 24,
+          'text-anchor': 'middle',
+          class: 'chart-label',
+        });
+      }
+
+      addSvgText(svg, 'Bracelets', {
+        x: margin.left,
+        y: 18,
+        class: 'chart-title-label chart-label',
+      });
+      addSvgText(svg, 'Year', {
+        x: margin.left + plotWidth,
+        y: height - 18,
+        'text-anchor': 'end',
+        class: 'chart-title-label chart-label',
+      });
+
+      const lineGroup = createSvgElement('g');
+      series.forEach((playerSeries, index) => {
+        const color = palette[index % palette.length];
+        const pathData = playerSeries.points.map((point, pointIndex) => {
+          const command = pointIndex === 0 ? 'M' : 'L';
+          return `${command}${xScale(point.timestamp).toFixed(2)},${yScale(point.total).toFixed(2)}`;
+        }).join(' ');
+
+        lineGroup.appendChild(createSvgElement('path', {
+          d: pathData,
+          stroke: color,
+          class: 'chart-line',
+        }));
+
+        const finalPoint = playerSeries.points[playerSeries.points.length - 1];
+        lineGroup.appendChild(createSvgElement('circle', {
+          cx: xScale(finalPoint.timestamp),
+          cy: yScale(finalPoint.total),
+          r: 4,
+          fill: color,
+          class: 'chart-point',
+        }));
+      });
+      svg.appendChild(lineGroup);
+
+      const legend = createSvgElement('g', { transform: 'translate(56 392)' });
+      series.forEach((playerSeries, index) => {
+        const x = index * 205;
+        const color = palette[index % palette.length];
+        legend.appendChild(createSvgElement('line', {
+          x1: x,
+          y1: 0,
+          x2: x + 26,
+          y2: 0,
+          stroke: color,
+          class: 'chart-line',
+        }));
+        addSvgText(legend, `${playerSeries.player} (${playerSeries.total})`, {
+          x: x + 34,
+          y: 5,
+          class: 'chart-label',
+        });
+      });
+      svg.appendChild(legend);
+
+      description.textContent = series
+        .map(playerSeries => `${playerSeries.player} has ${playerSeries.total} bracelets.`)
+        .join(' ');
+    }
+
     fetchHistoryText()
       .then(historyText => {
-        renderNightRows(buildNightRows(historyText));
+        const rows = buildNightRows(historyText);
+        renderBraceletChart(rows);
+        renderNightRows(rows);
       })
       .catch(error => {
         document.getElementById('data-message').textContent = 'Failed to load current history.';
