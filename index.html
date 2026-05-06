@@ -116,6 +116,9 @@
       padding: 0.35em 0.5em;
       transition: background-color 120ms ease, color 120ms ease;
     }
+    #season-standings-table tfoot {
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -399,7 +402,7 @@
 
         function getSummaryNightHeading(group, seasonFilterValue) {
           const seasonLabel = seasonFilterValue === 'All Time'
-            ? ` (Season: ${group.season})`
+            ? ` (Season ${group.season})`
             : '';
           return `${formatSummaryDate(group.date)}${seasonLabel}: ${getNightLabel(group)}`;
         }
@@ -653,6 +656,7 @@
                   </tr>
                 </thead>
                 <tbody></tbody>
+                <tfoot></tfoot>
               </table>
             </div>
           `;
@@ -662,6 +666,7 @@
           main.insertBefore(standingsSection, firstSection.nextSibling);
 
           const standingsBody = document.querySelector('#season-standings-table tbody');
+          const standingsFooter = document.querySelector('#season-standings-table tfoot');
           Object.entries(playerTotals)
             .sort(([, a], [, b]) => {
               return seasonFilterValue === "All Time"
@@ -680,6 +685,26 @@
               `;
               standingsBody.appendChild(tr);
             });
+
+          const standingsTotals = Object.values(playerTotals).reduce((totals, player) => {
+            totals.bracelets += player.bracelets;
+            totals.majorBracelets += player.majorBracelets;
+            return totals;
+          }, {
+            champions: Object.values(championCounts).reduce((total, count) => total + count, 0),
+            bracelets: 0,
+            majorBracelets: 0
+          });
+
+          const totalRow = document.createElement('tr');
+          totalRow.innerHTML = `
+            <td>Totals</td>
+            <td></td>
+            ${showChampColumn ? `<td>${standingsTotals.champions}</td>` : ''}
+            <td>${standingsTotals.bracelets}</td>
+            <td>${standingsTotals.majorBracelets}</td>
+          `;
+          standingsFooter.appendChild(totalRow);
 
           applyStripingByDate('season-standings-table');
         }
