@@ -60,7 +60,7 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    #bracelet-chart {
+    .data-chart {
       display: block;
       height: auto;
       margin: 0 auto;
@@ -125,9 +125,18 @@
     <section class="chart-section" aria-labelledby="bracelet-chart-heading">
       <h2 id="bracelet-chart-heading">Top 8 Cumulative Bracelets Over Time</h2>
       <div class="chart-frame">
-        <svg id="bracelet-chart" viewBox="0 0 900 540" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
+        <svg id="bracelet-chart" class="data-chart" viewBox="0 0 900 540" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
           <title id="bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
           <desc id="bracelet-chart-description">A line chart will appear after the current history file loads.</desc>
+        </svg>
+      </div>
+    </section>
+    <section class="chart-section" aria-labelledby="major-chart-heading">
+      <h2 id="major-chart-heading">Top 8 Cumulative Major Wins Over Time</h2>
+      <div class="chart-frame">
+        <svg id="major-chart" class="data-chart" viewBox="0 0 900 540" role="img" aria-labelledby="major-chart-title major-chart-description">
+          <title id="major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
+          <desc id="major-chart-description">A line chart will appear after the current history file loads.</desc>
         </svg>
       </div>
     </section>
@@ -301,9 +310,9 @@
       return element;
     }
 
-    function getTopBraceletPlayers(rows, limit = 8) {
+    function getTopWinners(rows, shouldCountRow, limit = 8) {
       const totals = rows.reduce((counts, row) => {
-        if (!row.winner) return counts;
+        if (!row.winner || !shouldCountRow(row)) return counts;
         counts[row.winner] = (counts[row.winner] || 0) + 1;
         return counts;
       }, {});
@@ -317,14 +326,14 @@
         .map(([player, total]) => ({ player, total }));
     }
 
-    function buildBraceletSeries(rows) {
-      const leaders = getTopBraceletPlayers(rows);
+    function buildCumulativeWinSeries(rows, shouldCountRow, limit = 8) {
+      const leaders = getTopWinners(rows, shouldCountRow, limit);
       const leaderNames = leaders.map(leader => leader.player);
       const runningTotals = Object.fromEntries(leaderNames.map(player => [player, 0]));
       const series = Object.fromEntries(leaderNames.map(player => [player, []]));
 
       rows.forEach(row => {
-        if (leaderNames.includes(row.winner)) {
+        if (leaderNames.includes(row.winner) && shouldCountRow(row)) {
           runningTotals[row.winner] += 1;
         }
 
@@ -343,19 +352,36 @@
       }));
     }
 
-    function renderBraceletChart(rows) {
-      const svg = document.getElementById('bracelet-chart');
+    function buildBraceletSeries(rows) {
+      return buildCumulativeWinSeries(rows, () => true);
+    }
+
+    function buildMajorSeries(rows) {
+      return buildCumulativeWinSeries(rows, row => row.isMajor === 'YES');
+    }
+
+    function renderCumulativeChart(options) {
+      const {
+        svgId,
+        series,
+        rows,
+        chartTitle,
+        emptyMessage,
+        yAxisLabel,
+        unitSingular,
+        unitPlural,
+      } = options;
+      const svg = document.getElementById(svgId);
       svg.replaceChildren();
 
-      const title = createSvgElement('title', { id: 'bracelet-chart-title' });
-      title.textContent = 'Cumulative bracelets over time for the top eight all-time bracelet earners';
-      const description = createSvgElement('desc', { id: 'bracelet-chart-description' });
+      const title = createSvgElement('title', { id: `${svgId}-title` });
+      title.textContent = chartTitle;
+      const description = createSvgElement('desc', { id: `${svgId}-description` });
       svg.append(title, description);
 
-      const series = buildBraceletSeries(rows);
       if (!series.length) {
-        description.textContent = 'No bracelet data is available.';
-        addSvgText(svg, 'No bracelet data available.', {
+        description.textContent = emptyMessage;
+        addSvgText(svg, emptyMessage, {
           x: 450,
           y: 215,
           'text-anchor': 'middle',
@@ -372,8 +398,8 @@
       const plotHeight = height - margin.top - margin.bottom;
       const minTime = Math.min(...rows.map(row => row.timestamp));
       const maxTime = Math.max(...rows.map(row => row.timestamp));
-      const maxBracelets = Math.max(...series.map(playerSeries => playerSeries.total));
-      const yMax = Math.max(5, Math.ceil(maxBracelets / 5) * 5);
+      const maxWins = Math.max(...series.map(playerSeries => playerSeries.total));
+      const yMax = Math.max(5, Math.ceil(maxWins / 5) * 5);
 
       const xScale = timestamp => {
         if (minTime === maxTime) return margin.left + plotWidth / 2;
@@ -439,7 +465,7 @@
         });
       }
 
-      addSvgText(svg, 'Bracelets', {
+      addSvgText(svg, yAxisLabel, {
         x: margin.left,
         y: 18,
         class: 'chart-title-label chart-label',
@@ -498,14 +524,44 @@
       svg.appendChild(legend);
 
       description.textContent = series
-        .map(playerSeries => `${playerSeries.player} has ${playerSeries.total} bracelets.`)
+        .map(playerSeries => {
+          const unit = playerSeries.total === 1 ? unitSingular : unitPlural;
+          return `${playerSeries.player} has ${playerSeries.total} ${unit}.`;
+        })
         .join(' ');
+    }
+
+    function renderBraceletChart(rows) {
+      renderCumulativeChart({
+        svgId: 'bracelet-chart',
+        rows,
+        series: buildBraceletSeries(rows),
+        chartTitle: 'Cumulative bracelets over time for the top eight all-time bracelet earners',
+        emptyMessage: 'No bracelet data available.',
+        yAxisLabel: 'Bracelets',
+        unitSingular: 'bracelet',
+        unitPlural: 'bracelets',
+      });
+    }
+
+    function renderMajorChart(rows) {
+      renderCumulativeChart({
+        svgId: 'major-chart',
+        rows,
+        series: buildMajorSeries(rows),
+        chartTitle: 'Cumulative major wins over time for the top eight all-time major winners',
+        emptyMessage: 'No major win data available.',
+        yAxisLabel: 'Major Wins',
+        unitSingular: 'major win',
+        unitPlural: 'major wins',
+      });
     }
 
     fetchHistoryText()
       .then(historyText => {
         const rows = buildNightRows(historyText);
         renderBraceletChart(rows);
+        renderMajorChart(rows);
         renderNightRows(rows);
       })
       .catch(error => {
