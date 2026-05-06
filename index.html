@@ -119,6 +119,53 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    .standings-chart-list {
+      margin-top: 1.5em;
+    }
+    .standings-chart-block {
+      margin: 0 auto 2em;
+      max-width: 100%;
+    }
+    .standings-chart-frame {
+      box-sizing: border-box;
+      margin: 0 auto;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .standings-chart {
+      display: block;
+      height: auto;
+      margin: 0 auto;
+      max-width: 100%;
+      min-width: 700px;
+    }
+    .chart-axis,
+    .chart-grid {
+      stroke: #d7d7d7;
+      stroke-width: 1;
+    }
+    .chart-axis {
+      stroke: #222;
+    }
+    .chart-line {
+      fill: none;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+    }
+    .chart-point {
+      stroke: #fff;
+      stroke-width: 1.5;
+    }
+    .chart-label {
+      fill: #222;
+      font-family: 'Roboto Serif', serif;
+      font-size: 13px;
+    }
+    .chart-title-label {
+      font-family: 'Cal Sans', sans-serif;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -659,6 +706,28 @@
                 <tfoot></tfoot>
               </table>
             </div>
+            ${showChampColumn ? `
+              <div id="all-time-chart-list" class="standings-chart-list">
+                <div class="standings-chart-block">
+                  <h2>Top 8 Cumulative Bracelets Over Time</h2>
+                  <div class="standings-chart-frame">
+                    <svg id="all-time-bracelet-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-bracelet-chart-title all-time-bracelet-chart-description">
+                      <title id="all-time-bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
+                      <desc id="all-time-bracelet-chart-description">A line chart will appear after the all-time standings load.</desc>
+                    </svg>
+                  </div>
+                </div>
+                <div class="standings-chart-block">
+                  <h2>Top 8 Cumulative Major Wins Over Time</h2>
+                  <div class="standings-chart-frame">
+                    <svg id="all-time-major-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-major-chart-title all-time-major-chart-description">
+                      <title id="all-time-major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
+                      <desc id="all-time-major-chart-description">A line chart will appear after the all-time standings load.</desc>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
           `;
           // Insert standingsSection after the filter section at the top of main
           const main = document.querySelector('main');
@@ -707,6 +776,377 @@
           standingsFooter.appendChild(totalRow);
 
           applyStripingByDate('season-standings-table');
+          if (showChampColumn) {
+            renderAllTimeCharts();
+          }
+        }
+
+        function createSvgElement(tagName, attributes = {}) {
+          const element = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+          Object.entries(attributes).forEach(([name, value]) => {
+            element.setAttribute(name, value);
+          });
+          return element;
+        }
+
+        function addSvgText(parent, text, attributes = {}) {
+          const element = createSvgElement('text', attributes);
+          element.textContent = text;
+          parent.appendChild(element);
+          return element;
+        }
+
+        const CHART_COLORS = [
+          '#005bbb',
+          '#d1495b',
+          '#007f5f',
+          '#8f2d56',
+          '#f28e2b',
+          '#4e79a7',
+          '#59a14f',
+          '#b07aa1',
+          '#9c755f',
+          '#e15759',
+          '#76b7b2',
+          '#edc948',
+        ];
+
+        function buildPlayerColorMap(...seriesGroups) {
+          const playerColors = {};
+          let colorIndex = 0;
+
+          seriesGroups.flat().forEach(playerSeries => {
+            if (playerColors[playerSeries.player]) return;
+            playerColors[playerSeries.player] = CHART_COLORS[colorIndex % CHART_COLORS.length];
+            colorIndex += 1;
+          });
+
+          return function getPlayerColor(player) {
+            if (playerColors[player]) return playerColors[player];
+            const hash = player.split('').reduce((total, character) => total + character.charCodeAt(0), 0);
+            return CHART_COLORS[hash % CHART_COLORS.length];
+          };
+        }
+
+        function calculateNightPoints(pointsAtStake, isMajor, playerCount, place) {
+          const base = 0.5 * playerCount - 0.5;
+          let points = pointsAtStake * (playerCount - place) / base;
+          if (isMajor !== 'YES') {
+            points /= 2;
+          }
+          return Number.isFinite(points) ? points : 0;
+        }
+
+        function compareNightResults(a, b) {
+          const roundedPointsA = parseFloat(a.points.toFixed(2));
+          const roundedPointsB = parseFloat(b.points.toFixed(2));
+          if (roundedPointsA !== roundedPointsB) {
+            return roundedPointsB - roundedPointsA;
+          }
+
+          return a.finalPlace - b.finalPlace;
+        }
+
+        function buildAllTimeNightRows() {
+          const nights = new Map();
+          document.querySelectorAll('#standings-table tbody tr').forEach(row => {
+            const season = row.cells[1]?.textContent.trim();
+            const dateText = row.cells[2]?.textContent.trim();
+            const timestamp = new Date(dateText).getTime() / 1000;
+            const isMajor = row.cells[3]?.textContent.trim().toUpperCase();
+            const majorName = isMajor === 'YES' ? row.cells[4]?.textContent.trim() || '' : '';
+            const pointsAtStake = parseFloat(row.cells[5]?.textContent.trim());
+            const playerCount = parseInt(row.cells[6]?.textContent.trim(), 10);
+            if (!season || !dateText || !Number.isFinite(timestamp) || !playerCount) return;
+
+            const key = `${season}|${dateText}`;
+            if (!nights.has(key)) {
+              nights.set(key, {
+                season,
+                dateText,
+                timestamp,
+                isMajor,
+                majorName,
+                players: new Map(),
+              });
+            }
+
+            const night = nights.get(key);
+            if (isMajor === 'YES') {
+              night.isMajor = 'YES';
+              night.majorName = majorName;
+            }
+
+            for (let i = 7; i < row.cells.length; i++) {
+              const player = row.cells[i]?.textContent.trim();
+              if (!player) continue;
+              const place = i - 6;
+              if (!night.players.has(player)) {
+                night.players.set(player, { player, points: 0, finalPlace: place });
+              }
+
+              const result = night.players.get(player);
+              result.points += calculateNightPoints(pointsAtStake, isMajor, playerCount, place);
+              result.finalPlace = place;
+            }
+          });
+
+          return Array.from(nights.values())
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map((night, index) => {
+              const winner = Array.from(night.players.values()).sort(compareNightResults)[0]?.player || '';
+              return {
+                eventNumber: index + 1,
+                timestamp: night.timestamp,
+                isMajor: night.isMajor,
+                winner,
+              };
+            });
+        }
+
+        function getTopWinners(rows, shouldCountRow, limit = 8) {
+          const totals = rows.reduce((counts, row) => {
+            if (!row.winner || !shouldCountRow(row)) return counts;
+            counts[row.winner] = (counts[row.winner] || 0) + 1;
+            return counts;
+          }, {});
+
+          return Object.entries(totals)
+            .sort(([playerA, countA], [playerB, countB]) => {
+              if (countA !== countB) return countB - countA;
+              return playerA.localeCompare(playerB);
+            })
+            .slice(0, limit)
+            .map(([player, total]) => ({ player, total }));
+        }
+
+        function buildCumulativeWinSeries(rows, shouldCountRow, limit = 8) {
+          const leaders = getTopWinners(rows, shouldCountRow, limit);
+          const leaderNames = leaders.map(leader => leader.player);
+          const runningTotals = Object.fromEntries(leaderNames.map(player => [player, 0]));
+          const series = Object.fromEntries(leaderNames.map(player => [player, []]));
+
+          rows.forEach(row => {
+            if (leaderNames.includes(row.winner) && shouldCountRow(row)) {
+              runningTotals[row.winner] += 1;
+            }
+
+            leaderNames.forEach(player => {
+              series[player].push({
+                eventNumber: row.eventNumber,
+                timestamp: row.timestamp,
+                total: runningTotals[player],
+              });
+            });
+          });
+
+          return leaders.map(leader => ({
+            ...leader,
+            points: series[leader.player],
+          }));
+        }
+
+        function renderCumulativeChart(options) {
+          const {
+            svgId,
+            series,
+            rows,
+            chartTitle,
+            emptyMessage,
+            yAxisLabel,
+            unitSingular,
+            unitPlural,
+            getPlayerColor,
+          } = options;
+          const svg = document.getElementById(svgId);
+          if (!svg) return;
+          svg.replaceChildren();
+
+          const title = createSvgElement('title', { id: `${svgId}-title` });
+          title.textContent = chartTitle;
+          const description = createSvgElement('desc', { id: `${svgId}-description` });
+          svg.append(title, description);
+
+          if (!series.length) {
+            description.textContent = emptyMessage;
+            addSvgText(svg, emptyMessage, {
+              x: 450,
+              y: 215,
+              'text-anchor': 'middle',
+              class: 'chart-label',
+            });
+            return;
+          }
+
+          const width = 900;
+          const height = 540;
+          const margin = { top: 34, right: 42, bottom: 138, left: 56 };
+          const plotWidth = width - margin.left - margin.right;
+          const plotHeight = height - margin.top - margin.bottom;
+          const minTime = Math.min(...rows.map(row => row.timestamp));
+          const maxTime = Math.max(...rows.map(row => row.timestamp));
+          const maxWins = Math.max(...series.map(playerSeries => playerSeries.total));
+          const yMax = Math.max(5, Math.ceil(maxWins / 5) * 5);
+
+          const xScale = timestamp => {
+            if (minTime === maxTime) return margin.left + plotWidth / 2;
+            return margin.left + ((timestamp - minTime) / (maxTime - minTime)) * plotWidth;
+          };
+
+          const yScale = total => margin.top + plotHeight - (total / yMax) * plotHeight;
+
+          const gridGroup = createSvgElement('g');
+          const yStep = Math.max(1, Math.ceil(yMax / 5));
+          for (let value = 0; value <= yMax; value += yStep) {
+            const y = yScale(value);
+            gridGroup.appendChild(createSvgElement('line', {
+              x1: margin.left,
+              y1: y,
+              x2: margin.left + plotWidth,
+              y2: y,
+              class: 'chart-grid',
+            }));
+            addSvgText(gridGroup, value, {
+              x: margin.left - 10,
+              y: y + 4,
+              'text-anchor': 'end',
+              class: 'chart-label',
+            });
+          }
+          svg.appendChild(gridGroup);
+
+          svg.appendChild(createSvgElement('line', {
+            x1: margin.left,
+            y1: margin.top + plotHeight,
+            x2: margin.left + plotWidth,
+            y2: margin.top + plotHeight,
+            class: 'chart-axis',
+          }));
+          svg.appendChild(createSvgElement('line', {
+            x1: margin.left,
+            y1: margin.top,
+            x2: margin.left,
+            y2: margin.top + plotHeight,
+            class: 'chart-axis',
+          }));
+
+          const startYear = new Date(minTime * 1000).getFullYear();
+          const endYear = new Date(maxTime * 1000).getFullYear();
+          const yearStep = Math.max(1, Math.ceil((endYear - startYear) / 5));
+          for (let year = startYear; year <= endYear; year += yearStep) {
+            const timestamp = new Date(year, 0, 1).getTime() / 1000;
+            if (timestamp < minTime || timestamp > maxTime) continue;
+            const x = xScale(timestamp);
+            svg.appendChild(createSvgElement('line', {
+              x1: x,
+              y1: margin.top + plotHeight,
+              x2: x,
+              y2: margin.top + plotHeight + 6,
+              class: 'chart-axis',
+            }));
+            addSvgText(svg, year, {
+              x,
+              y: margin.top + plotHeight + 24,
+              'text-anchor': 'middle',
+              class: 'chart-label',
+            });
+          }
+
+          addSvgText(svg, yAxisLabel, {
+            x: margin.left,
+            y: 18,
+            class: 'chart-title-label chart-label',
+          });
+          addSvgText(svg, 'Year', {
+            x: margin.left + plotWidth,
+            y: margin.top + plotHeight + 48,
+            'text-anchor': 'end',
+            class: 'chart-title-label chart-label',
+          });
+
+          const lineGroup = createSvgElement('g');
+          series.forEach(playerSeries => {
+            const color = getPlayerColor(playerSeries.player);
+            const pathData = playerSeries.points.map((point, pointIndex) => {
+              const command = pointIndex === 0 ? 'M' : 'L';
+              return `${command}${xScale(point.timestamp).toFixed(2)},${yScale(point.total).toFixed(2)}`;
+            }).join(' ');
+
+            lineGroup.appendChild(createSvgElement('path', {
+              d: pathData,
+              stroke: color,
+              class: 'chart-line',
+            }));
+
+            const finalPoint = playerSeries.points[playerSeries.points.length - 1];
+            lineGroup.appendChild(createSvgElement('circle', {
+              cx: xScale(finalPoint.timestamp),
+              cy: yScale(finalPoint.total),
+              r: 4,
+              fill: color,
+              class: 'chart-point',
+            }));
+          });
+          svg.appendChild(lineGroup);
+
+          const legend = createSvgElement('g', { transform: 'translate(56 468)' });
+          series.forEach((playerSeries, index) => {
+            const x = (index % 4) * 205;
+            const y = Math.floor(index / 4) * 32;
+            const color = getPlayerColor(playerSeries.player);
+            legend.appendChild(createSvgElement('line', {
+              x1: x,
+              y1: y,
+              x2: x + 26,
+              y2: y,
+              stroke: color,
+              class: 'chart-line',
+            }));
+            addSvgText(legend, `${playerSeries.player} (${playerSeries.total})`, {
+              x: x + 34,
+              y: y + 5,
+              class: 'chart-label',
+            });
+          });
+          svg.appendChild(legend);
+
+          description.textContent = series
+            .map(playerSeries => {
+              const unit = playerSeries.total === 1 ? unitSingular : unitPlural;
+              return `${playerSeries.player} has ${playerSeries.total} ${unit}.`;
+            })
+            .join(' ');
+        }
+
+        function renderAllTimeCharts() {
+          const rows = buildAllTimeNightRows();
+          const braceletSeries = buildCumulativeWinSeries(rows, () => true);
+          const majorSeries = buildCumulativeWinSeries(rows, row => row.isMajor === 'YES');
+          const getPlayerColor = buildPlayerColorMap(braceletSeries, majorSeries);
+
+          renderCumulativeChart({
+            svgId: 'all-time-bracelet-chart',
+            rows,
+            series: braceletSeries,
+            chartTitle: 'Cumulative bracelets over time for the top eight all-time bracelet earners',
+            emptyMessage: 'No bracelet data available.',
+            yAxisLabel: 'Bracelets',
+            unitSingular: 'bracelet',
+            unitPlural: 'bracelets',
+            getPlayerColor,
+          });
+
+          renderCumulativeChart({
+            svgId: 'all-time-major-chart',
+            rows,
+            series: majorSeries,
+            chartTitle: 'Cumulative major wins over time for the top eight all-time major winners',
+            emptyMessage: 'No major win data available.',
+            yAxisLabel: 'Major Wins',
+            unitSingular: 'major win',
+            unitPlural: 'major wins',
+            getPlayerColor,
+          });
         }
 
         function applyStripingByDate(tableId) {
