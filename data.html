@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOPT Data</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=mobile-logo-20260505" />
+  <style>
+    body {
+      font-family: 'Roboto Serif', serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Cal Sans', sans-serif;
+    }
+
+    main {
+      box-sizing: border-box;
+      margin: 0 auto 3rem;
+      max-width: min(960px, calc(100vw - 2rem));
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .table-container {
+      box-sizing: border-box;
+      margin: 0 auto;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #night-data-table {
+      margin: 1em auto;
+      white-space: nowrap;
+    }
+
+    .data-message {
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .table-container {
+        font-size: 0.82em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header style="text-align: center;">
+    <img src="assets/logo.GIF" alt="GOPT Logo" class="logo" />
+    <nav style="background-color: black; padding: 0.5em;">
+      <a href="index.html" style="color: white; text-decoration: none; margin: 0 1em;">Standings</a>
+      <a href="record.html" style="color: white; text-decoration: none; margin: 0 1em;">Record</a>
+      <a href="rules.html" style="color: white; text-decoration: none; margin: 0 1em;">Rules</a>
+      <a href="technote.html" style="color: white; text-decoration: none; margin: 0 1em;">Tech Note</a>
+      <a href="upload.html" style="color: white; text-decoration: none; margin: 0 1em;">Admin</a>
+    </nav>
+    <h1>GOPT Data</h1>
+  </header>
+
+  <main>
+    <p id="data-message" class="data-message">Loading current history...</p>
+    <div class="table-container">
+      <table id="night-data-table">
+        <thead>
+          <tr>
+            <th>Event #</th>
+            <th>Date</th>
+            <th>Season</th>
+            <th>Is Major</th>
+            <th>Winner</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function looksLikeHistoryFile(text) {
+      return /^\d+\s*(\n|$)/.test(text.trim());
+    }
+
+    function fetchHistoryText(sources = ['api/history/current', 'api/history-current.php', 'files/GOPThistory.txt']) {
+      const [source, ...remaining] = sources;
+      return fetch(source, { cache: 'no-store' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Could not load ${source}.`);
+          }
+          return response.text();
+        })
+        .then(text => {
+          if (!looksLikeHistoryFile(text)) {
+            throw new Error(`${source} did not return a GOPThistory file.`);
+          }
+          return text;
+        })
+        .catch(error => {
+          if (!remaining.length) throw error;
+          return fetchHistoryText(remaining);
+        });
+    }
+
+    function splitHistoryLine(line) {
+      return line.split(',').map(cell => {
+        const value = cell.trim();
+        return value === 'Mrs. Clay Matthews' ? 'Mrs. Clay' : value;
+      });
+    }
+
+    function formatDate(timestamp) {
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+      }).format(new Date(timestamp * 1000));
+    }
+
+    function calculatePoints(pointsAtStake, isMajor, playerCount, place) {
+      const base = 0.5 * playerCount - 0.5;
+      let points = pointsAtStake * (playerCount - place) / base;
+      if (isMajor !== 'YES') {
+        points /= 2;
+      }
+      return Number.isFinite(points) ? points : 0;
+    }
+
+    function compareNightResults(a, b) {
+      const roundedPointsA = parseFloat(a.points.toFixed(2));
+      const roundedPointsB = parseFloat(b.points.toFixed(2));
+      if (roundedPointsA !== roundedPointsB) {
+        return roundedPointsB - roundedPointsA;
+      }
+
+      return a.finalPlace - b.finalPlace;
+    }
+
+    function buildNightRows(historyText) {
+      const nights = new Map();
+      historyText.trim().split('\n').slice(1).forEach(line => {
+        const cells = splitHistoryLine(line);
+        const season = cells[1];
+        const timestamp = Number.parseInt(cells[2], 10);
+        const isMajor = String(cells[3] || '').toUpperCase();
+        const pointsAtStake = Number.parseFloat(cells[5]);
+        const players = cells.slice(6).filter(Boolean);
+        const playerCount = players.length;
+        if (!season || !Number.isInteger(timestamp) || !playerCount) return;
+
+        const key = `${season}|${timestamp}`;
+        if (!nights.has(key)) {
+          nights.set(key, {
+            season,
+            timestamp,
+            isMajor,
+            players: new Map(),
+          });
+        }
+
+        const night = nights.get(key);
+        if (isMajor === 'YES') {
+          night.isMajor = 'YES';
+        }
+
+        players.forEach((player, index) => {
+          const place = index + 1;
+          if (!night.players.has(player)) {
+            night.players.set(player, { player, points: 0, finalPlace: place });
+          }
+
+          const result = night.players.get(player);
+          result.points += calculatePoints(pointsAtStake, isMajor, playerCount, place);
+          result.finalPlace = place;
+        });
+      });
+
+      return Array.from(nights.values())
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .map((night, index) => {
+          const winner = Array.from(night.players.values()).sort(compareNightResults)[0]?.player || '';
+          return {
+            eventNumber: index + 1,
+            date: formatDate(night.timestamp),
+            season: night.season,
+            isMajor: night.isMajor,
+            winner,
+          };
+        });
+    }
+
+    function renderNightRows(rows) {
+      const body = document.querySelector('#night-data-table tbody');
+      body.innerHTML = '';
+
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.eventNumber}</td>
+          <td>${row.date}</td>
+          <td>${row.season}</td>
+          <td>${row.isMajor}</td>
+          <td>${row.winner}</td>
+        `;
+        body.appendChild(tr);
+      });
+
+      document.getElementById('data-message').textContent = `${rows.length} nights loaded.`;
+    }
+
+    fetchHistoryText()
+      .then(historyText => {
+        renderNightRows(buildNightRows(historyText));
+      })
+      .catch(error => {
+        document.getElementById('data-message').textContent = 'Failed to load current history.';
+        console.error(error);
+      });
+  </script>
+  <script src="wachs-action.js"></script>
+</body>
+</html>
