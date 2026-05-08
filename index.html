@@ -119,6 +119,9 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    .all-time-major-summary {
+      margin-top: 1.5em;
+    }
     .standings-chart-disclosure {
       margin: 1.5em auto 0;
       max-width: 100%;
@@ -711,6 +714,21 @@
               </table>
             </div>
             ${showChampColumn ? `
+              <div class="all-time-major-summary">
+                <h2>Major Summary</h2>
+                <div class="table-container">
+                  <table id="all-time-major-summary-table">
+                    <thead>
+                      <tr>
+                        <th>Major Name</th>
+                        <th>Number</th>
+                        <th>Most Frequent Winner</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
               <details class="standings-chart-disclosure">
                 <summary>Show all-time plots</summary>
                 <div id="all-time-chart-list" class="standings-chart-list">
@@ -784,6 +802,7 @@
 
           applyStripingByDate('season-standings-table');
           if (showChampColumn) {
+            renderAllTimeMajorSummaryTable();
             renderAllTimeCharts();
           }
         }
@@ -855,60 +874,69 @@
         }
 
         function buildAllTimeNightRows() {
-          const nights = new Map();
-          document.querySelectorAll('#standings-table tbody tr').forEach(row => {
-            const season = row.cells[1]?.textContent.trim();
-            const dateText = row.cells[2]?.textContent.trim();
-            const timestamp = new Date(dateText).getTime() / 1000;
-            const isMajor = row.cells[3]?.textContent.trim().toUpperCase();
-            const majorName = isMajor === 'YES' ? row.cells[4]?.textContent.trim() || '' : '';
-            const pointsAtStake = parseFloat(row.cells[5]?.textContent.trim());
-            const playerCount = parseInt(row.cells[6]?.textContent.trim(), 10);
-            if (!season || !dateText || !Number.isFinite(timestamp) || !playerCount) return;
+          return GoptData.buildNights(parsedData.rows).map(night => ({
+            eventNumber: night.eventNumber,
+            timestamp: night.timestamp,
+            isMajor: night.isMajor,
+            majorName: night.majorName,
+            winner: night.winner,
+          }));
+        }
 
-            const key = `${season}|${dateText}`;
-            if (!nights.has(key)) {
-              nights.set(key, {
-                season,
-                dateText,
-                timestamp,
-                isMajor,
-                majorName,
-                players: new Map(),
-              });
-            }
+        function buildAllTimeMajorSummaryRows() {
+          const majorMap = new Map();
 
-            const night = nights.get(key);
-            if (isMajor === 'YES') {
-              night.isMajor = 'YES';
-              night.majorName = majorName;
-            }
-
-            for (let i = 7; i < row.cells.length; i++) {
-              const player = row.cells[i]?.textContent.trim();
-              if (!player) continue;
-              const place = i - 6;
-              if (!night.players.has(player)) {
-                night.players.set(player, { player, points: 0, finalPlace: place });
+          buildAllTimeNightRows()
+            .filter(row => row.isMajor === 'YES' && row.majorName)
+            .forEach(row => {
+              if (!majorMap.has(row.majorName)) {
+                majorMap.set(row.majorName, {
+                  majorName: row.majorName,
+                  number: 0,
+                  winners: new Map(),
+                });
               }
 
-              const result = night.players.get(player);
-              result.points += calculateNightPoints(pointsAtStake, isMajor, playerCount, place);
-              result.finalPlace = place;
-            }
-          });
-
-          return Array.from(nights.values())
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .map((night, index) => {
-              const winner = Array.from(night.players.values()).sort(compareNightResults)[0]?.player || '';
-              return {
-                eventNumber: index + 1,
-                timestamp: night.timestamp,
-                isMajor: night.isMajor,
-                winner,
-              };
+              const summary = majorMap.get(row.majorName);
+              summary.number += 1;
+              if (row.winner) {
+                summary.winners.set(row.winner, (summary.winners.get(row.winner) || 0) + 1);
+              }
             });
+
+          return Array.from(majorMap.values())
+            .map(summary => {
+              const highCount = Math.max(0, ...summary.winners.values());
+              const frequentWinners = Array.from(summary.winners.entries())
+                .filter(([, count]) => count === highCount)
+                .map(([winner]) => winner)
+                .sort((a, b) => a.localeCompare(b));
+
+              return {
+                majorName: summary.majorName,
+                number: summary.number,
+                mostFrequentWinner: frequentWinners.length
+                  ? `${frequentWinners.join(', ')} (${highCount})`
+                  : '',
+              };
+            })
+            .sort((a, b) => a.majorName.localeCompare(b.majorName));
+        }
+
+        function renderAllTimeMajorSummaryTable() {
+          const body = document.querySelector('#all-time-major-summary-table tbody');
+          if (!body) return;
+
+          body.innerHTML = '';
+          buildAllTimeMajorSummaryRows().forEach(row => {
+            const tr = document.createElement('tr');
+            ['majorName', 'number', 'mostFrequentWinner'].forEach(field => {
+              const td = document.createElement('td');
+              td.textContent = row[field];
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
         }
 
         function getTopWinners(rows, shouldCountRow, limit = 8) {
