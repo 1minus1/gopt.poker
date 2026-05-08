@@ -723,6 +723,7 @@
                         <th>Major Name</th>
                         <th>Number</th>
                         <th>Most Frequent Winner</th>
+                        <th>Top Finishers</th>
                       </tr>
                     </thead>
                     <tbody></tbody>
@@ -873,8 +874,12 @@
           return a.finalPlace - b.finalPlace;
         }
 
+        function buildAllTimeNights() {
+          return GoptData.buildNights(parsedData.rows);
+        }
+
         function buildAllTimeNightRows() {
-          return GoptData.buildNights(parsedData.rows).map(night => ({
+          return buildAllTimeNights().map(night => ({
             eventNumber: night.eventNumber,
             timestamp: night.timestamp,
             isMajor: night.isMajor,
@@ -883,25 +888,39 @@
           }));
         }
 
+        function formatMajorSummaryPoints(points) {
+          return Number(points.toFixed(2)).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+          });
+        }
+
         function buildAllTimeMajorSummaryRows() {
           const majorMap = new Map();
 
-          buildAllTimeNightRows()
-            .filter(row => row.isMajor === 'YES' && row.majorName)
-            .forEach(row => {
-              if (!majorMap.has(row.majorName)) {
-                majorMap.set(row.majorName, {
-                  majorName: row.majorName,
+          buildAllTimeNights()
+            .filter(night => night.isMajor === 'YES' && night.majorName)
+            .forEach(night => {
+              if (!majorMap.has(night.majorName)) {
+                majorMap.set(night.majorName, {
+                  majorName: night.majorName,
                   number: 0,
+                  finishers: new Map(),
                   winners: new Map(),
                 });
               }
 
-              const summary = majorMap.get(row.majorName);
+              const summary = majorMap.get(night.majorName);
               summary.number += 1;
-              if (row.winner) {
-                summary.winners.set(row.winner, (summary.winners.get(row.winner) || 0) + 1);
+              if (night.winner) {
+                summary.winners.set(night.winner, (summary.winners.get(night.winner) || 0) + 1);
               }
+              night.players.forEach(result => {
+                summary.finishers.set(
+                  result.player,
+                  (summary.finishers.get(result.player) || 0) + result.points
+                );
+              });
             });
 
           return Array.from(majorMap.values())
@@ -911,6 +930,13 @@
                 .filter(([, count]) => count === highCount)
                 .map(([winner]) => winner)
                 .sort((a, b) => a.localeCompare(b));
+              const topFinishers = Array.from(summary.finishers.entries())
+                .sort(([playerA, pointsA], [playerB, pointsB]) => {
+                  if (pointsA !== pointsB) return pointsB - pointsA;
+                  return playerA.localeCompare(playerB);
+                })
+                .slice(0, 3)
+                .map(([player, points]) => `${player} (${formatMajorSummaryPoints(points)} pts)`);
 
               return {
                 majorName: summary.majorName,
@@ -918,6 +944,7 @@
                 mostFrequentWinner: frequentWinners.length
                   ? `${frequentWinners.join(', ')} (${highCount})`
                   : '',
+                topFinishers: topFinishers.join(', '),
               };
             })
             .sort((a, b) => a.majorName.localeCompare(b.majorName));
@@ -930,7 +957,7 @@
           body.innerHTML = '';
           buildAllTimeMajorSummaryRows().forEach(row => {
             const tr = document.createElement('tr');
-            ['majorName', 'number', 'mostFrequentWinner'].forEach(field => {
+            ['majorName', 'number', 'mostFrequentWinner', 'topFinishers'].forEach(field => {
               const td = document.createElement('td');
               td.textContent = row[field];
               tr.appendChild(td);
