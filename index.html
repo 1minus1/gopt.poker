@@ -119,8 +119,28 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    .all-time-disclosure {
+      margin: 1.5em auto 0;
+      max-width: 100%;
+      text-align: center;
+    }
+    .all-time-disclosure summary {
+      color: #0645ad;
+      cursor: pointer;
+      display: list-item;
+      font-weight: 700;
+      margin: 0 auto;
+      text-decoration: underline;
+      width: max-content;
+    }
+    .all-time-disclosure[open] summary {
+      margin-bottom: 0.75em;
+    }
     .all-time-major-summary {
       margin-top: 1.5em;
+    }
+    .hosting-summary h3 {
+      text-align: center;
     }
     .standings-chart-disclosure {
       margin: 1.5em auto 0;
@@ -403,6 +423,7 @@
             const majorName = row.cells[4]?.textContent.trim();
             const pointsAtStake = row.cells[5]?.textContent.trim();
             const playerCount = row.cells[6]?.textContent.trim();
+            const host = row.dataset.host || '';
 
             for (let i = 7; i < row.cells.length; i++) {
               const player = row.cells[i]?.textContent.trim();
@@ -420,6 +441,7 @@
                 }
 
                 const tr = document.createElement('tr');
+                tr.dataset.host = host;
                 tr.innerHTML = `
                   <td>${date}</td>
                   <td>${season}</td>
@@ -454,11 +476,18 @@
           return 'Standard Poker Night';
         }
 
+        function formatHostName(host) {
+          return GoptData.normalizePlayerNameForDisplay(String(host || '').trim())
+            .replace(/^Masta Pu\$\$y$/i, 'Masta Pussy');
+        }
+
         function getSummaryNightHeading(group, seasonFilterValue) {
           const seasonLabel = seasonFilterValue === 'All Time'
             ? ` (Season ${group.season})`
             : '';
-          return `${formatSummaryDate(group.date)}${seasonLabel}: ${getNightLabel(group)}`;
+          const host = formatHostName(group.host);
+          const hostLabel = host ? ` hosted by ${host}` : '';
+          return `${formatSummaryDate(group.date)}${seasonLabel}: ${getNightLabel(group)}${hostLabel}`;
         }
 
         function createSummaryCell(label, value, className = '') {
@@ -512,9 +541,10 @@
             const isMajor = row.cells[2]?.textContent.trim();
             const majorName = row.cells[3]?.textContent.trim();
             const season = row.cells[1]?.textContent.trim();
+            const host = row.dataset.host || '';
             const key = `${season}|${date}|${player}`;
             if (!summary[key]) {
-              summary[key] = { date, season, player, points: 0, places: [], isMajor, majorName };
+              summary[key] = { date, season, player, points: 0, places: [], isMajor, majorName, host };
             }
             summary[key].points += points;
             // Add the place to the places array
@@ -557,6 +587,7 @@
                 season: entry.season,
                 isMajor: entry.isMajor,
                 majorName: entry.majorName,
+                host: entry.host,
                 entries: []
               });
             }
@@ -600,6 +631,9 @@
               const playerCell = createSummaryCell('Player', entry.player);
               if (index === 0) {
                 playerCell.append(' ', createBraceletMarker(entry.season));
+                if (group.isMajor?.trim().toUpperCase() === 'YES') {
+                  playerCell.append(' 🎉');
+                }
               }
               tr.appendChild(playerCell);
 
@@ -714,22 +748,68 @@
               </table>
             </div>
             ${showChampColumn ? `
-              <div class="all-time-major-summary">
-                <h2>Major Summary</h2>
-                <div class="table-container">
-                  <table id="all-time-major-summary-table">
-                    <thead>
-                      <tr>
-                        <th>Major Name</th>
-                        <th>Number</th>
-                        <th>Most Frequent Winner</th>
-                        <th>Top Finishers</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
+              <details class="all-time-disclosure">
+                <summary>Show major summary</summary>
+                <div class="all-time-major-summary">
+                  <h2>Major Summary</h2>
+                  <div class="table-container">
+                    <table id="all-time-major-summary-table">
+                      <thead>
+                        <tr>
+                          <th>Major Name</th>
+                          <th>Number</th>
+                          <th>Most Frequent Winners</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              </details>
+              <details class="all-time-disclosure">
+                <summary>Show hosting data</summary>
+                <div class="hosting-summary">
+                  <h2>Hosting Data</h2>
+                  <h3>Ten Most Recent Hosted Events</h3>
+                  <div class="table-container">
+                    <table id="recent-hosting-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Event</th>
+                          <th>Host</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3>Times Hosted</h3>
+                  <div class="table-container">
+                    <table id="host-count-table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Times Hosted</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3>Longest Since Hosting</h3>
+                  <div class="table-container">
+                    <table id="hosting-drought-table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Last Hosted</th>
+                          <th>Events Since Hosting</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
               <details class="standings-chart-disclosure">
                 <summary>Show all-time plots</summary>
                 <div id="all-time-chart-list" class="standings-chart-list">
@@ -804,6 +884,7 @@
           applyStripingByDate('season-standings-table');
           if (showChampColumn) {
             renderAllTimeMajorSummaryTable();
+            renderHostingDataTables();
             renderAllTimeCharts();
           }
         }
@@ -888,13 +969,6 @@
           }));
         }
 
-        function formatMajorSummaryPoints(points) {
-          return Number(points.toFixed(2)).toLocaleString(undefined, {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-          });
-        }
-
         function buildAllTimeMajorSummaryRows() {
           const majorMap = new Map();
 
@@ -905,7 +979,6 @@
                 majorMap.set(night.majorName, {
                   majorName: night.majorName,
                   number: 0,
-                  finishers: new Map(),
                   winners: new Map(),
                 });
               }
@@ -915,36 +988,22 @@
               if (night.winner) {
                 summary.winners.set(night.winner, (summary.winners.get(night.winner) || 0) + 1);
               }
-              night.players.forEach(result => {
-                summary.finishers.set(
-                  result.player,
-                  (summary.finishers.get(result.player) || 0) + result.points
-                );
-              });
             });
 
           return Array.from(majorMap.values())
             .map(summary => {
-              const highCount = Math.max(0, ...summary.winners.values());
               const frequentWinners = Array.from(summary.winners.entries())
-                .filter(([, count]) => count === highCount)
-                .map(([winner]) => winner)
-                .sort((a, b) => a.localeCompare(b));
-              const topFinishers = Array.from(summary.finishers.entries())
-                .sort(([playerA, pointsA], [playerB, pointsB]) => {
-                  if (pointsA !== pointsB) return pointsB - pointsA;
-                  return playerA.localeCompare(playerB);
+                .sort(([winnerA, countA], [winnerB, countB]) => {
+                  if (countA !== countB) return countB - countA;
+                  return winnerA.localeCompare(winnerB);
                 })
                 .slice(0, 3)
-                .map(([player, points]) => `${player} (${formatMajorSummaryPoints(points)} pts)`);
+                .map(([winner, count]) => `${winner} (${count})`);
 
               return {
                 majorName: summary.majorName,
                 number: summary.number,
-                mostFrequentWinner: frequentWinners.length
-                  ? `${frequentWinners.join(', ')} (${highCount})`
-                  : '',
-                topFinishers: topFinishers.join(', '),
+                mostFrequentWinners: frequentWinners.join(', '),
               };
             })
             .sort((a, b) => a.majorName.localeCompare(b.majorName));
@@ -957,13 +1016,128 @@
           body.innerHTML = '';
           buildAllTimeMajorSummaryRows().forEach(row => {
             const tr = document.createElement('tr');
-            ['majorName', 'number', 'mostFrequentWinner', 'topFinishers'].forEach(field => {
+            ['majorName', 'number', 'mostFrequentWinners'].forEach(field => {
               const td = document.createElement('td');
               td.textContent = row[field];
               tr.appendChild(td);
             });
             body.appendChild(tr);
           });
+        }
+
+        function formatHostingDate(timestamp) {
+          return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+          }).format(new Date(timestamp * 1000));
+        }
+
+        function getHostingEventLabel(night) {
+          return night.isMajor === 'YES'
+            ? (night.majorName || 'Major Poker Night')
+            : 'Standard Poker Night';
+        }
+
+        function getAllPlayers() {
+          const players = new Set();
+          parsedData.rows.forEach(row => {
+            row.finishers.forEach(player => players.add(player));
+          });
+          return players;
+        }
+
+        function getHostedNights() {
+          return buildAllTimeNights()
+            .map(night => ({
+              ...night,
+              displayHost: formatHostName(night.host),
+            }))
+            .filter(night => night.displayHost);
+        }
+
+        function buildRecentHostingRows() {
+          return buildAllTimeNights()
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 10)
+            .map(night => ({
+              date: formatHostingDate(night.timestamp),
+              event: getHostingEventLabel(night),
+              host: formatHostName(night.host),
+            }));
+        }
+
+        function buildHostCountRows() {
+          const players = getAllPlayers();
+          const counts = new Map(Array.from(players, player => [player, 0]));
+
+          getHostedNights().forEach(night => {
+            if (players.has(night.displayHost)) {
+              counts.set(night.displayHost, (counts.get(night.displayHost) || 0) + 1);
+            }
+          });
+
+          return Array.from(counts.entries())
+            .sort(([playerA, countA], [playerB, countB]) => {
+              if (countA !== countB) return countB - countA;
+              return playerA.localeCompare(playerB);
+            })
+            .map(([player, count]) => ({ player, count }));
+        }
+
+        function buildHostingDroughtRows() {
+          const excludedPlayers = new Set(['Norman', 'Princess Peach']);
+          const players = Array.from(getAllPlayers())
+            .filter(player => !excludedPlayers.has(player));
+          const playerSet = new Set(players);
+          const allNights = buildAllTimeNights();
+          const latestEventNumber = Math.max(0, ...allNights.map(night => night.eventNumber));
+          const lastHostedByPlayer = new Map();
+
+          getHostedNights().forEach(night => {
+            if (playerSet.has(night.displayHost)) {
+              lastHostedByPlayer.set(night.displayHost, night);
+            }
+          });
+
+          return players
+            .map(player => {
+              const lastHostedNight = lastHostedByPlayer.get(player);
+              return {
+                player,
+                lastHosted: lastHostedNight ? formatHostingDate(lastHostedNight.timestamp) : 'Never',
+                eventsSince: lastHostedNight
+                  ? latestEventNumber - lastHostedNight.eventNumber
+                  : latestEventNumber,
+              };
+            })
+            .sort((a, b) => {
+              if (a.eventsSince !== b.eventsSince) return b.eventsSince - a.eventsSince;
+              return a.player.localeCompare(b.player);
+            })
+            .slice(0, 3);
+        }
+
+        function renderRows(tableId, rows, fields) {
+          const body = document.querySelector(`#${tableId} tbody`);
+          if (!body) return;
+
+          body.innerHTML = '';
+          rows.forEach(row => {
+            const tr = document.createElement('tr');
+            fields.forEach(field => {
+              const td = document.createElement('td');
+              td.textContent = row[field];
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
+        }
+
+        function renderHostingDataTables() {
+          renderRows('recent-hosting-table', buildRecentHostingRows(), ['date', 'event', 'host']);
+          renderRows('host-count-table', buildHostCountRows(), ['player', 'count']);
+          renderRows('hosting-drought-table', buildHostingDroughtRows(), ['player', 'lastHosted', 'eventsSince']);
         }
 
         function getTopWinners(rows, shouldCountRow, limit = 8) {
