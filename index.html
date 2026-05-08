@@ -119,6 +119,23 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    .standings-chart-disclosure {
+      margin: 1.5em auto 0;
+      max-width: 100%;
+      text-align: center;
+    }
+    .standings-chart-disclosure summary {
+      color: #0645ad;
+      cursor: pointer;
+      display: list-item;
+      font-weight: 700;
+      margin: 0 auto;
+      text-decoration: underline;
+      width: max-content;
+    }
+    .standings-chart-disclosure[open] summary {
+      margin-bottom: 0.75em;
+    }
     .standings-chart-list {
       margin-top: 1.5em;
     }
@@ -707,26 +724,29 @@
               </table>
             </div>
             ${showChampColumn ? `
-              <div id="all-time-chart-list" class="standings-chart-list">
-                <div class="standings-chart-block">
-                  <h2>Top 8 Cumulative Bracelets Over Time</h2>
-                  <div class="standings-chart-frame">
-                    <svg id="all-time-bracelet-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-bracelet-chart-title all-time-bracelet-chart-description">
-                      <title id="all-time-bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
-                      <desc id="all-time-bracelet-chart-description">A line chart will appear after the all-time standings load.</desc>
-                    </svg>
+              <details class="standings-chart-disclosure">
+                <summary>Show all-time plots</summary>
+                <div id="all-time-chart-list" class="standings-chart-list">
+                  <div class="standings-chart-block">
+                    <h2>Top 8 Cumulative Bracelets Over Time</h2>
+                    <div class="standings-chart-frame">
+                      <svg id="all-time-bracelet-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-bracelet-chart-title all-time-bracelet-chart-description">
+                        <title id="all-time-bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
+                        <desc id="all-time-bracelet-chart-description">A line chart will appear after the all-time standings load.</desc>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="standings-chart-block">
+                    <h2>Top 8 Cumulative Major Wins Over Time</h2>
+                    <div class="standings-chart-frame">
+                      <svg id="all-time-major-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-major-chart-title all-time-major-chart-description">
+                        <title id="all-time-major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
+                        <desc id="all-time-major-chart-description">A line chart will appear after the all-time standings load.</desc>
+                      </svg>
+                    </div>
                   </div>
                 </div>
-                <div class="standings-chart-block">
-                  <h2>Top 8 Cumulative Major Wins Over Time</h2>
-                  <div class="standings-chart-frame">
-                    <svg id="all-time-major-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-major-chart-title all-time-major-chart-description">
-                      <title id="all-time-major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
-                      <desc id="all-time-major-chart-description">A line chart will appear after the all-time standings load.</desc>
-                    </svg>
-                  </div>
-                </div>
-              </div>
+              </details>
             ` : ''}
           `;
           // Insert standingsSection after the filter section at the top of main
