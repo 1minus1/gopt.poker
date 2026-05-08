@@ -19,7 +19,7 @@ try {
 
     $upload = $_FILES['historyFile'] ?? null;
     if (!$upload || !is_array($upload) || intval($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        gopt_send_upload_result(['status' => 'error', 'message' => 'Choose a history text file to upload.'], 400);
+        gopt_send_upload_result(['status' => 'error', 'message' => 'Choose a GOPT data file to upload.'], 400);
         exit;
     }
 
@@ -30,14 +30,14 @@ try {
 
     $fileText = file_get_contents((string)$upload['tmp_name']);
     if ($fileText === false || $fileText === '') {
-        gopt_send_upload_result(['status' => 'error', 'message' => 'Choose a history text file to upload.'], 400);
+        gopt_send_upload_result(['status' => 'error', 'message' => 'Choose a GOPT data file to upload.'], 400);
         exit;
     }
 
     $result = gopt_with_history_lock(true, function () use ($fileText, $upload) {
         $filename = basename((string)($upload['name'] ?? ''));
         return gopt_save_history_upload($fileText, [
-            'label' => $_POST['label'] ?? ($filename ? 'Uploaded ' . $filename : 'Uploaded history file'),
+            'label' => $_POST['label'] ?? ($filename ? 'Uploaded ' . $filename : 'Uploaded data file'),
             'source' => $_POST['source'] ?? 'upload',
         ]);
     });

@@ -10,7 +10,7 @@ if ($method !== 'GET' && $method !== 'HEAD') {
 
 try {
     $zip = gopt_with_history_lock(true, fn() => gopt_build_history_versions_zip());
-    $filename = 'gopt-history-versions-' . gmdate('Y-m-d') . '.zip';
+    $filename = 'gopt-data-versions-' . gmdate('Y-m-d') . '.zip';
 
     header('Cache-Control: no-store');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -23,5 +23,5 @@ try {
 } catch (Throwable $error) {
     http_response_code(gopt_exception_status($error));
     header('Content-Type: text/plain; charset=utf-8');
-    echo $error->getMessage() ?: 'Could not build history archive.';
+    echo $error->getMessage() ?: 'Could not build data archive.';
 }

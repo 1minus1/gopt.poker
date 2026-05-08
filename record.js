@@ -6,7 +6,7 @@ const state = {
   downloadUrl: null,
   generatedText: '',
   headerLine: '',
-  historyRows: [],
+  dataRows: [],
   maxHistoryVersion: null,
   selectedPlayers: new Set(),
   seasons: [],
@@ -125,10 +125,6 @@ function clearSavedDraft() {
   state.draftActive = false;
 }
 
-function splitHistoryLine(line) {
-  return line.split(',').map(cell => cell.trim());
-}
-
 function getMostRecentSeason() {
   return state.seasons[0]?.season || String(new Date().getFullYear());
 }
@@ -148,7 +144,7 @@ function escapeHtml(value) {
 
 function ensureNoComma(value, label) {
   if (value.includes(',')) {
-    throw new Error(`${label} cannot contain commas because GOPThistory.txt is comma-separated.`);
+    throw new Error(`${label} cannot contain commas yet.`);
   }
 }
 
@@ -184,15 +180,13 @@ function findHistoryRowOnCalendarDate(timestamp) {
   const dateKey = localCalendarDateKey(timestamp);
   if (!dateKey) return null;
 
-  for (const row of state.historyRows) {
-    const cells = splitHistoryLine(row);
-    const rowTimestamp = Number(cells[2]);
-    if (Number.isFinite(rowTimestamp) && localCalendarDateKey(rowTimestamp) === dateKey) {
+  for (const row of state.dataRows) {
+    if (Number.isFinite(row.timestamp) && localCalendarDateKey(row.timestamp) === dateKey) {
       return {
-        isMajor: String(cells[3] || '').toUpperCase() === 'YES',
-        majorName: cells[4] || '',
-        season: cells[1] || '',
-        timestamp: rowTimestamp,
+        isMajor: row.isMajor === 'YES',
+        majorName: row.majorName || '',
+        season: row.season || '',
+        timestamp: row.timestamp,
       };
     }
   }
@@ -200,27 +194,26 @@ function findHistoryRowOnCalendarDate(timestamp) {
   return null;
 }
 
-function parseHistory(data) {
-  const lines = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
-  state.headerLine = lines[0] || '1';
+function parseCurrentData(data) {
+  const parsedData = GoptData.parseDataFile(data);
+  state.headerLine = String(parsedData.versionNumber || '1');
   const currentVersion = Number.parseInt(state.headerLine, 10);
   if (Number.isInteger(currentVersion)) {
     state.maxHistoryVersion = Math.max(state.maxHistoryVersion || currentVersion, currentVersion);
   }
-  state.historyRows = lines.slice(1).filter(line => line.trim());
+  state.dataRows = parsedData.rows;
 
   const seasonDates = new Map();
   const players = new Set();
-  state.historyRows.forEach(row => {
-    const cells = splitHistoryLine(row);
-    const season = cells[1];
-    const timestamp = Number(cells[2]);
+  state.dataRows.forEach(row => {
+    const season = row.season;
+    const timestamp = row.timestamp;
 
     if (season && Number.isFinite(timestamp)) {
       seasonDates.set(season, Math.max(seasonDates.get(season) || 0, timestamp));
     }
 
-    cells.slice(6).forEach(player => {
+    row.finishers.forEach(player => {
       if (player) players.add(player);
     });
   });
@@ -231,10 +224,9 @@ function parseHistory(data) {
 
   const latestSeason = getMostRecentSeason();
   const currentPlayers = new Set();
-  state.historyRows.forEach(row => {
-    const cells = splitHistoryLine(row);
-    if (cells[1] === latestSeason) {
-      cells.slice(6).forEach(player => {
+  state.dataRows.forEach(row => {
+    if (row.season === latestSeason) {
+      row.finishers.forEach(player => {
         if (player) currentPlayers.add(player);
       });
     }
@@ -359,7 +351,7 @@ function getSetupDetails() {
     const existingType = existingNight.isMajor
       ? `major "${existingNight.majorName}"`
       : 'standard night';
-    throw new Error(`The active history already has a ${existingType} on ${formatCalendarDate(existingNight.timestamp)}. Choose a different event date before locking details.`);
+    throw new Error(`The active data already has a ${existingType} on ${formatCalendarDate(existingNight.timestamp)}. Choose a different event date before locking details.`);
   }
 
   return {
@@ -529,31 +521,50 @@ function updateFinishState() {
     : 'All tournaments are complete.';
 }
 
-function buildHistoryText() {
+function buildDataV2Text() {
   const details = state.details;
   const isMajor = details.isMajor ? 'YES' : 'NO';
-  const majorName = details.isMajor ? details.majorName : 'NO';
+  const majorName = details.isMajor ? details.majorName : '';
   const pointsAtStake = formatNumber(details.pointsAtStake);
   const serverVersion = Number.parseInt(state.headerLine, 10);
   const baselineVersion = Number.isInteger(state.maxHistoryVersion)
     ? state.maxHistoryVersion
     : serverVersion;
-  const nextVersion = Number.isInteger(baselineVersion) ? String(baselineVersion + 1) : state.headerLine;
+  const nextVersion = Number.isInteger(baselineVersion) ? baselineVersion + 1 : Number(state.headerLine) || 1;
+  const dateText = GoptData.formatUsDateFromTimestamp(details.timestamp);
 
-  const newRows = state.tournaments.map(tournament => {
+  const newRows = state.tournaments.map((tournament, tournamentIndex) => {
     const finishOrder = [...tournament.outOrder].reverse();
-    return [
-      details.league,
-      details.season,
-      String(details.timestamp),
+    return {
+      historyVersion: nextVersion,
+      league: details.league,
+      season: details.season,
+      dateText,
+      timestamp: details.timestamp,
       isMajor,
       majorName,
+      host: '',
       pointsAtStake,
-      ...finishOrder,
-    ].join(',');
+      tournamentNumber: tournamentIndex + 1,
+      isOrdered: finishOrder.length <= 1 ? 'NO' : 'YES',
+      finishers: finishOrder,
+    };
   });
 
-  return [nextVersion, ...newRows, ...state.historyRows].join('\n') + '\n';
+  const existingRows = state.dataRows.map(row => ({
+    ...row,
+    historyVersion: nextVersion,
+  }));
+
+  return GoptData.serializeDataV2(
+    [
+      ...existingRows,
+      ...newRows,
+    ],
+    {
+      versionNumber: nextVersion,
+    }
+  );
 }
 
 function clearGeneratedFile() {
@@ -569,7 +580,7 @@ function clearGeneratedFile() {
 function setGeneratedFile(text) {
   clearGeneratedFile();
   state.generatedText = text;
-  state.downloadUrl = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  state.downloadUrl = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
   els.downloadHistory.href = state.downloadUrl;
   els.historyPreview.value = text;
   els.generatedSection.hidden = false;
@@ -700,7 +711,7 @@ async function createServerHistoryVersion(event) {
   clearMessage();
 
   if (!state.generatedText) {
-    showMessage('Finish the night before creating a server history version.', 'error');
+    showMessage('Finish the night before creating a server data version.', 'error');
     return;
   }
 
@@ -709,12 +720,12 @@ async function createServerHistoryVersion(event) {
   formData.append('password', els.replacePassword.value);
   formData.append('source', 'recorded-night');
   formData.append('label', 'Created from Record page');
-  formData.append('historyFile', new File([state.generatedText], 'GOPThistory.txt', { type: 'text/plain' }));
+  formData.append('historyFile', new File([state.generatedText], 'GOPTdatav2.csv', { type: 'text/csv' }));
 
   const { response, result } = await fetchUploadResult(formData);
 
   if (!response.ok || result.status !== 'success') {
-    showMessage(result.message || 'Server history update failed.', 'error');
+    showMessage(result.message || 'Server data update failed.', 'error');
     return;
   }
 
@@ -722,9 +733,9 @@ async function createServerHistoryVersion(event) {
   if (Number.isInteger(createdVersion)) {
     state.maxHistoryVersion = Math.max(state.maxHistoryVersion || createdVersion, createdVersion);
   }
-  parseHistory(state.generatedText);
+  parseCurrentData(state.generatedText);
   clearSavedDraft();
-  showMessage(`Current server history updated to version ${result.versionNumber}. The recorder is now using that version as its baseline.`, 'success');
+  showMessage(`Current server data updated to version ${result.versionNumber}. The recorder is now using that version as its baseline.`, 'success');
 }
 
 async function fetchUploadResult(formData, endpoints = ['upload-history', 'api/history-upload.php']) {
@@ -744,14 +755,10 @@ async function fetchUploadResult(formData, endpoints = ['upload-history', 'api/h
     }
   }
 
-  throw lastError || new Error('Server history update failed.');
+  throw lastError || new Error('Server data update failed.');
 }
 
-function looksLikeHistoryFile(text) {
-  return /^\d+\s*(\n|$)/.test(text.trim());
-}
-
-async function fetchHistoryText(sources = ['api/history/current', 'api/history-current.php', 'files/GOPThistory.txt']) {
+async function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
   let lastError = null;
 
   for (const source of sources) {
@@ -760,8 +767,8 @@ async function fetchHistoryText(sources = ['api/history/current', 'api/history-c
       if (!response.ok) throw new Error(`Could not load ${source}.`);
 
       const text = await response.text();
-      if (!looksLikeHistoryFile(text)) {
-        throw new Error(`${source} did not return a GOPThistory file.`);
+      if (!GoptData.looksLikeSupportedDataFile(text)) {
+        throw new Error(`${source} did not return a supported GOPT data file.`);
       }
 
       return text;
@@ -770,7 +777,7 @@ async function fetchHistoryText(sources = ['api/history/current', 'api/history-c
     }
   }
 
-  throw lastError || new Error('Could not load current history.');
+  throw lastError || new Error('Could not load current data.');
 }
 
 async function refreshMaxHistoryVersion() {
@@ -792,7 +799,7 @@ async function refreshMaxHistoryVersion() {
     versionNumbers.push(currentVersion);
   }
   if (!versionNumbers.length) {
-    throw new Error('Could not determine the latest history version number.');
+    throw new Error('Could not determine the latest data version number.');
   }
 
   state.maxHistoryVersion = Math.max(...versionNumbers);
@@ -815,8 +822,8 @@ async function fetchJson(endpoints) {
 }
 
 async function loadHistory() {
-  const text = await fetchHistoryText();
-  parseHistory(text);
+  const text = await fetchCurrentDataText();
+  parseCurrentData(text);
   await refreshMaxHistoryVersion();
   renderSeasonOptions();
   renderPlayers();
@@ -967,20 +974,20 @@ els.finishNight.addEventListener('click', () => {
   if (!allTournamentsComplete()) return;
   refreshMaxHistoryVersion()
     .then(() => {
-      const text = buildHistoryText();
+      const text = buildDataV2Text();
       setGeneratedFile(text);
       saveDraft();
       downloadGeneratedFile();
-      showMessage('History file generated and downloaded. Use Download GOPThistory.txt if you need another copy, or create a current server version after reviewing the output.', 'success');
+      showMessage('Data file generated and downloaded. Use Download GOPTdatav2.csv if you need another copy, or create a current server version after reviewing the output.', 'success');
     })
     .catch(error => {
-      showMessage(error.message || 'Could not determine the latest history version.', 'error');
+      showMessage(error.message || 'Could not determine the latest data version.', 'error');
     });
 });
 
 els.replaceForm.addEventListener('submit', event => {
   createServerHistoryVersion(event).catch(error => {
-    showMessage(error.message || 'Server history update failed.', 'error');
+    showMessage(error.message || 'Server data update failed.', 'error');
   });
 });
 

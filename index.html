@@ -238,12 +238,9 @@
       </section>
     </main>
   </div>
+  <script src="gopt-data.js"></script>
   <script>
-    function looksLikeHistoryFile(text) {
-      return /^\d+\s*(\n|$)/.test(text.trim());
-    }
-
-    function fetchHistoryText(sources = ['api/history/current', 'api/history-current.php', 'files/GOPThistory.txt']) {
+    function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
       const [source, ...remaining] = sources;
       return fetch(source, { cache: 'no-store' })
         .then(response => {
@@ -253,26 +250,33 @@
           return response.text();
         })
         .then(text => {
-          if (!looksLikeHistoryFile(text)) {
-            throw new Error(`${source} did not return a GOPThistory file.`);
+          if (!GoptData.looksLikeSupportedDataFile(text)) {
+            throw new Error(`${source} did not return a supported GOPT data file.`);
           }
           return text;
         })
         .catch(error => {
           if (!remaining.length) throw error;
-          return fetchHistoryText(remaining);
+          return fetchCurrentDataText(remaining);
         });
     }
 
-    fetchHistoryText()
+    function formatDisplayDate(timestamp) {
+      return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
+    fetchCurrentDataText()
       .then(data => {
-        const lines = data.trim().split('\n');
+        const parsedData = GoptData.parseDataFile(data, { normalizePlayerName: true });
         const table = document.getElementById('standings-table');
         const thead = table.querySelector('thead');
         const tbody = table.querySelector('tbody');
+        const playerColumnCount = Math.max(15, ...parsedData.rows.map(row => row.finishers.length));
 
-        // Skip the first line as version header
-        // Define new headers
         const headers = [
           "League",
           "Season",
@@ -280,13 +284,10 @@
           "IsMajor",
           "MajorName",
           "PointsAtStake",
-          "1", "2", "3", "4", "5",
-          "6", "7", "8", "9", "10",
-          "11", "12", "13", "14", "15"
+          "Player Count",
+          ...Array.from({ length: playerColumnCount }, (_, index) => String(index + 1))
         ];
-        headers.splice(6, 0, "Player Count");
 
-        // Create header row
         const headerRow = document.createElement('tr');
         headers.forEach(header => {
           const th = document.createElement('th');
@@ -296,44 +297,30 @@
         thead.appendChild(headerRow);
         if (headerRow.cells[0]) headerRow.cells[0].style.display = 'none';
 
-        for (let i = 1; i < lines.length; i++) {
+        parsedData.rows.forEach(dataRow => {
           const row = document.createElement('tr');
-          const cells = lines[i]
-            .split(',')
-            .map(c => (c.trim() === 'Mrs. Clay Matthews' ? 'Mrs. Clay' : c.trim()));
+          row.dataset.host = dataRow.host || '';
 
-          // Append fixed columns (up to 21)
-          for (let j = 0; j < 21 && j < cells.length; j++) {
+          const cells = [
+            dataRow.league,
+            dataRow.season,
+            formatDisplayDate(dataRow.timestamp),
+            dataRow.isMajor,
+            dataRow.isMajor === 'YES' ? dataRow.majorName : 'NO',
+            dataRow.pointsAtStake,
+            String(dataRow.finishers.length),
+            ...dataRow.finishers,
+          ];
+
+          cells.forEach(cell => {
             const td = document.createElement('td');
-            if (j === 2) {
-              const timestamp = parseInt(cells[2].trim(), 10) * 1000;
-              const date = new Date(timestamp);
-              td.textContent = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              });
-            } else {
-              td.textContent = cells[j].trim();
-            }
+            td.textContent = String(cell || '').trim();
             row.appendChild(td);
-          }
-
-          // Append additional player columns dynamically if present
-          for (let k = 21; k < cells.length; k++) {
-            const td = document.createElement('td');
-            td.textContent = cells[k].trim();
-            row.appendChild(td);
-          }
-
-          const playerCount = cells.slice(6).filter(name => name.trim() !== '').length;
-          const countTd = document.createElement('td');
-          countTd.textContent = playerCount;
-          row.insertBefore(countTd, row.children[6]);
+          });
 
           if (row.cells[0]) row.cells[0].style.display = 'none';
           tbody.appendChild(row);
-        }
+        });
 
         // After table is built, remove empty columns
         const allRows = [...table.rows];

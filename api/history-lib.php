@@ -34,6 +34,11 @@ function gopt_static_history_path(): string
     return gopt_site_root() . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'GOPThistory.txt';
 }
 
+function gopt_static_data_v2_path(): string
+{
+    return gopt_site_root() . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'GOPTdatav2.csv';
+}
+
 function gopt_history_version_dir(): string
 {
     return gopt_history_store_dir() . DIRECTORY_SEPARATOR . 'versions';
@@ -155,7 +160,7 @@ function gopt_read_index(): array
     $data = file_get_contents($path);
     $parsed = json_decode($data ?: '', true);
     if (!is_array($parsed) || !isset($parsed['versions']) || !is_array($parsed['versions'])) {
-        throw new GoptHistoryException('The history version index is invalid.', 500);
+        throw new GoptHistoryException('The data version index is invalid.', 500);
     }
 
     return [
@@ -172,11 +177,11 @@ function gopt_write_index(array $index): void
     $text = json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
 
     if (file_put_contents($tempPath, $text, LOCK_EX) === false) {
-        throw new GoptHistoryException('Could not write the history version index.', 500);
+        throw new GoptHistoryException('Could not write the data version index.', 500);
     }
     if (!rename($tempPath, $path)) {
         @unlink($tempPath);
-        throw new GoptHistoryException('Could not save the history version index.', 500);
+        throw new GoptHistoryException('Could not save the data version index.', 500);
     }
 }
 
@@ -188,9 +193,210 @@ function gopt_safe_slug(string $value): string
     return $slug !== '' ? $slug : 'history';
 }
 
-function gopt_validate_history(string $text): array
+function gopt_normalized_upload_text(string $text): string
 {
     $normalized = trim(str_replace(["\r\n", "\r"], "\n", $text));
+    $withoutBom = preg_replace('/^\xEF\xBB\xBF/', '', $normalized);
+    return $withoutBom === null ? $normalized : $withoutBom;
+}
+
+function gopt_csv_rows(string $text): array
+{
+    $lines = explode("\n", $text);
+    $rows = [];
+    foreach ($lines as $line) {
+        if (trim($line) === '') {
+            continue;
+        }
+        $rows[] = array_map('trim', str_getcsv($line));
+    }
+    return $rows;
+}
+
+function gopt_date_is_valid(string $dateText): bool
+{
+    if (!preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/', trim($dateText), $matches)) {
+        return false;
+    }
+
+    $year = intval($matches[3]);
+    if ($year < 100) {
+        $year += 2000;
+    }
+
+    return checkdate(intval($matches[1]), intval($matches[2]), $year);
+}
+
+function gopt_date_sort_value(string $dateText): int
+{
+    if (!preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/', trim($dateText), $matches)) {
+        return 0;
+    }
+
+    $year = intval($matches[3]);
+    if ($year < 100) {
+        $year += 2000;
+    }
+
+    return intval(sprintf('%04d%02d%02d', $year, intval($matches[1]), intval($matches[2])));
+}
+
+function gopt_looks_like_data_v2(string $text): bool
+{
+    $rows = gopt_csv_rows($text);
+    return strtolower((string)($rows[0][0] ?? '')) === 'history_version';
+}
+
+function gopt_validate_data_v2(string $text): array
+{
+    $normalized = gopt_normalized_upload_text($text);
+    $rows = gopt_csv_rows($normalized);
+    $errors = [];
+    $warnings = [];
+    $majorRows = 0;
+
+    if (!count($rows)) {
+        $errors[] = 'The CSV file is empty.';
+        return [
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'rowCount' => 0,
+            'majorRows' => 0,
+            'normalizedText' => "\n",
+            'versionNumber' => 0,
+            'format' => 'v2',
+        ];
+    }
+
+    $headers = array_map(fn($header) => strtolower(trim((string)$header)), $rows[0]);
+    $headerMap = [];
+    foreach ($headers as $index => $header) {
+        $headerMap[$header] = $index;
+    }
+
+    $required = [
+        'history_version',
+        'league',
+        'season',
+        'date',
+        'is_major',
+        'major_name',
+        'host',
+        'points_at_stake',
+        'tournament_number',
+        'is_ordered',
+    ];
+
+    foreach ($required as $column) {
+        if (!array_key_exists($column, $headerMap)) {
+            $errors[] = "The CSV file is missing {$column}.";
+        }
+    }
+
+    $finisherColumns = [];
+    foreach ($headers as $index => $header) {
+        if (preg_match('/^finisher_(\d+)$/', $header, $matches)) {
+            $finisherColumns[intval($matches[1])] = $index;
+        }
+    }
+    ksort($finisherColumns);
+    if (!count($finisherColumns)) {
+        $errors[] = 'The CSV file needs at least one finisher column.';
+    }
+
+    if (count($rows) < 2) {
+        $errors[] = 'The CSV file must include at least one tournament row.';
+    }
+
+    $versionNumbers = [];
+    $previousDate = 0;
+
+    for ($index = 1; $index < count($rows); $index += 1) {
+        $lineNumber = $index + 1;
+        $row = $rows[$index];
+        $cell = fn($name) => trim((string)($row[$headerMap[$name] ?? -1] ?? ''));
+
+        $versionRaw = $cell('history_version');
+        $version = filter_var($versionRaw, FILTER_VALIDATE_INT);
+        $league = $cell('league');
+        $season = $cell('season');
+        $dateText = $cell('date');
+        $isMajor = strtoupper($cell('is_major'));
+        $majorName = $cell('major_name');
+        $pointsRaw = $cell('points_at_stake');
+        $tournamentRaw = $cell('tournament_number');
+        $isOrdered = strtoupper($cell('is_ordered'));
+        $finishers = [];
+
+        foreach ($finisherColumns as $finisherIndex) {
+            $finisher = trim((string)($row[$finisherIndex] ?? ''));
+            if ($finisher !== '') {
+                $finishers[] = $finisher;
+            }
+        }
+
+        if ($version === false || $version <= 0) {
+            $errors[] = "Line {$lineNumber} has an invalid history version.";
+        } else {
+            $versionNumbers[] = intval($version);
+        }
+        if ($league === '') {
+            $errors[] = "Line {$lineNumber} is missing a league.";
+        }
+        if ($season === '') {
+            $errors[] = "Line {$lineNumber} is missing a season.";
+        }
+        if (!gopt_date_is_valid($dateText)) {
+            $errors[] = "Line {$lineNumber} has an invalid MM/DD/YYYY date.";
+        } else {
+            $sortValue = gopt_date_sort_value($dateText);
+            if ($previousDate && $sortValue < $previousDate) {
+                $warnings[] = "Line {$lineNumber} is older than the row above it.";
+            }
+            $previousDate = $sortValue;
+        }
+        if ($isMajor !== 'YES' && $isMajor !== 'NO') {
+            $errors[] = "Line {$lineNumber} is_major must be YES or NO.";
+        }
+        if ($isMajor === 'YES') {
+            $majorRows += 1;
+            if ($majorName === '') {
+                $errors[] = "Line {$lineNumber} is a major and needs a major name.";
+            }
+        }
+        if (!is_numeric($pointsRaw) || (float)$pointsRaw <= 0) {
+            $errors[] = "Line {$lineNumber} has invalid points at stake.";
+        }
+        if (filter_var($tournamentRaw, FILTER_VALIDATE_INT) === false || intval($tournamentRaw) <= 0) {
+            $errors[] = "Line {$lineNumber} has an invalid tournament number.";
+        }
+        if ($isOrdered !== 'YES' && $isOrdered !== 'NO') {
+            $errors[] = "Line {$lineNumber} is_ordered must be YES or NO.";
+        }
+        if (!count($finishers)) {
+            $errors[] = "Line {$lineNumber} needs at least one player result.";
+        }
+    }
+
+    $uniqueVersions = array_values(array_unique($versionNumbers));
+    if (count($uniqueVersions) > 1) {
+        $errors[] = 'All CSV rows must use the same history_version value.';
+    }
+
+    return [
+        'errors' => $errors,
+        'warnings' => $warnings,
+        'rowCount' => max(count($rows) - 1, 0),
+        'majorRows' => $majorRows,
+        'normalizedText' => $normalized . "\n",
+        'versionNumber' => count($uniqueVersions) ? intval($uniqueVersions[0]) : 0,
+        'format' => 'v2',
+    ];
+}
+
+function gopt_validate_legacy_history(string $text): array
+{
+    $normalized = gopt_normalized_upload_text($text);
     $lines = $normalized === '' ? [''] : explode("\n", $normalized);
     $errors = [];
     $warnings = [];
@@ -268,7 +474,18 @@ function gopt_validate_history(string $text): array
         'majorRows' => $majorRows,
         'normalizedText' => $normalized . "\n",
         'versionNumber' => intval($lines[0] ?? 0),
+        'format' => 'legacy',
     ];
+}
+
+function gopt_validate_history(string $text): array
+{
+    $normalized = gopt_normalized_upload_text($text);
+    if (gopt_looks_like_data_v2($normalized)) {
+        return gopt_validate_data_v2($normalized);
+    }
+
+    return gopt_validate_legacy_history($normalized);
 }
 
 function gopt_save_history_version(string $fileText, array $options = []): array
@@ -287,35 +504,37 @@ function gopt_save_history_version(string $fileText, array $options = []): array
     $index = gopt_read_index();
     foreach ($index['versions'] as $version) {
         if (intval($version['versionNumber'] ?? 0) === intval($validation['versionNumber'])) {
-            throw new GoptHistoryException('History version ' . $validation['versionNumber'] . ' already exists.', 409);
+            throw new GoptHistoryException('Data version ' . $validation['versionNumber'] . ' already exists.', 409);
         }
     }
 
     $source = gopt_safe_slug((string)($options['source'] ?? 'upload'));
     $createdAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z');
     $id = preg_replace('/[:.]/', '-', $createdAt) . '-' . bin2hex(random_bytes(4));
-    $filename = $id . '-' . $source . '-v' . $validation['versionNumber'] . '.txt';
+    $extension = ($validation['format'] ?? 'legacy') === 'v2' ? '.csv' : '.txt';
+    $filename = $id . '-' . $source . '-v' . $validation['versionNumber'] . $extension;
     $filePath = gopt_history_version_dir() . DIRECTORY_SEPARATOR . $filename;
     $tempPath = $filePath . '.tmp';
     $normalizedText = $validation['normalizedText'];
 
     if (file_put_contents($tempPath, $normalizedText, LOCK_EX) === false) {
-        throw new GoptHistoryException('Could not write the history version file.', 500);
+        throw new GoptHistoryException('Could not write the data version file.', 500);
     }
     if (!rename($tempPath, $filePath)) {
         @unlink($tempPath);
-        throw new GoptHistoryException('Could not save the history version file.', 500);
+        throw new GoptHistoryException('Could not save the data version file.', 500);
     }
 
     $metadata = [
         'id' => $id,
         'createdAt' => $createdAt,
         'filename' => $filename,
-        'label' => $options['label'] ?? 'Uploaded history file',
+        'label' => $options['label'] ?? 'Uploaded data file',
         'source' => $source,
         'versionNumber' => $validation['versionNumber'],
         'rowCount' => $validation['rowCount'],
         'majorRows' => $validation['majorRows'],
+        'format' => $validation['format'] ?? 'legacy',
         'sha256' => hash('sha256', $normalizedText),
     ];
 
@@ -351,15 +570,23 @@ function gopt_ensure_history_store(): array
         return $index;
     }
 
-    $seedPath = gopt_static_history_path();
+    $seedPath = gopt_static_data_v2_path();
+    $seedLabel = 'Imported from data/GOPTdatav2.csv';
+    $seedSource = 'seed-static-data-v2';
+    if (!is_file($seedPath)) {
+        $seedPath = gopt_static_history_path();
+        $seedLabel = 'Imported from files/GOPThistory.txt';
+        $seedSource = 'seed-static-file';
+    }
+
     if (!is_file($seedPath)) {
         throw new GoptHistoryException('No seed history file was found.', 500);
     }
 
     $seedText = file_get_contents($seedPath);
     $seeded = gopt_save_history_version($seedText ?: '', [
-        'label' => 'Imported from files/GOPThistory.txt',
-        'source' => 'seed-static-file',
+        'label' => $seedLabel,
+        'source' => $seedSource,
         'setCurrent' => true,
         'skipEnsure' => true,
     ]);
@@ -408,13 +635,13 @@ function gopt_get_current_history(): array
     }
 
     if (!$current) {
-        throw new GoptHistoryException('No current history version is available.', 500);
+        throw new GoptHistoryException('No current data version is available.', 500);
     }
 
     $path = gopt_history_version_dir() . DIRECTORY_SEPARATOR . $current['filename'];
     $text = file_get_contents($path);
     if ($text === false) {
-        throw new GoptHistoryException('Could not read the current history version.', 500);
+        throw new GoptHistoryException('Could not read the current data version.', 500);
     }
 
     return ['text' => $text, 'metadata' => $current, 'index' => $index];
@@ -432,7 +659,7 @@ function gopt_revert_history_version(string $versionId): array
     }
 
     if (!$target) {
-        throw new GoptHistoryException('Selected history version was not found.', 404);
+        throw new GoptHistoryException('Selected data version was not found.', 404);
     }
 
     $index['currentId'] = $target['id'];
@@ -452,16 +679,16 @@ function gopt_delete_history_version(string $versionId): array
     }
 
     if (!$target) {
-        throw new GoptHistoryException('Selected history version was not found.', 404);
+        throw new GoptHistoryException('Selected data version was not found.', 404);
     }
 
     $oldest = gopt_get_oldest_history_version($index);
     if (($target['id'] ?? null) === ($oldest['id'] ?? null)) {
-        throw new GoptHistoryException('The oldest history version cannot be deleted.', 409);
+        throw new GoptHistoryException('The oldest data version cannot be deleted.', 409);
     }
 
     if (($target['id'] ?? null) === ($index['currentId'] ?? null)) {
-        throw new GoptHistoryException('The current history version cannot be deleted. Restore another version first.', 409);
+        throw new GoptHistoryException('The current data version cannot be deleted. Restore another version first.', 409);
     }
 
     $index['versions'] = array_values(array_filter(
@@ -472,7 +699,7 @@ function gopt_delete_history_version(string $versionId): array
 
     $path = gopt_history_version_dir() . DIRECTORY_SEPARATOR . $target['filename'];
     if (is_file($path) && !unlink($path)) {
-        throw new GoptHistoryException('The version was removed from the index, but its text file could not be deleted.', 500);
+        throw new GoptHistoryException('The version was removed from the index, but its data file could not be deleted.', 500);
     }
 
     return ['metadata' => $target, 'index' => $index];
@@ -482,7 +709,8 @@ function gopt_history_archive_filename(array $version, array $index, int $positi
 {
     $timestamp = preg_replace('/[^0-9TZ-]/', '-', str_replace([':', '.'], '-', (string)($version['createdAt'] ?? '')));
     $current = ($version['id'] ?? null) === ($index['currentId'] ?? null) ? '-current' : '';
-    return str_pad((string)($position + 1), 3, '0', STR_PAD_LEFT) . '-' . $timestamp . '-v' . $version['versionNumber'] . $current . '.txt';
+    $extension = ($version['format'] ?? 'legacy') === 'v2' ? '.csv' : '.txt';
+    return str_pad((string)($position + 1), 3, '0', STR_PAD_LEFT) . '-' . $timestamp . '-v' . $version['versionNumber'] . $current . $extension;
 }
 
 function gopt_dos_date_time(string $value): array
@@ -576,7 +804,7 @@ function gopt_build_history_versions_zip(): string
         $path = gopt_history_version_dir() . DIRECTORY_SEPARATOR . $version['filename'];
         $text = file_get_contents($path);
         if ($text === false) {
-            throw new GoptHistoryException('Could not read one of the history versions.', 500);
+            throw new GoptHistoryException('Could not read one of the data versions.', 500);
         }
 
         $entries[] = [
@@ -592,7 +820,7 @@ function gopt_build_history_versions_zip(): string
 function gopt_save_history_upload(string $fileText, array $options = []): array
 {
     return gopt_save_history_version($fileText, [
-        'label' => $options['label'] ?? 'Uploaded history file',
+        'label' => $options['label'] ?? 'Uploaded data file',
         'source' => $options['source'] ?? 'upload',
         'setCurrent' => true,
     ]);

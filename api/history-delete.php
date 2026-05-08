@@ -20,7 +20,7 @@ try {
     }
 
     if ($versionId === '') {
-        gopt_send_json(400, ['status' => 'error', 'message' => 'Choose a history version to delete.']);
+        gopt_send_json(400, ['status' => 'error', 'message' => 'Choose a data version to delete.']);
         exit;
     }
 

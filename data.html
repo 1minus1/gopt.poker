@@ -121,13 +121,13 @@
   </header>
 
   <main>
-    <p id="data-message" class="data-message">Loading current history...</p>
+    <p id="data-message" class="data-message">Loading current data...</p>
     <section class="chart-section" aria-labelledby="bracelet-chart-heading">
       <h2 id="bracelet-chart-heading">Top 8 Cumulative Bracelets Over Time</h2>
       <div class="chart-frame">
         <svg id="bracelet-chart" class="data-chart" viewBox="0 0 900 540" role="img" aria-labelledby="bracelet-chart-title bracelet-chart-description">
           <title id="bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
-          <desc id="bracelet-chart-description">A line chart will appear after the current history file loads.</desc>
+          <desc id="bracelet-chart-description">A line chart will appear after the current data file loads.</desc>
         </svg>
       </div>
     </section>
@@ -136,7 +136,7 @@
       <div class="chart-frame">
         <svg id="major-chart" class="data-chart" viewBox="0 0 900 540" role="img" aria-labelledby="major-chart-title major-chart-description">
           <title id="major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
-          <desc id="major-chart-description">A line chart will appear after the current history file loads.</desc>
+          <desc id="major-chart-description">A line chart will appear after the current data file loads.</desc>
         </svg>
       </div>
     </section>
@@ -157,12 +157,9 @@
     </div>
   </main>
 
+  <script src="gopt-data.js"></script>
   <script>
-    function looksLikeHistoryFile(text) {
-      return /^\d+\s*(\n|$)/.test(text.trim());
-    }
-
-    function fetchHistoryText(sources = ['api/history/current', 'api/history-current.php', 'files/GOPThistory.txt']) {
+    function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
       const [source, ...remaining] = sources;
       return fetch(source, { cache: 'no-store' })
         .then(response => {
@@ -172,22 +169,15 @@
           return response.text();
         })
         .then(text => {
-          if (!looksLikeHistoryFile(text)) {
-            throw new Error(`${source} did not return a GOPThistory file.`);
+          if (!GoptData.looksLikeSupportedDataFile(text)) {
+            throw new Error(`${source} did not return a supported GOPT data file.`);
           }
           return text;
         })
         .catch(error => {
           if (!remaining.length) throw error;
-          return fetchHistoryText(remaining);
+          return fetchCurrentDataText(remaining);
         });
-    }
-
-    function splitHistoryLine(line) {
-      return line.split(',').map(cell => {
-        const value = cell.trim();
-        return value === 'Mrs. Clay Matthews' ? 'Mrs. Clay' : value;
-      });
     }
 
     function formatDate(timestamp) {
@@ -198,81 +188,16 @@
       }).format(new Date(timestamp * 1000));
     }
 
-    function calculatePoints(pointsAtStake, isMajor, playerCount, place) {
-      const base = 0.5 * playerCount - 0.5;
-      let points = pointsAtStake * (playerCount - place) / base;
-      if (isMajor !== 'YES') {
-        points /= 2;
-      }
-      return Number.isFinite(points) ? points : 0;
-    }
-
-    function compareNightResults(a, b) {
-      const roundedPointsA = parseFloat(a.points.toFixed(2));
-      const roundedPointsB = parseFloat(b.points.toFixed(2));
-      if (roundedPointsA !== roundedPointsB) {
-        return roundedPointsB - roundedPointsA;
-      }
-
-      return a.finalPlace - b.finalPlace;
-    }
-
-    function buildNightRows(historyText) {
-      const nights = new Map();
-      historyText.trim().split('\n').slice(1).forEach(line => {
-        const cells = splitHistoryLine(line);
-        const season = cells[1];
-        const timestamp = Number.parseInt(cells[2], 10);
-        const isMajor = String(cells[3] || '').toUpperCase();
-        const majorName = isMajor === 'YES' ? cells[4] || '' : '';
-        const pointsAtStake = Number.parseFloat(cells[5]);
-        const players = cells.slice(6).filter(Boolean);
-        const playerCount = players.length;
-        if (!season || !Number.isInteger(timestamp) || !playerCount) return;
-
-        const key = `${season}|${timestamp}`;
-        if (!nights.has(key)) {
-          nights.set(key, {
-            season,
-            timestamp,
-            isMajor,
-            majorName,
-            players: new Map(),
-          });
-        }
-
-        const night = nights.get(key);
-        if (isMajor === 'YES') {
-          night.isMajor = 'YES';
-          night.majorName = majorName;
-        }
-
-        players.forEach((player, index) => {
-          const place = index + 1;
-          if (!night.players.has(player)) {
-            night.players.set(player, { player, points: 0, finalPlace: place });
-          }
-
-          const result = night.players.get(player);
-          result.points += calculatePoints(pointsAtStake, isMajor, playerCount, place);
-          result.finalPlace = place;
-        });
-      });
-
-      return Array.from(nights.values())
-        .sort((a, b) => a.timestamp - b.timestamp)
-        .map((night, index) => {
-          const winner = Array.from(night.players.values()).sort(compareNightResults)[0]?.player || '';
-          return {
-            eventNumber: index + 1,
-            date: formatDate(night.timestamp),
-            timestamp: night.timestamp,
-            season: night.season,
-            isMajor: night.isMajor,
-            majorName: night.majorName,
-            winner,
-          };
-        });
+    function buildNightRows(dataRows) {
+      return GoptData.buildNights(dataRows).map(night => ({
+        eventNumber: night.eventNumber,
+        date: formatDate(night.timestamp),
+        timestamp: night.timestamp,
+        season: night.season,
+        isMajor: night.isMajor,
+        majorName: night.majorName,
+        winner: night.winner,
+      }));
     }
 
     function renderNightRows(rows) {
@@ -591,9 +516,10 @@
       });
     }
 
-    fetchHistoryText()
-      .then(historyText => {
-        const rows = buildNightRows(historyText);
+    fetchCurrentDataText()
+      .then(dataText => {
+        const parsedData = GoptData.parseDataFile(dataText, { normalizePlayerName: true });
+        const rows = buildNightRows(parsedData.rows);
         const braceletSeries = buildBraceletSeries(rows);
         const majorSeries = buildMajorSeries(rows);
         const getPlayerColor = buildPlayerColorMap(braceletSeries, majorSeries);
@@ -602,7 +528,7 @@
         renderNightRows(rows);
       })
       .catch(error => {
-        document.getElementById('data-message').textContent = 'Failed to load current history.';
+        document.getElementById('data-message').textContent = 'Failed to load current data.';
         console.error(error);
       });
   </script>

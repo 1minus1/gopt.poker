@@ -21,6 +21,6 @@ try {
 } catch (Throwable $error) {
     gopt_send_json(gopt_exception_status($error), [
         'status' => 'error',
-        'message' => $error->getMessage() ?: 'Could not list history versions.',
+        'message' => $error->getMessage() ?: 'Could not list data versions.',
     ]);
 }

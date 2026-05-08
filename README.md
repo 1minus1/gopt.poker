@@ -14,19 +14,19 @@ Then open:
 http://localhost:8000/index.html
 ```
 
-The standings, Admin, and Record pages use clean history API routes that DreamHost rewrites to PHP endpoints in `api/` for current history, version management, authenticated uploads, restore/delete actions, and zip archive downloads. This is intended to work on a shared DreamHost account without Node.
+The standings, Admin, and Record pages use clean history API routes that DreamHost rewrites to PHP endpoints in `api/` for current data, version management, authenticated uploads, restore/delete actions, and zip archive downloads. This is intended to work on a shared DreamHost account without Node.
 
-Successful uploads create a new version in the history store and move the current-history pointer to that version. By default the PHP backend stores versions in a sibling directory outside the web root:
+Successful uploads create a new version in the history store and move the current-data pointer to that version. By default the PHP backend stores versions in a sibling directory outside the web root:
 
 ```text
 ../gopt-history-store/
 ```
 
-The first request imports the known static `files/GOPThistory.txt` into that version store. The static file is kept in place as a seed/baseline, but the live pages load from the PHP history store after that.
+The first request imports the known static `data/GOPTdatav2.csv` into that version store. The older `files/GOPThistory.txt` is kept in place as a legacy seed/baseline, and the live pages can still read either format during the transition.
 
 The built-in admin password is stored as a hash in `api/admin-config.php`; set `GOPT_ADMIN_USERNAME` and `GOPT_ADMIN_PASSWORD_HASH` in the server environment if you want to override the defaults without editing code. Use HTTPS when this is deployed publicly, because Admin and Record submit credentials.
 
-The `record.html` page records a currently played night. It downloads a generated history file when results are finished and can create a new current server history version after the same admin authentication used by Admin.
+The `record.html` page records a currently played night. It downloads a generated `GOPTdatav2.csv` file when results are finished and can create a new current server data version after the same admin authentication used by Admin.
 
 Local-only cleanup already applied:
 
