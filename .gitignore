@@ -4,6 +4,8 @@ gopt-history-store/
 .history-backups/
 .history-store/
 *.bkp
+~$*.xls
+~$*.xlsx
 !files/GOPTpayouttechnote.pdf
 .admin.local.php
 .deploy.local.json

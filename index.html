@@ -323,6 +323,7 @@
         parsedData.rows.forEach(dataRow => {
           const row = document.createElement('tr');
           row.dataset.host = dataRow.host || '';
+          row.dataset.isOrdered = dataRow.isOrdered || 'YES';
 
           const cells = [
             dataRow.league,
@@ -424,24 +425,34 @@
             const pointsAtStake = row.cells[5]?.textContent.trim();
             const playerCount = row.cells[6]?.textContent.trim();
             const host = row.dataset.host || '';
+            const isOrdered = row.dataset.isOrdered || 'YES';
 
             for (let i = 7; i < row.cells.length; i++) {
               const player = row.cells[i]?.textContent.trim();
               if (player) {
                 const place = i - 6;
-                const n = parseInt(playerCount);
-                const B = parseFloat(pointsAtStake);
-                const base = 0.5 * n - 0.5;
-                let points = B * (n - place) / base;
-                if (isMajor.trim().toUpperCase() === 'NO') {
-                  points /= 2;
-                }
-                if (isNaN(points)) {
-                  points = 0;
+                const placeLabel = isOrdered === 'NO' && place !== 1 ? '' : String(place);
+                let points;
+                if (isOrdered === 'NO') {
+                  points = place === 1
+                    ? (isMajor.trim().toUpperCase() === 'YES' ? 80 : 40)
+                    : 0;
+                } else {
+                  const n = parseInt(playerCount);
+                  const B = parseFloat(pointsAtStake);
+                  const base = 0.5 * n - 0.5;
+                  points = B * (n - place) / base;
+                  if (isMajor.trim().toUpperCase() === 'NO') {
+                    points /= 2;
+                  }
+                  if (isNaN(points)) {
+                    points = 0;
+                  }
                 }
 
                 const tr = document.createElement('tr');
                 tr.dataset.host = host;
+                tr.dataset.isOrdered = isOrdered;
                 tr.innerHTML = `
                   <td>${date}</td>
                   <td>${season}</td>
@@ -449,7 +460,7 @@
                   <td>${majorName}</td>
                   <td>${pointsAtStake}</td>
                   <td>${playerCount}</td>
-                  <td>${place}</td>
+                  <td>${placeLabel}</td>
                   <td>${player}</td>
                   <td>${points.toFixed(4)}</td>`;
                 stackedBody.appendChild(tr);
@@ -565,7 +576,12 @@
               }
               const lastPlaceA = parseInt(a.places[a.places.length - 1], 10);
               const lastPlaceB = parseInt(b.places[b.places.length - 1], 10);
-              return lastPlaceA - lastPlaceB;
+              const normalizedPlaceA = Number.isNaN(lastPlaceA) ? Number.POSITIVE_INFINITY : lastPlaceA;
+              const normalizedPlaceB = Number.isNaN(lastPlaceB) ? Number.POSITIVE_INFINITY : lastPlaceB;
+              if (normalizedPlaceA !== normalizedPlaceB) {
+                return normalizedPlaceA - normalizedPlaceB;
+              }
+              return a.player.localeCompare(b.player);
             });
 
           const summarySection = document.createElement('section');
@@ -625,6 +641,7 @@
             group.entries.forEach((entry, index) => {
               const tr = document.createElement('tr');
               tr.dataset.isMajor = entry.isMajor;
+              tr.dataset.player = entry.player;
               tr.dataset.season = entry.season;
               tr.appendChild(createSummaryCell('Date', formatSummaryDate(entry.date), 'summary-date-column'));
 
@@ -661,7 +678,7 @@
           const showChampColumn = seasonFilterValue === "All Time";
 
           rows.forEach(row => {
-            const player = row.cells[1]?.textContent.trim();
+            const player = row.dataset.player || row.cells[1]?.textContent.trim();
             const points = parseFloat(row.cells[2]?.textContent.trim());
             const bracelet = row.cells[5]?.textContent.trim() === '1' ? 1 : 0;
             const isMajor = row.dataset.isMajor?.trim().toUpperCase() === 'YES';
@@ -810,6 +827,24 @@
                   </div>
                 </div>
               </details>
+              <details class="all-time-disclosure">
+                <summary>Show attendance</summary>
+                <div class="attendance-summary">
+                  <h2>Attendance</h2>
+                  <div class="table-container">
+                    <table id="all-time-attendance-table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Nights</th>
+                          <th>Majors</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
               <details class="standings-chart-disclosure">
                 <summary>Show all-time plots</summary>
                 <div id="all-time-chart-list" class="standings-chart-list">
@@ -885,6 +920,7 @@
           if (showChampColumn) {
             renderAllTimeMajorSummaryTable();
             renderHostingDataTables();
+            renderAllTimeAttendanceTable();
             renderAllTimeCharts();
           }
         }
@@ -1138,6 +1174,33 @@
           renderRows('recent-hosting-table', buildRecentHostingRows(), ['date', 'event', 'host']);
           renderRows('host-count-table', buildHostCountRows(), ['player', 'count']);
           renderRows('hosting-drought-table', buildHostingDroughtRows(), ['player', 'lastHosted', 'eventsSince']);
+        }
+
+        function buildAllTimeAttendanceRows() {
+          const attendance = {};
+
+          buildAllTimeNights().forEach(night => {
+            night.players.forEach((playerResult, player) => {
+              if (!attendance[player]) {
+                attendance[player] = { player, nights: 0, majors: 0 };
+              }
+              attendance[player].nights += 1;
+              if (night.isMajor === 'YES') {
+                attendance[player].majors += 1;
+              }
+            });
+          });
+
+          return Object.values(attendance)
+            .sort((a, b) => {
+              if (a.nights !== b.nights) return b.nights - a.nights;
+              if (a.majors !== b.majors) return b.majors - a.majors;
+              return a.player.localeCompare(b.player);
+            });
+        }
+
+        function renderAllTimeAttendanceTable() {
+          renderRows('all-time-attendance-table', buildAllTimeAttendanceRows(), ['player', 'nights', 'majors']);
         }
 
         function getTopWinners(rows, shouldCountRow, limit = 8) {

@@ -244,13 +244,24 @@
     return Number.isFinite(points) ? points : 0;
   }
 
+  function calculateRowPoints(row, playerCount, place) {
+    if (row.isOrdered === 'NO') {
+      if (place !== 1) return 0;
+      return row.isMajor === 'YES' ? 80 : 40;
+    }
+
+    return calculatePoints(row.pointsAtStake, row.isMajor, playerCount, place);
+  }
+
   function compareNightResults(a, b) {
     const roundedPointsA = parseFloat(a.points.toFixed(2));
     const roundedPointsB = parseFloat(b.points.toFixed(2));
     if (roundedPointsA !== roundedPointsB) {
       return roundedPointsB - roundedPointsA;
     }
-    return a.finalPlace - b.finalPlace;
+    const finalPlaceA = Number.isFinite(a.finalPlace) ? a.finalPlace : Number.POSITIVE_INFINITY;
+    const finalPlaceB = Number.isFinite(b.finalPlace) ? b.finalPlace : Number.POSITIVE_INFINITY;
+    return finalPlaceA - finalPlaceB;
   }
 
   function buildNights(rows) {
@@ -286,14 +297,22 @@
 
       row.finishers.forEach((player, index) => {
         const place = index + 1;
+        const placeLabel = row.isOrdered === 'NO' && place !== 1 ? '' : String(place);
         if (!night.players.has(player)) {
-          night.players.set(player, { player, points: 0, places: [], finalPlace: place });
+          night.players.set(player, {
+            player,
+            points: 0,
+            places: [],
+            finalPlace: placeLabel ? place : Number.POSITIVE_INFINITY,
+          });
         }
 
         const result = night.players.get(player);
-        result.points += calculatePoints(row.pointsAtStake, row.isMajor, row.finishers.length, place);
-        result.places.push(String(place));
-        result.finalPlace = place;
+        result.points += calculateRowPoints(row, row.finishers.length, place);
+        if (placeLabel) {
+          result.places.push(placeLabel);
+          result.finalPlace = place;
+        }
       });
     });
 

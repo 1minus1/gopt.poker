@@ -10,7 +10,10 @@
 - Dates use `MM/DD/YYYY`.
 - Dates come from `files/hosts.csv`, which is treated as the canonical date source after chronological matching to history nights.
 - Finishers are stored in ordered columns: `finisher_1`, `finisher_2`, etc.
-- `is_ordered` is `NO` when a tournament row has only one listed finisher, and `YES` otherwise.
+- `is_ordered` is `NO` when the original source only identified the winner and the remaining listed players should be treated as attendance only.
+- For `is_ordered=NO` rows, `finisher_1` is the winner; later `finisher_*` values are attendees with unknown finish order.
+- Unordered standard-night winners receive 40 points. Unordered major winners receive 80 points. Other attendees on unordered rows receive 0 points.
+- Ordered rows keep the standard points formula and finish-order behavior.
 - `history_version` preserves the first-line version value from `files/GOPThistory.txt`.
 
 ## Columns
@@ -25,7 +28,7 @@
 - `points_at_stake`: points-at-stake value from the original history row.
 - `tournament_number`: 1-based tournament number within a poker night.
 - `is_ordered`: whether the finisher list should be treated as complete ordered finishes.
-- `finisher_1` through `finisher_20`: ordered finisher list from the original history row, with blank cells reserved for future larger games.
+- `finisher_1` through `finisher_20`: ordered finisher list for ordered rows; winner plus attendance for unordered rows; blank cells reserved for future larger games.
 
 ## Current Reviewed Date Conflicts
 

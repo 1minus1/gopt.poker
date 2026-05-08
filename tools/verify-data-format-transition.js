@@ -48,11 +48,19 @@ function compareRows(label, legacyRows, v2Rows) {
   const v2ByKey = new Map(v2Rows.map(row => [row.key, row]));
   const keys = new Set([...legacyByKey.keys(), ...v2ByKey.keys()]);
 
+  function isZeroOnly(row) {
+    return row && row.points === 0 && row.bracelets === 0 && row.majorBracelets === 0;
+  }
+
   [...keys].sort().forEach(key => {
     const legacy = legacyByKey.get(key);
     const v2 = v2ByKey.get(key);
 
     if (!legacy || !v2) {
+      const existing = legacy || v2;
+      if (isZeroOnly(existing)) {
+        return;
+      }
       errors.push(`${label}: ${key} exists only in ${legacy ? 'legacy' : 'v2'}.`);
       return;
     }
