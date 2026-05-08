@@ -677,8 +677,12 @@
           const rows = document.querySelectorAll('.summary-table tbody tr');
           const showChampColumn = seasonFilterValue === "All Time";
 
+          function getSummaryRowPlayer(row) {
+            return row.dataset.player || row.cells[1]?.textContent.trim() || '';
+          }
+
           rows.forEach(row => {
-            const player = row.dataset.player || row.cells[1]?.textContent.trim();
+            const player = getSummaryRowPlayer(row);
             const points = parseFloat(row.cells[2]?.textContent.trim());
             const bracelet = row.cells[5]?.textContent.trim() === '1' ? 1 : 0;
             const isMajor = row.dataset.isMajor?.trim().toUpperCase() === 'YES';
@@ -697,7 +701,7 @@
             const seasonTotals = {};
             rows.forEach(row => {
               const season = row.dataset.season;
-              const player = row.cells[1]?.textContent.trim();
+              const player = getSummaryRowPlayer(row);
               const points = parseFloat(row.cells[2]?.textContent.trim());
               if (!season || season === currentSeason || !player || !Number.isFinite(points)) return;
 
