@@ -1351,8 +1351,7 @@
           const yScale = total => margin.top + plotHeight - (total / yMax) * plotHeight;
 
           const gridGroup = createSvgElement('g');
-          const yStep = Math.max(1, Math.ceil(yMax / 5));
-          for (let value = 0; value <= yMax; value += yStep) {
+          for (let value = 0; value <= yMax; value += 5) {
             const y = yScale(value);
             gridGroup.appendChild(createSvgElement('line', {
               x1: margin.left,
