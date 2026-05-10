@@ -193,6 +193,9 @@
       stroke-width: 3;
       vector-effect: non-scaling-stroke;
     }
+    .chart-bar {
+      vector-effect: non-scaling-stroke;
+    }
     .chart-point {
       stroke: #fff;
       stroke-width: 1.5;
@@ -776,8 +779,40 @@
               </table>
             </div>
             ${showChampColumn ? `
+              <details class="standings-chart-disclosure">
+                <summary>Show all-time plots</summary>
+                <div id="all-time-chart-list" class="standings-chart-list">
+                  <div class="standings-chart-block">
+                    <h2>Top 8 Cumulative Bracelets Over Time</h2>
+                    <div class="standings-chart-frame">
+                      <svg id="all-time-bracelet-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-bracelet-chart-title all-time-bracelet-chart-description">
+                        <title id="all-time-bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
+                        <desc id="all-time-bracelet-chart-description">A line chart will appear after the all-time standings load.</desc>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="standings-chart-block">
+                    <h2>Top 8 Cumulative Major Wins Over Time</h2>
+                    <div class="standings-chart-frame">
+                      <svg id="all-time-major-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-major-chart-title all-time-major-chart-description">
+                        <title id="all-time-major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
+                        <desc id="all-time-major-chart-description">A line chart will appear after the all-time standings load.</desc>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="standings-chart-block">
+                    <h2>All-Time Bracelet Win Rate</h2>
+                    <div class="standings-chart-frame">
+                      <svg id="all-time-win-rate-chart" class="standings-chart" viewBox="0 0 900 620" role="img" aria-labelledby="all-time-win-rate-chart-title all-time-win-rate-chart-description">
+                        <title id="all-time-win-rate-chart-title">All-time bracelet win rate by player</title>
+                        <desc id="all-time-win-rate-chart-description">A bar chart will appear after the all-time standings load.</desc>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </details>
               <details class="all-time-disclosure">
-                <summary>Show major summary</summary>
+                <summary>Show all-time Major Summary</summary>
                 <div class="all-time-major-summary">
                   <h2>Major Summary</h2>
                   <div class="table-container">
@@ -787,6 +822,24 @@
                           <th>Major Name</th>
                           <th>Number</th>
                           <th>Most Frequent Winners</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
+              <details class="all-time-disclosure">
+                <summary>Show attendance summary</summary>
+                <div class="attendance-summary">
+                  <h2>Attendance</h2>
+                  <div class="table-container">
+                    <table id="all-time-attendance-table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Nights</th>
+                          <th>Majors</th>
                         </tr>
                       </thead>
                       <tbody></tbody>
@@ -835,47 +888,6 @@
                       </thead>
                       <tbody></tbody>
                     </table>
-                  </div>
-                </div>
-              </details>
-              <details class="all-time-disclosure">
-                <summary>Show attendance</summary>
-                <div class="attendance-summary">
-                  <h2>Attendance</h2>
-                  <div class="table-container">
-                    <table id="all-time-attendance-table">
-                      <thead>
-                        <tr>
-                          <th>Player</th>
-                          <th>Nights</th>
-                          <th>Majors</th>
-                        </tr>
-                      </thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-              </details>
-              <details class="standings-chart-disclosure">
-                <summary>Show all-time plots</summary>
-                <div id="all-time-chart-list" class="standings-chart-list">
-                  <div class="standings-chart-block">
-                    <h2>Top 8 Cumulative Bracelets Over Time</h2>
-                    <div class="standings-chart-frame">
-                      <svg id="all-time-bracelet-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-bracelet-chart-title all-time-bracelet-chart-description">
-                        <title id="all-time-bracelet-chart-title">Cumulative bracelets over time for the top eight all-time bracelet earners</title>
-                        <desc id="all-time-bracelet-chart-description">A line chart will appear after the all-time standings load.</desc>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="standings-chart-block">
-                    <h2>Top 8 Cumulative Major Wins Over Time</h2>
-                    <div class="standings-chart-frame">
-                      <svg id="all-time-major-chart" class="standings-chart" viewBox="0 0 900 540" role="img" aria-labelledby="all-time-major-chart-title all-time-major-chart-description">
-                        <title id="all-time-major-chart-title">Cumulative major wins over time for the top eight all-time major winners</title>
-                        <desc id="all-time-major-chart-description">A line chart will appear after the all-time standings load.</desc>
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </details>
@@ -1210,6 +1222,39 @@
             });
         }
 
+        function buildAllTimeWinRateRows() {
+          const players = new Map();
+
+          buildAllTimeNights().forEach(night => {
+            night.players.forEach((playerResult, player) => {
+              if (!players.has(player)) {
+                players.set(player, { player, bracelets: 0, attendedEvents: 0, winRate: 0 });
+              }
+              players.get(player).attendedEvents += 1;
+            });
+
+            if (night.winner) {
+              if (!players.has(night.winner)) {
+                players.set(night.winner, { player: night.winner, bracelets: 0, attendedEvents: 0, winRate: 0 });
+              }
+              players.get(night.winner).bracelets += 1;
+            }
+          });
+
+          return Array.from(players.values())
+            .filter(row => row.attendedEvents > 0)
+            .map(row => ({
+              ...row,
+              winRate: row.bracelets / row.attendedEvents,
+            }))
+            .sort((a, b) => {
+              if (a.winRate !== b.winRate) return b.winRate - a.winRate;
+              if (a.bracelets !== b.bracelets) return b.bracelets - a.bracelets;
+              if (a.attendedEvents !== b.attendedEvents) return b.attendedEvents - a.attendedEvents;
+              return a.player.localeCompare(b.player);
+            });
+        }
+
         function renderAllTimeAttendanceTable() {
           renderRows('all-time-attendance-table', buildAllTimeAttendanceRows(), ['player', 'nights', 'majors']);
         }
@@ -1428,11 +1473,117 @@
             .join(' ');
         }
 
+        function renderWinRateChart(rows, getPlayerColor) {
+          const svgId = 'all-time-win-rate-chart';
+          const svg = document.getElementById(svgId);
+          if (!svg) return;
+          svg.replaceChildren();
+
+          const title = createSvgElement('title', { id: `${svgId}-title` });
+          title.textContent = 'All-time bracelet win rate by player';
+          const description = createSvgElement('desc', { id: `${svgId}-description` });
+          svg.append(title, description);
+
+          if (!rows.length) {
+            description.textContent = 'No win-rate data available.';
+            addSvgText(svg, 'No win-rate data available.', {
+              x: 450,
+              y: 215,
+              'text-anchor': 'middle',
+              class: 'chart-label',
+            });
+            return;
+          }
+
+          const width = 900;
+          const rowHeight = 32;
+          const margin = { top: 34, right: 118, bottom: 54, left: 170 };
+          const plotHeight = rows.length * rowHeight;
+          const height = Math.max(420, margin.top + margin.bottom + plotHeight);
+          const plotWidth = width - margin.left - margin.right;
+          const maxRate = Math.max(0.05, ...rows.map(row => row.winRate));
+          const maxPercent = Math.ceil((maxRate * 100) / 5) * 5;
+          const xScale = rate => margin.left + (rate / (maxPercent / 100)) * plotWidth;
+
+          svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+          const tickCount = 5;
+          for (let tick = 0; tick <= tickCount; tick += 1) {
+            const percent = (maxPercent / tickCount) * tick;
+            const x = margin.left + (percent / maxPercent) * plotWidth;
+            svg.appendChild(createSvgElement('line', {
+              x1: x,
+              y1: margin.top,
+              x2: x,
+              y2: margin.top + plotHeight,
+              class: 'chart-grid',
+            }));
+            addSvgText(svg, `${Math.round(percent)}%`, {
+              x,
+              y: margin.top + plotHeight + 24,
+              'text-anchor': 'middle',
+              class: 'chart-label',
+            });
+          }
+
+          svg.appendChild(createSvgElement('line', {
+            x1: margin.left,
+            y1: margin.top + plotHeight,
+            x2: margin.left + plotWidth,
+            y2: margin.top + plotHeight,
+            class: 'chart-axis',
+          }));
+          svg.appendChild(createSvgElement('line', {
+            x1: margin.left,
+            y1: margin.top,
+            x2: margin.left,
+            y2: margin.top + plotHeight,
+            class: 'chart-axis',
+          }));
+
+          addSvgText(svg, 'Bracelet wins / attended events', {
+            x: margin.left,
+            y: 18,
+            class: 'chart-title-label chart-label',
+          });
+
+          rows.forEach((row, index) => {
+            const y = margin.top + index * rowHeight + 7;
+            const barWidth = Math.max(2, xScale(row.winRate) - margin.left);
+            const color = getPlayerColor(row.player);
+
+            addSvgText(svg, row.player, {
+              x: margin.left - 10,
+              y: y + 14,
+              'text-anchor': 'end',
+              class: 'chart-label',
+            });
+            svg.appendChild(createSvgElement('rect', {
+              x: margin.left,
+              y,
+              width: barWidth,
+              height: 18,
+              fill: color,
+              class: 'chart-bar',
+            }));
+            addSvgText(svg, `${(row.winRate * 100).toFixed(1)}% (${row.bracelets}/${row.attendedEvents})`, {
+              x: margin.left + barWidth + 8,
+              y: y + 14,
+              class: 'chart-label',
+            });
+          });
+
+          description.textContent = rows
+            .map(row => `${row.player} has a ${(row.winRate * 100).toFixed(1)} percent win rate with ${row.bracelets} bracelet wins in ${row.attendedEvents} attended events.`)
+            .join(' ');
+        }
+
         function renderAllTimeCharts() {
           const rows = buildAllTimeNightRows();
           const braceletSeries = buildCumulativeWinSeries(rows, () => true);
           const majorSeries = buildCumulativeWinSeries(rows, row => row.isMajor === 'YES');
-          const getPlayerColor = buildPlayerColorMap(braceletSeries, majorSeries);
+          const winRateRows = buildAllTimeWinRateRows();
+          const getPlayerColor = buildPlayerColorMap(braceletSeries, majorSeries, winRateRows);
 
           renderCumulativeChart({
             svgId: 'all-time-bracelet-chart',
@@ -1457,6 +1608,8 @@
             unitPlural: 'major wins',
             getPlayerColor,
           });
+
+          renderWinRateChart(winRateRows, getPlayerColor);
         }
 
         function applyStripingByDate(tableId) {
