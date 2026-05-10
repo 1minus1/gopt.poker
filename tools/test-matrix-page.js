@@ -50,7 +50,7 @@ function assertMatrixFiles() {
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
   assert(html.includes('styles.css?v=matrix-20260510-cachefix'), 'Matrix stylesheet URL should be cache-busted.');
-  assert(html.includes('matrix.js?v=matrix-20260510-statuspct'), 'Matrix script URL should be cache-busted.');
+  assert(html.includes('matrix.js?v=matrix-20260510-cleanstart'), 'Matrix script URL should be cache-busted.');
   assert(html.includes('<details class="matrix-section matrix-create-disclosure">'), 'New Matrix form should be behind a disclosure.');
   assert(html.includes('<summary>New Matrix</summary>'), 'New Matrix disclosure should have a clear summary.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
@@ -61,6 +61,8 @@ function assertMatrixFiles() {
   assert(js.includes('DOUBTFUL (25%)'), 'Matrix status selector should show percentage likelihoods.');
   assert(js.includes('QUESTIONABLE (50%)'), 'Matrix status selector should show percentage likelihoods.');
   assert(js.includes('PROBABLE (100%)'), 'Matrix status selector should show percentage likelihoods.');
+  assert(js.includes('Choose player'), 'Matrix player selector should start with no player selected.');
+  assert(js.includes("state.selectedPlayers[matrix.id] || ''"), 'Matrix cards should start with a clean read-only table.');
   assert(!js.includes("['No response', 'missing'"), 'Matrix totals should not render the no response row.');
   assert(js.includes('--matrix-table-min-width'), 'Matrix tables should size from their date count.');
   assert(js.includes('matrix-save-bar'), 'Matrix editor should keep the save control visible near the editing area.');

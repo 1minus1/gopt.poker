@@ -454,6 +454,12 @@ function createPlayerSelect(matrixId, selectedPlayer) {
   const select = document.createElement('select');
   select.className = 'matrix-player-select';
   select.dataset.matrixId = matrixId;
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Choose player';
+  select.appendChild(placeholder);
+
   state.players.forEach(player => {
     const option = document.createElement('option');
     option.value = player;
@@ -492,7 +498,7 @@ function createMatrixCard(matrix, index) {
   appendMetric(metrics, 'Most probables', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
   details.appendChild(metrics);
 
-  const selectedPlayer = state.selectedPlayers[matrix.id] || state.players[0] || '';
+  const selectedPlayer = state.selectedPlayers[matrix.id] || '';
   state.selectedPlayers[matrix.id] = selectedPlayer;
 
   const form = document.createElement('form');
