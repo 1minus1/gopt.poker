@@ -51,8 +51,11 @@ function assertMatrixFiles() {
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
   assert(js.includes('Local preview mode'), 'Matrix client should have a static-server preview fallback.');
   assert(js.includes('matrix-status-probable'), 'Matrix client should render status-specific cells.');
+  assert(js.includes('data-delete-matrix-id'), 'Matrix client should render a matrix delete control.');
+  assert(js.includes('Type the matrix name exactly'), 'Matrix deletion should require a harsh confirmation.');
   assert(php.includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
   assert(php.includes('update_response'), 'Matrix API should support per-player response updates.');
+  assert(php.includes('gopt_delete_matrix'), 'Matrix API should support matrix deletion.');
 }
 
 function main() {

@@ -211,6 +211,19 @@ function gopt_update_matrix_response(array $store, array $data): array
     return $store;
 }
 
+function gopt_delete_matrix(array $store, array $data): array
+{
+    $matrixId = trim((string)($data['matrixId'] ?? ''));
+    if ($matrixId === '') {
+        throw new GoptHistoryException('Choose a matrix.', 400);
+    }
+
+    $index = gopt_find_matrix_index($store, $matrixId);
+    array_splice($store['matrices'], $index, 1);
+
+    return $store;
+}
+
 function gopt_sort_matrices(array $store): array
 {
     usort($store['matrices'], function ($a, $b) {
@@ -243,6 +256,8 @@ try {
             array_unshift($store['matrices'], gopt_create_matrix($data));
         } elseif ($action === 'update_response') {
             $store = gopt_update_matrix_response($store, $data);
+        } elseif ($action === 'delete') {
+            $store = gopt_delete_matrix($store, $data);
         } else {
             throw new GoptHistoryException('Unsupported matrix action.', 400);
         }

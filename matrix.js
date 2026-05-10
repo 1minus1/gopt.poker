@@ -228,6 +228,34 @@ async function saveMatrixResponse(matrixId, player, responses) {
   writeLocalStore();
 }
 
+async function saveMatrixDelete(matrixId) {
+  if (state.apiAvailable) {
+    try {
+      const result = await fetchMatrixJson(['api/matrix', 'api/matrix.php'], {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          matrixId,
+        }),
+      });
+      state.matrices = sortMatrices(result.matrices || []);
+      delete state.selectedPlayers[matrixId];
+      return;
+    } catch (error) {
+      state.apiAvailable = false;
+      showMessage('Local preview mode. Matrix changes are saved in this browser.', 'success');
+    }
+  }
+
+  state.matrices = sortMatrices(state.matrices.filter(matrix => matrix.id !== matrixId));
+  delete state.selectedPlayers[matrixId];
+  writeLocalStore();
+}
+
 async function loadPlayers() {
   const text = await fetchCurrentDataText();
   const parsed = GoptData.parseDataFile(text, { normalizePlayerName: true });
@@ -486,7 +514,34 @@ function createMatrixCard(matrix, index) {
   form.append(label, tableWrap, save);
   details.appendChild(form);
 
+  const actions = document.createElement('div');
+  actions.className = 'matrix-card-actions';
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'matrix-delete-button';
+  deleteButton.dataset.deleteMatrixId = matrix.id;
+  deleteButton.textContent = 'Delete Matrix';
+
+  actions.appendChild(deleteButton);
+  details.appendChild(actions);
+
   return details;
+}
+
+function confirmMatrixDelete(matrix) {
+  const matrixName = String(matrix.name || '').trim();
+  const entered = window.prompt(
+    `PERMANENT DELETE\n\nThis will delete "${matrixName}" and every availability response in it. There is no undo.\n\nType the matrix name exactly to delete it:`
+  );
+
+  if (entered === null) {
+    return { confirmed: false, message: '' };
+  }
+  if (entered !== matrixName) {
+    return { confirmed: false, message: 'Matrix was not deleted. The typed name did not match.' };
+  }
+  return { confirmed: true, message: '' };
 }
 
 function renderMatrices() {
@@ -548,6 +603,38 @@ els.list.addEventListener('change', event => {
 
   state.selectedPlayers[playerSelect.dataset.matrixId] = playerSelect.value;
   renderMatrices();
+});
+
+els.list.addEventListener('click', event => {
+  const deleteButton = event.target.closest('[data-delete-matrix-id]');
+  if (!deleteButton) return;
+
+  const matrixId = deleteButton.dataset.deleteMatrixId;
+  const matrix = state.matrices.find(item => item.id === matrixId);
+  if (!matrix) {
+    showMessage('Matrix not found.', 'error');
+    return;
+  }
+
+  const confirmation = confirmMatrixDelete(matrix);
+  if (!confirmation.confirmed) {
+    if (confirmation.message) {
+      showMessage(confirmation.message, 'error');
+    }
+    return;
+  }
+
+  clearMessage();
+  deleteButton.disabled = true;
+  saveMatrixDelete(matrixId)
+    .then(() => {
+      renderMatrices();
+      showMessage('Matrix deleted.', 'success');
+    })
+    .catch(error => {
+      deleteButton.disabled = false;
+      showMessage(error.message, 'error');
+    });
 });
 
 els.list.addEventListener('submit', event => {

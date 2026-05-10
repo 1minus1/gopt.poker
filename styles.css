@@ -484,6 +484,28 @@ button:disabled {
   cursor: pointer;
 }
 
+.matrix-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.matrix-delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #8f1f1f;
+  background: #b32626;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .matrix-date-list {
   display: grid;
   gap: 0.65rem;
