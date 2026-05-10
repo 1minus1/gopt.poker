@@ -166,9 +166,39 @@ function formatNumber(value) {
   return String(Number(value).toFixed(2)).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
 }
 
-function localDateTimeValue(date = new Date()) {
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+function localDateValue(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function normalizeDateInputValue(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+}
+
+function timestampFromDateInput(value) {
+  const normalized = normalizeDateInputValue(value);
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return NaN;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return NaN;
+  }
+
+  return Math.floor(date.getTime() / 1000);
 }
 
 function localCalendarDateKey(timestamp) {
@@ -367,7 +397,7 @@ function updateMajorFields() {
 
 function updateLockedSummary() {
   const type = state.details.isMajor ? `Major: ${state.details.majorName}` : 'Standard night';
-  const date = new Date(state.details.timestamp * 1000).toLocaleString();
+  const date = formatCalendarDate(state.details.timestamp);
   els.lockedSummary.textContent = `${state.details.season} | ${type} | hosted by ${state.details.host} | ${state.details.tournamentCount} tournament(s) | ${state.details.roster.length} players | ${date}`;
 }
 
@@ -423,7 +453,7 @@ function getSetupDetails() {
   const majorName = getSelectedMajorName(isMajor);
   const tournamentCount = Number(els.tournamentCount.value);
   const buyIn = Number(els.buyIn.value);
-  const timestamp = Math.floor(new Date(els.nightDatetime.value).getTime() / 1000);
+  const timestamp = timestampFromDateInput(els.nightDatetime.value);
   const roster = Array.from(state.selectedPlayers).sort((a, b) => a.localeCompare(b));
 
   if (!season) throw new Error('Choose or enter a season.');
@@ -431,7 +461,7 @@ function getSetupDetails() {
   if (isMajor && !majorName) throw new Error('Name the major.');
   if (!Number.isInteger(tournamentCount) || tournamentCount < 1) throw new Error('Tournament count must be at least 1.');
   if (!Number.isFinite(buyIn) || buyIn <= 0) throw new Error('Buy-in must be greater than 0.');
-  if (!Number.isInteger(timestamp) || timestamp <= 0) throw new Error('Choose a valid night date/time.');
+  if (!Number.isInteger(timestamp) || timestamp <= 0) throw new Error('Choose a valid night date.');
   if (roster.length < 2) throw new Error('Select at least two players.');
 
   roster.forEach(player => ensureNoComma(player, 'Player names'));
@@ -754,7 +784,7 @@ function restoreDraft(draft) {
   setHostSelectValue(setup.hostSelect);
   els.newSeasonInput.value = setup.newSeason || '';
   els.newHostInput.value = setup.newHost || '';
-  els.nightDatetime.value = setup.nightDatetime || els.nightDatetime.value;
+  els.nightDatetime.value = normalizeDateInputValue(setup.nightDatetime) || els.nightDatetime.value;
   els.majorSelect.value = setup.majorSelect || 'NO';
   setMajorNameSelectValue(setup.majorNameSelect || setup.majorName);
   els.newMajorNameInput.value = setup.newMajorName || '';
@@ -954,7 +984,7 @@ async function loadHistory() {
   updateSeasonFields();
   updateHostFields();
   updateMajorFields();
-  els.nightDatetime.value = localDateTimeValue();
+  els.nightDatetime.value = localDateValue();
   showDraftRestorePrompt(loadDraft());
 }
 

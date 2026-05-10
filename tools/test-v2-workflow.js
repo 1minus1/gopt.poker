@@ -45,6 +45,8 @@ function assertRecordPageUsesV2Fields() {
 
   assert(recordHtml.includes('id="host-select"'), 'Record page should include a host selector.');
   assert(recordHtml.includes('id="major-name-select"'), 'Record page should include a major-name selector.');
+  assert(recordHtml.includes('type="date"'), 'Record page should use a date-only event input.');
+  assert(!recordHtml.includes('type="datetime-local"'), 'Record page should not ask for an event time.');
   assert(!recordHtml.includes('id="major-name-input"'), 'Record page should not use the old freeform-only major input.');
   assert(recordJs.includes('host: details.host'), 'Generated rows should persist the selected host.');
   assert(recordJs.includes("isOrdered: 'YES'"), 'Generated rows should be ordered.');
