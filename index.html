@@ -1203,7 +1203,7 @@
           const attendance = {};
 
           buildAllTimeNights().forEach(night => {
-            night.players.forEach((playerResult, player) => {
+            GoptData.getNightAttendees(night).forEach(player => {
               if (!attendance[player]) {
                 attendance[player] = { player, nights: 0, majors: 0 };
               }
@@ -1226,7 +1226,7 @@
           const players = new Map();
 
           buildAllTimeNights().forEach(night => {
-            night.players.forEach((playerResult, player) => {
+            GoptData.getNightAttendees(night).forEach(player => {
               if (!players.has(player)) {
                 players.set(player, { player, bracelets: 0, attendedEvents: 0, winRate: 0 });
               }

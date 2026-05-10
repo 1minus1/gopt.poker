@@ -236,6 +236,16 @@
     return finalPlaceA - finalPlaceB;
   }
 
+  function getNightAttendees(night) {
+    if (night && night.attendees && typeof night.attendees.forEach === 'function') {
+      return Array.from(night.attendees);
+    }
+    if (night && night.players && typeof night.players.keys === 'function') {
+      return Array.from(night.players.keys());
+    }
+    return [];
+  }
+
   function buildNights(rows) {
     const nights = new Map();
 
@@ -253,6 +263,7 @@
           majorName: row.majorName,
           host: row.host,
           rows: [],
+          attendees: new Set(),
           players: new Map(),
         });
       }
@@ -270,6 +281,7 @@
       row.finishers.forEach((player, index) => {
         const place = index + 1;
         const placeLabel = row.isOrdered === 'NO' && place !== 1 ? '' : String(place);
+        night.attendees.add(player);
         if (!night.players.has(player)) {
           night.players.set(player, {
             player,
@@ -404,6 +416,7 @@
     calculateStats,
     compareNightResults,
     formatUsDateFromTimestamp,
+    getNightAttendees,
     localDateKeyFromTimestamp,
     looksLikeDataV2,
     looksLikeSupportedDataFile,

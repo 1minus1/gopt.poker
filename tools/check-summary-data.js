@@ -70,7 +70,7 @@ function buildAttendanceRows(nights) {
   const attendance = new Map();
 
   nights.forEach(night => {
-    night.players.forEach((playerResult, player) => {
+    GoptData.getNightAttendees(night).forEach(player => {
       if (!attendance.has(player)) {
         attendance.set(player, { player, nights: 0, majors: 0 });
       }
@@ -83,6 +83,53 @@ function buildAttendanceRows(nights) {
   });
 
   return Array.from(attendance.values());
+}
+
+function assertUnorderedAttendanceRule(label, parsed, nights, attendanceRows, errors) {
+  const unorderedAttendanceRow = parsed.rows.find(row => (
+    row.isOrdered === 'NO' &&
+    row.finishers.length > 1 &&
+    row.finishers[1]
+  ));
+  assert(unorderedAttendanceRow, `${label}: no unordered attendance-enriched row found.`, errors);
+  if (!unorderedAttendanceRow) return;
+
+  const listedNonWinner = unorderedAttendanceRow.finishers[1];
+  const nightDateKey = GoptData.localDateKeyFromTimestamp(unorderedAttendanceRow.timestamp);
+  const night = nights.find(candidate => (
+    candidate.season === unorderedAttendanceRow.season &&
+    GoptData.localDateKeyFromTimestamp(candidate.timestamp) === nightDateKey
+  ));
+  assert(night, `${label}: unordered attendance test night was not built.`, errors);
+  if (!night) return;
+
+  assert(
+    GoptData.getNightAttendees(night).includes(listedNonWinner),
+    `${label}: unordered listed non-winner ${listedNonWinner} was not counted as attending.`,
+    errors
+  );
+
+  const playerResult = night.players.get(listedNonWinner);
+  assert(playerResult, `${label}: unordered listed non-winner ${listedNonWinner} missing from night results.`, errors);
+  if (playerResult) {
+    assert(
+      Math.abs(playerResult.points) < 0.000001,
+      `${label}: unordered listed non-winner ${listedNonWinner} should receive zero points.`,
+      errors
+    );
+    assert(
+      playerResult.places.length === 0,
+      `${label}: unordered listed non-winner ${listedNonWinner} should not receive a rank.`,
+      errors
+    );
+  }
+
+  const attendanceRow = attendanceRows.find(row => row.player === listedNonWinner);
+  assert(
+    attendanceRow && attendanceRow.nights > 0,
+    `${label}: unordered listed non-winner ${listedNonWinner} missing from attendance summary.`,
+    errors
+  );
 }
 
 function checkParsedData(label, parsed, options = {}) {
@@ -105,6 +152,7 @@ function checkParsedData(label, parsed, options = {}) {
   assert(majorRows.every(row => row.number > 0 && row.winners.length > 0), `${label}: major summary has empty rows.`, errors);
   assert(attendanceRows.length > 0, `${label}: attendance summary would be empty.`, errors);
   assert(attendanceRows.every(row => row.nights >= row.majors), `${label}: attendance row has more majors than nights.`, errors);
+  assertUnorderedAttendanceRule(label, parsed, nights, attendanceRows, errors);
 
   if (options.expectHosts) {
     assert(hostingRows.hostCounts.length > 0, `${label}: hosting counts would be empty.`, errors);
