@@ -1,6 +1,7 @@
 .DS_Store
 deploy/
 gopt-history-store/
+gopt-matrix-store/
 .history-backups/
 .history-store/
 *.bkp

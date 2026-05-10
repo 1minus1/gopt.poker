@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOPT Matrix</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=matrix-20260510" />
+  <style>
+    body {
+      font-family: 'Roboto Serif', serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Cal Sans', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <header style="text-align: center;">
+    <img src="assets/logo.GIF" alt="GOPT Logo" class="logo" />
+    <nav style="background-color: black; padding: 0.5em;">
+      <a href="index.html" style="color: white; text-decoration: none; margin: 0 1em;">Standings</a>
+      <a href="record.html" style="color: white; text-decoration: none; margin: 0 1em;">Record</a>
+      <a href="matrix.html" style="color: white; text-decoration: none; margin: 0 1em; font-weight: bold;">Matrix</a>
+      <a href="rules.html" style="color: white; text-decoration: none; margin: 0 1em;">Rules</a>
+      <a href="upload.html" style="color: white; text-decoration: none; margin: 0 1em;">Admin</a>
+    </nav>
+    <h1>Matrix</h1>
+  </header>
+
+  <main class="matrix-shell">
+    <div id="matrix-message" class="admin-message" role="status" aria-live="polite"></div>
+
+    <section class="matrix-section">
+      <h2>New Matrix</h2>
+      <form id="matrix-create-form" class="matrix-form">
+        <label>
+          Matrix name
+          <input id="matrix-name" type="text" maxlength="120" placeholder="June 2026 Poker Night" required />
+        </label>
+
+        <div>
+          <div class="section-heading-row">
+            <h3>Candidate Dates</h3>
+            <button id="add-matrix-date" type="button">Add Date</button>
+          </div>
+          <div id="matrix-date-list" class="matrix-date-list"></div>
+        </div>
+
+        <button type="submit">Create Matrix</button>
+      </form>
+    </section>
+
+    <section class="matrix-section">
+      <h2>Upcoming Matrices</h2>
+      <div id="matrix-list" class="matrix-list"></div>
+    </section>
+  </main>
+
+  <script src="gopt-data.js"></script>
+  <script src="matrix.js?v=matrix-20260510"></script>
+  <script src="wachs-action.js"></script>
+</body>
+</html>

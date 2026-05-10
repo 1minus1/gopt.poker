@@ -8,16 +8,16 @@ a long-running process.
 
 Upload the site files into the `gopt.poker` web directory, including:
 
-- `index.html`, `record.html`, `upload.html`, `rules.html`, `technote.html`
-- `styles.css`, `record.js`, `wachs-action.js`
+- `index.html`, `record.html`, `matrix.html`, `upload.html`, `rules.html`, `technote.html`
+- `styles.css`, `record.js`, `matrix.js`, `wachs-action.js`
 - `.htaccess`
 - `router.php` if you want local PHP testing with `php -S`
 - `api/`
 - `assets/`
 - `files/`
 
-Do not upload local-only folders such as `deploy/`, `.history-store/`, or
-`gopt-history-store/`.
+Do not upload local-only folders such as `deploy/`, `.history-store/`,
+`gopt-history-store/`, or `gopt-matrix-store/`.
 
 ## History storage
 
@@ -46,6 +46,18 @@ make sure the PHP user can write to it.
 The first request seeds the history store from `data/GOPTdatav2.csv`. The live
 pages and Admin tools only support that v2 CSV format.
 
+## Matrix storage
+
+The Matrix page creates a separate public-editable JSON store beside the web
+root:
+
+```text
+/home/USERNAME/gopt-matrix-store/matrices.json
+```
+
+If automatic folder creation is blocked, create `/home/USERNAME/gopt-matrix-store/`
+over SSH/SFTP and make sure PHP can write to it.
+
 ## Admin password
 
 The default admin username and hashed password are in `api/admin-config.php`.
@@ -69,6 +81,8 @@ https://gopt.poker/
 https://gopt.poker/api/history/current
 https://gopt.poker/api/history/versions
 https://gopt.poker/record.html
+https://gopt.poker/matrix.html
+https://gopt.poker/api/matrix
 https://gopt.poker/upload.html
 ```
 

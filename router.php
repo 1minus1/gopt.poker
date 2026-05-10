@@ -8,6 +8,7 @@ $routes = [
     '/api/history/versions.zip' => '/api/history-versions-zip.php',
     '/api/history/revert' => '/api/history-revert.php',
     '/api/history/delete' => '/api/history-delete.php',
+    '/api/matrix' => '/api/matrix.php',
     '/upload-history' => '/api/history-upload.php',
 ];
 

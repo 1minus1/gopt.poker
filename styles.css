@@ -437,6 +437,172 @@ button:disabled {
   white-space: pre;
 }
 
+.matrix-shell {
+  width: min(1180px, calc(100vw - 2rem));
+  margin: 0 auto 3rem;
+}
+
+.matrix-form,
+.matrix-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.matrix-form label,
+.matrix-editor label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.matrix-form input,
+.matrix-form select,
+.matrix-editor input,
+.matrix-editor select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #888;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  background: #fff;
+}
+
+.matrix-form button,
+.matrix-editor button,
+.matrix-date-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matrix-date-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.matrix-date-row {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) auto;
+  gap: 0.65rem;
+  justify-content: start;
+}
+
+.matrix-date-row button {
+  background: #fff;
+  color: #111;
+  border-color: #777;
+}
+
+.matrix-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.matrix-card {
+  border: 1px solid #999;
+  padding: 1rem;
+  background: #fff;
+}
+
+.matrix-card summary {
+  cursor: pointer;
+  font-family: 'Cal Sans', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.matrix-card[open] summary {
+  margin-bottom: 1rem;
+}
+
+.matrix-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.matrix-metric {
+  border: 1px solid #bbb;
+  padding: 0.65rem 0.75rem;
+}
+
+.matrix-metric span {
+  display: block;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.matrix-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.matrix-table {
+  min-width: 720px;
+  width: 100%;
+}
+
+.matrix-table th,
+.matrix-table td {
+  text-align: center;
+}
+
+.matrix-table th:first-child,
+.matrix-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  background: #fff;
+}
+
+.matrix-table thead th:first-child,
+.matrix-table tfoot th:first-child {
+  background: #111;
+}
+
+.matrix-table select {
+  min-width: 9rem;
+  font: inherit;
+}
+
+.matrix-status-empty {
+  background: #f2f2f2;
+  color: #555;
+}
+
+.matrix-status-out {
+  background: #f6b3b3;
+}
+
+.matrix-status-doubtful {
+  background: #f5c178;
+}
+
+.matrix-status-questionable {
+  background: #ffe978;
+}
+
+.matrix-status-probable {
+  background: #a8dfb0;
+}
+
+.matrix-editing-row td:first-child {
+  font-weight: 700;
+}
+
 .wachs-modal {
   position: fixed;
   inset: 0;
