@@ -43,8 +43,8 @@ That keeps the version database outside the public web directory. If DreamHost
 permissions block automatic creation, create the folder once over SSH/SFTP and
 make sure the PHP user can write to it.
 
-The first request seeds the history store from `files/GOPThistory.txt`. That file
-stays in place as a baseline, but the live pages use the PHP version store.
+The first request seeds the history store from `data/GOPTdatav2.csv`. The live
+pages and Admin tools only support that v2 CSV format.
 
 ## Admin password
 

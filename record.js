@@ -6,7 +6,9 @@ const state = {
   downloadUrl: null,
   generatedText: '',
   headerLine: '',
+  hosts: [],
   dataRows: [],
+  majorNames: [],
   maxHistoryVersion: null,
   selectedPlayers: new Set(),
   seasons: [],
@@ -26,10 +28,15 @@ const els = {
   finishStatus: document.getElementById('finish-status'),
   generatedSection: document.getElementById('generated-section'),
   historyPreview: document.getElementById('history-preview'),
+  hostSelect: document.getElementById('host-select'),
   lockedSummary: document.getElementById('locked-summary'),
   majorNameField: document.getElementById('major-name-field'),
-  majorNameInput: document.getElementById('major-name-input'),
+  majorNameSelect: document.getElementById('major-name-select'),
   majorSelect: document.getElementById('major-select'),
+  newHostField: document.getElementById('new-host-field'),
+  newHostInput: document.getElementById('new-host-input'),
+  newMajorNameField: document.getElementById('new-major-name-field'),
+  newMajorNameInput: document.getElementById('new-major-name-input'),
   message: document.getElementById('record-message'),
   newPlayerInput: document.getElementById('new-player-input'),
   newSeasonField: document.getElementById('new-season-field'),
@@ -63,8 +70,11 @@ function clearMessage() {
 function getSetupDraft() {
   return {
     buyIn: els.buyIn.value,
-    majorName: els.majorNameInput.value,
+    hostSelect: els.hostSelect.value,
     majorSelect: els.majorSelect.value,
+    majorNameSelect: els.majorNameSelect.value,
+    newHost: els.newHostInput.value,
+    newMajorName: els.newMajorNameInput.value,
     newPlayerInput: els.newPlayerInput.value,
     newSeason: els.newSeasonInput.value,
     nightDatetime: els.nightDatetime.value,
@@ -131,6 +141,10 @@ function getMostRecentSeason() {
 
 function cleanTextField(value) {
   return value.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeMajorName(value) {
+  return GoptData.normalizeMajorName(cleanTextField(value), 'YES');
 }
 
 function escapeHtml(value) {
@@ -204,6 +218,8 @@ function parseCurrentData(data) {
   state.dataRows = parsedData.rows;
 
   const seasonDates = new Map();
+  const hosts = new Set();
+  const majorNames = new Set();
   const players = new Set();
   state.dataRows.forEach(row => {
     const season = row.season;
@@ -213,6 +229,12 @@ function parseCurrentData(data) {
       seasonDates.set(season, Math.max(seasonDates.get(season) || 0, timestamp));
     }
 
+    if (row.host) {
+      hosts.add(row.host);
+    }
+    if (row.isMajor === 'YES' && row.majorName) {
+      majorNames.add(row.majorName);
+    }
     row.finishers.forEach(player => {
       if (player) players.add(player);
     });
@@ -234,6 +256,8 @@ function parseCurrentData(data) {
 
   state.allPlayers = Array.from(players).sort((a, b) => a.localeCompare(b));
   state.currentSeasonPlayers = Array.from(currentPlayers).sort((a, b) => a.localeCompare(b));
+  state.hosts = Array.from(hosts).sort((a, b) => a.localeCompare(b));
+  state.majorNames = Array.from(majorNames).sort((a, b) => a.localeCompare(b));
 }
 
 function renderSeasonOptions() {
@@ -250,6 +274,38 @@ function renderSeasonOptions() {
   newOption.value = '__new__';
   newOption.textContent = 'New season...';
   els.seasonSelect.appendChild(newOption);
+}
+
+function renderHostOptions() {
+  els.hostSelect.innerHTML = '';
+
+  state.hosts.forEach(host => {
+    const option = document.createElement('option');
+    option.value = host;
+    option.textContent = host;
+    els.hostSelect.appendChild(option);
+  });
+
+  const newOption = document.createElement('option');
+  newOption.value = '__new__';
+  newOption.textContent = 'New host...';
+  els.hostSelect.appendChild(newOption);
+}
+
+function renderMajorNameOptions() {
+  els.majorNameSelect.innerHTML = '';
+
+  state.majorNames.forEach(majorName => {
+    const option = document.createElement('option');
+    option.value = majorName;
+    option.textContent = majorName;
+    els.majorNameSelect.appendChild(option);
+  });
+
+  const newOption = document.createElement('option');
+  newOption.value = '__new__';
+  newOption.textContent = 'New major...';
+  els.majorNameSelect.appendChild(newOption);
 }
 
 function renderPlayers() {
@@ -282,13 +338,25 @@ function updateSeasonFields() {
   const isNew = els.seasonSelect.value === '__new__';
   els.newSeasonField.hidden = !isNew;
   els.newSeasonInput.required = isNew;
+  els.newSeasonInput.disabled = !isNew;
+}
+
+function updateHostFields() {
+  const isNew = els.hostSelect.value === '__new__';
+  els.newHostField.hidden = !isNew;
+  els.newHostInput.required = isNew;
+  els.newHostInput.disabled = !isNew;
 }
 
 function updateMajorFields() {
   const isMajor = els.majorSelect.value === 'YES';
+  const isNewMajor = isMajor && els.majorNameSelect.value === '__new__';
   els.majorNameField.hidden = !isMajor;
-  els.majorNameInput.required = isMajor;
-  els.majorNameInput.disabled = !isMajor;
+  els.majorNameSelect.required = isMajor;
+  els.majorNameSelect.disabled = !isMajor;
+  els.newMajorNameField.hidden = !isNewMajor;
+  els.newMajorNameInput.required = isNewMajor;
+  els.newMajorNameInput.disabled = !isNewMajor;
 
   if (!state.tournamentCountTouched) {
     const defaultCount = isMajor ? '1' : '2';
@@ -300,7 +368,7 @@ function updateMajorFields() {
 function updateLockedSummary() {
   const type = state.details.isMajor ? `Major: ${state.details.majorName}` : 'Standard night';
   const date = new Date(state.details.timestamp * 1000).toLocaleString();
-  els.lockedSummary.textContent = `${state.details.season} | ${type} | ${state.details.tournamentCount} tournament(s) | ${state.details.roster.length} players | ${date}`;
+  els.lockedSummary.textContent = `${state.details.season} | ${type} | hosted by ${state.details.host} | ${state.details.tournamentCount} tournament(s) | ${state.details.roster.length} players | ${date}`;
 }
 
 function addPlayer(name) {
@@ -327,18 +395,40 @@ function getSelectedSeason() {
   return els.seasonSelect.value;
 }
 
+function getSelectedHost() {
+  if (els.hostSelect.value === '__new__') {
+    const host = cleanTextField(els.newHostInput.value);
+    ensureNoComma(host, 'Host');
+    return host;
+  }
+
+  return els.hostSelect.value;
+}
+
+function getSelectedMajorName(isMajor) {
+  if (!isMajor) return '';
+
+  const rawMajorName = els.majorNameSelect.value === '__new__'
+    ? els.newMajorNameInput.value
+    : els.majorNameSelect.value;
+  const majorName = normalizeMajorName(rawMajorName);
+  ensureNoComma(majorName, 'Major name');
+  return majorName;
+}
+
 function getSetupDetails() {
   const season = getSelectedSeason();
+  const host = getSelectedHost();
   const isMajor = els.majorSelect.value === 'YES';
-  const majorName = isMajor ? cleanTextField(els.majorNameInput.value) : 'NO';
+  const majorName = getSelectedMajorName(isMajor);
   const tournamentCount = Number(els.tournamentCount.value);
   const buyIn = Number(els.buyIn.value);
   const timestamp = Math.floor(new Date(els.nightDatetime.value).getTime() / 1000);
   const roster = Array.from(state.selectedPlayers).sort((a, b) => a.localeCompare(b));
 
   if (!season) throw new Error('Choose or enter a season.');
+  if (!host) throw new Error('Choose or enter a host.');
   if (isMajor && !majorName) throw new Error('Name the major.');
-  ensureNoComma(majorName, 'Major name');
   if (!Number.isInteger(tournamentCount) || tournamentCount < 1) throw new Error('Tournament count must be at least 1.');
   if (!Number.isFinite(buyIn) || buyIn <= 0) throw new Error('Buy-in must be greater than 0.');
   if (!Number.isInteger(timestamp) || timestamp <= 0) throw new Error('Choose a valid night date/time.');
@@ -356,6 +446,7 @@ function getSetupDetails() {
 
   return {
     buyIn,
+    host,
     isMajor,
     league: 'GOPT',
     majorName,
@@ -524,7 +615,7 @@ function updateFinishState() {
 function buildDataV2Text() {
   const details = state.details;
   const isMajor = details.isMajor ? 'YES' : 'NO';
-  const majorName = details.isMajor ? details.majorName : '';
+  const majorName = details.isMajor ? normalizeMajorName(details.majorName) : '';
   const pointsAtStake = formatNumber(details.pointsAtStake);
   const serverVersion = Number.parseInt(state.headerLine, 10);
   const baselineVersion = Number.isInteger(state.maxHistoryVersion)
@@ -543,10 +634,10 @@ function buildDataV2Text() {
       timestamp: details.timestamp,
       isMajor,
       majorName,
-      host: '',
+      host: details.host,
       pointsAtStake,
       tournamentNumber: tournamentIndex + 1,
-      isOrdered: finishOrder.length <= 1 ? 'NO' : 'YES',
+      isOrdered: 'YES',
       finishers: finishOrder,
     };
   });
@@ -600,6 +691,33 @@ function setSeasonSelectValue(value) {
   els.seasonSelect.value = value;
 }
 
+function setHostSelectValue(value) {
+  if (!value) return;
+
+  if (!Array.from(els.hostSelect.options).some(option => option.value === value)) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    els.hostSelect.insertBefore(option, els.hostSelect.querySelector('option[value="__new__"]'));
+  }
+
+  els.hostSelect.value = value;
+}
+
+function setMajorNameSelectValue(value) {
+  if (!value) return;
+
+  const normalized = normalizeMajorName(value);
+  if (!Array.from(els.majorNameSelect.options).some(option => option.value === normalized)) {
+    const option = document.createElement('option');
+    option.value = normalized;
+    option.textContent = normalized;
+    els.majorNameSelect.insertBefore(option, els.majorNameSelect.querySelector('option[value="__new__"]'));
+  }
+
+  els.majorNameSelect.value = normalized;
+}
+
 function normalizeRestoredTournaments(tournaments, details) {
   const source = Array.isArray(tournaments) ? tournaments : [];
   const tournamentCount = Number(details?.tournamentCount);
@@ -633,14 +751,18 @@ function restoreDraft(draft) {
 
   renderPlayers();
   setSeasonSelectValue(setup.seasonSelect);
+  setHostSelectValue(setup.hostSelect);
   els.newSeasonInput.value = setup.newSeason || '';
+  els.newHostInput.value = setup.newHost || '';
   els.nightDatetime.value = setup.nightDatetime || els.nightDatetime.value;
   els.majorSelect.value = setup.majorSelect || 'NO';
-  els.majorNameInput.value = setup.majorName || '';
+  setMajorNameSelectValue(setup.majorNameSelect || setup.majorName);
+  els.newMajorNameInput.value = setup.newMajorName || '';
   els.newPlayerInput.value = setup.newPlayerInput || '';
   els.buyIn.value = setup.buyIn || '20';
   els.tournamentCount.value = setup.tournamentCount || els.tournamentCount.value;
   updateSeasonFields();
+  updateHostFields();
   updateMajorFields();
   els.tournamentCount.value = setup.tournamentCount || els.tournamentCount.value;
 
@@ -758,7 +880,7 @@ async function fetchUploadResult(formData, endpoints = ['upload-history', 'api/h
   throw lastError || new Error('Server data update failed.');
 }
 
-async function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
+async function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv']) {
   let lastError = null;
 
   for (const source of sources) {
@@ -826,8 +948,11 @@ async function loadHistory() {
   parseCurrentData(text);
   await refreshMaxHistoryVersion();
   renderSeasonOptions();
+  renderHostOptions();
+  renderMajorNameOptions();
   renderPlayers();
   updateSeasonFields();
+  updateHostFields();
   updateMajorFields();
   els.nightDatetime.value = localDateTimeValue();
   showDraftRestorePrompt(loadDraft());
@@ -838,12 +963,21 @@ els.seasonSelect.addEventListener('change', () => {
   saveDraft();
 });
 els.newSeasonInput.addEventListener('input', saveDraft);
+els.hostSelect.addEventListener('change', () => {
+  updateHostFields();
+  saveDraft();
+});
+els.newHostInput.addEventListener('input', saveDraft);
 els.nightDatetime.addEventListener('input', saveDraft);
 els.majorSelect.addEventListener('change', () => {
   updateMajorFields();
   saveDraft();
 });
-els.majorNameInput.addEventListener('input', saveDraft);
+els.majorNameSelect.addEventListener('change', () => {
+  updateMajorFields();
+  saveDraft();
+});
+els.newMajorNameInput.addEventListener('input', saveDraft);
 els.buyIn.addEventListener('input', () => {
   saveDraft();
 });

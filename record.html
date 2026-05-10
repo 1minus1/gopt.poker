@@ -46,6 +46,16 @@
             <input id="new-season-input" type="text" placeholder="2027" />
           </label>
 
+          <label>
+            Host
+            <select id="host-select" required></select>
+          </label>
+
+          <label id="new-host-field" hidden>
+            New host
+            <input id="new-host-input" type="text" placeholder="Junior" />
+          </label>
+
           <label class="wide-field">
             Night date/time
             <input id="night-datetime" type="datetime-local" required />
@@ -61,7 +71,12 @@
 
           <label id="major-name-field" hidden>
             Major name
-            <input id="major-name-input" type="text" placeholder="AC Baby" />
+            <select id="major-name-select"></select>
+          </label>
+
+          <label id="new-major-name-field" hidden>
+            New major name
+            <input id="new-major-name-input" type="text" placeholder="Downtown Newark Open" />
           </label>
 
           <label>

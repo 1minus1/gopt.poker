@@ -6,7 +6,6 @@ const GoptData = require('../gopt-data.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const V2_PATH = path.join(ROOT, 'data', 'GOPTdatav2.csv');
-const LEGACY_PATH = path.join(ROOT, 'files', 'GOPThistory.txt');
 
 function readParsed(filePath) {
   return GoptData.parseDataFile(fs.readFileSync(filePath, 'utf8'), {
@@ -130,7 +129,6 @@ function checkParsedData(label, parsed, options = {}) {
 function main() {
   const checks = [
     checkParsedData('GOPTdatav2.csv', readParsed(V2_PATH), { expectHosts: true }),
-    checkParsedData('GOPThistory.txt normalized fallback', readParsed(LEGACY_PATH), { expectHosts: false }),
   ];
   const errors = checks.flatMap(check => check.errors);
 

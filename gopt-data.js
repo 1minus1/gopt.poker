@@ -61,18 +61,13 @@
     return rows.map(row => row.map(csvEscape).join(',')).join('\n') + '\n';
   }
 
-  function looksLikeLegacyHistory(text) {
-    const firstLine = normalizeLineEndings(text).trimStart().split('\n')[0] || '';
-    return /^\d+$/.test(firstLine.trim());
-  }
-
   function looksLikeDataV2(text) {
     const firstRow = parseCsv(text)[0] || [];
     return String(firstRow[0] || '').replace(/^\uFEFF/, '').toLowerCase() === 'history_version';
   }
 
   function looksLikeSupportedDataFile(text) {
-    return looksLikeDataV2(text) || looksLikeLegacyHistory(text);
+    return looksLikeDataV2(text);
   }
 
   function parseUsDate(dateText) {
@@ -136,7 +131,7 @@
     if (majorName.toUpperCase() === 'NO') return '';
 
     const withoutYear = majorName
-      .replace(/\b(?:19|20)\d{2}\b/g, '')
+      .replace(/\b\d{4}\b/g, '')
       .replace(/\s+/g, ' ')
       .trim();
     const normalized = withoutYear || majorName;
@@ -153,46 +148,6 @@
     }
 
     return normalized;
-  }
-
-  function parseLegacyHistory(text, options = {}) {
-    const lines = normalizeLineEndings(text).trim().split('\n').filter(Boolean);
-    const versionNumber = Number.parseInt(lines[0] || '0', 10);
-    const tournamentNumbers = new Map();
-
-    const rows = lines.slice(1).map((line, index) => {
-      const cells = parseCsv(line)[0] || [];
-      const season = cells[1] || '';
-      const timestamp = Number.parseInt(cells[2], 10);
-      const isMajor = String(cells[3] || '').trim().toUpperCase() === 'YES' ? 'YES' : 'NO';
-      const key = `${season}|${timestamp}`;
-      const tournamentNumber = (tournamentNumbers.get(key) || 0) + 1;
-      tournamentNumbers.set(key, tournamentNumber);
-      const finishers = cells.slice(6).map(player => cleanName(player, options)).filter(Boolean);
-
-      return {
-        sourceFormat: 'legacy',
-        sourceIndex: index,
-        historyVersion: Number.isInteger(versionNumber) ? versionNumber : null,
-        league: cells[0] || '',
-        season,
-        dateText: Number.isInteger(timestamp) ? formatUsDateFromTimestamp(timestamp) : '',
-        timestamp,
-        isMajor,
-        majorName: normalizeMajorName(cells[4], isMajor),
-        host: '',
-        pointsAtStake: cells[5] || '',
-        tournamentNumber,
-        isOrdered: finishers.length <= 1 ? 'NO' : 'YES',
-        finishers,
-      };
-    }).filter(row => row.league || row.season || row.finishers.length);
-
-    return {
-      format: 'legacy',
-      versionNumber: Number.isInteger(versionNumber) ? versionNumber : null,
-      rows,
-    };
   }
 
   function parseDataV2(text, options = {}) {
@@ -249,10 +204,7 @@
     if (looksLikeDataV2(text)) {
       return parseDataV2(text, options);
     }
-    if (looksLikeLegacyHistory(text)) {
-      return parseLegacyHistory(text, options);
-    }
-    throw new Error('Unsupported GOPT data file format.');
+    throw new Error('Unsupported GOPT data file format. Use GOPTdatav2.csv.');
   }
 
   function calculatePoints(pointsAtStake, isMajor, playerCount, place) {
@@ -454,8 +406,8 @@
     formatUsDateFromTimestamp,
     localDateKeyFromTimestamp,
     looksLikeDataV2,
-    looksLikeLegacyHistory,
     looksLikeSupportedDataFile,
+    normalizeMajorName,
     normalizePlayerNameForDisplay,
     parseCsv,
     parseDataFile,

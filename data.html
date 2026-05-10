@@ -159,7 +159,7 @@
 
   <script src="gopt-data.js"></script>
   <script>
-    function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
+    function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv']) {
       const [source, ...remaining] = sources;
       return fetch(source, { cache: 'no-store' })
         .then(response => {

@@ -14,12 +14,11 @@ try {
     $metadata = $current['metadata'];
 
     header('Cache-Control: no-store');
-    $contentType = ($metadata['format'] ?? 'legacy') === 'v2' ? 'text/csv' : 'text/plain';
-    header('Content-Type: ' . $contentType . '; charset=utf-8');
+    header('Content-Type: text/csv; charset=utf-8');
     header('Content-Length: ' . strlen($text));
     header('X-GOPT-History-Version: ' . $metadata['versionNumber']);
     header('X-GOPT-History-Version-Id: ' . $metadata['id']);
-    header('X-GOPT-History-Format: ' . ($metadata['format'] ?? 'legacy'));
+    header('X-GOPT-History-Format: v2');
 
     if ($method !== 'HEAD') {
         echo $text;

@@ -22,7 +22,7 @@ Successful uploads create a new version in the history store and move the curren
 ../gopt-history-store/
 ```
 
-The first request imports the known static `data/GOPTdatav2.csv` into that version store. The older `files/GOPThistory.txt` is kept in place as a legacy seed/baseline, and the live pages can still read either format during the transition.
+The first request imports the known static `data/GOPTdatav2.csv` into that version store. `GOPTdatav2.csv` is now the only supported import/export format for the live site.
 
 The built-in admin password is stored as a hash in `api/admin-config.php`; set `GOPT_ADMIN_USERNAME` and `GOPT_ADMIN_PASSWORD_HASH` in the server environment if you want to override the defaults without editing code. Use HTTPS when this is deployed publicly, because Admin and Record submit credentials.
 

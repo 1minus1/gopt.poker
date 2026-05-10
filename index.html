@@ -279,26 +279,6 @@
         });
     }
 
-    function maybePreferStaticDataV2(apiText) {
-      const apiData = GoptData.parseDataFile(apiText);
-      if (apiData.format !== 'legacy') {
-        return Promise.resolve(apiText);
-      }
-
-      return fetchDataSource('data/GOPTdatav2.csv')
-        .then(staticText => {
-          const staticData = GoptData.parseDataFile(staticText);
-          if (
-            staticData.format === 'v2' &&
-            (staticData.versionNumber || 0) >= (apiData.versionNumber || 0)
-          ) {
-            return staticText;
-          }
-          return apiText;
-        })
-        .catch(() => apiText);
-    }
-
     function fetchFirstAvailableDataText(sources) {
       const [source, ...remaining] = sources;
       return fetchDataSource(source).catch(error => {
@@ -308,9 +288,7 @@
     }
 
     function fetchCurrentDataText() {
-      return fetchFirstAvailableDataText(['api/history/current', 'api/history-current.php'])
-        .then(maybePreferStaticDataV2)
-        .catch(() => fetchFirstAvailableDataText(['data/GOPTdatav2.csv', 'files/GOPThistory.txt']));
+      return fetchFirstAvailableDataText(['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv']);
     }
 
     function formatDisplayDate(timestamp) {
