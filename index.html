@@ -1547,13 +1547,20 @@
             class: 'chart-title-label chart-label',
           });
 
-          const topWinRate = Math.max(...rows.map(row => row.winRate));
+          const rankedWinRates = Array.from(new Set(rows.map(row => row.winRate)))
+            .sort((a, b) => b - a);
+          const topWinRate = rankedWinRates[0];
+          const secondWinRate = rankedWinRates[1];
 
           rows.forEach((row, index) => {
             const y = margin.top + index * rowHeight + 7;
             const barWidth = Math.max(2, xScale(row.winRate) - margin.left);
             const color = getPlayerColor(row.player);
-            const playerLabel = row.winRate === topWinRate ? `${row.player} 🐐` : row.player;
+            const playerLabel = row.winRate === topWinRate
+              ? `${row.player} 🐐`
+              : row.winRate === secondWinRate
+                ? `${row.player} 🥈`
+                : row.player;
 
             addSvgText(svg, playerLabel, {
               x: margin.left - 10,
@@ -1578,8 +1585,12 @@
 
           description.textContent = rows
             .map(row => {
-              const leaderLabel = row.winRate === topWinRate ? ' It is the best all-time win rate.' : '';
-              return `${row.player} has a ${(row.winRate * 100).toFixed(1)} percent win rate with ${row.bracelets} bracelet wins in ${row.attendedEvents} attended events.${leaderLabel}`;
+              const rankLabel = row.winRate === topWinRate
+                ? ' It is the best all-time win rate.'
+                : row.winRate === secondWinRate
+                  ? ' It is the second-best all-time win rate.'
+                  : '';
+              return `${row.player} has a ${(row.winRate * 100).toFixed(1)} percent win rate with ${row.bracelets} bracelet wins in ${row.attendedEvents} attended events.${rankLabel}`;
             })
             .join(' ');
         }
