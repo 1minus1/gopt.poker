@@ -79,6 +79,27 @@ function gopt_verify_password(string $password, string $encodedHash): bool
 function gopt_authenticate(string $username, string $password): bool
 {
     $config = gopt_admin_config();
+    $admins = $config['admins'] ?? null;
+
+    if (is_array($admins)) {
+        foreach ($admins as $admin) {
+            if (!is_array($admin)) {
+                continue;
+            }
+
+            $expectedUsername = (string)($admin['username'] ?? '');
+            $expectedHash = (string)($admin['password_hash'] ?? '');
+
+            if ($expectedUsername !== '' && $expectedHash !== '' &&
+                hash_equals($expectedUsername, $username) &&
+                gopt_verify_password($password, $expectedHash)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     $expectedUsername = (string)($config['username'] ?? '');
     $expectedHash = (string)($config['password_hash'] ?? '');
 
