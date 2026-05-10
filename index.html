@@ -1342,10 +1342,13 @@
           const maxTime = Math.max(...rows.map(row => row.timestamp));
           const maxWins = Math.max(...series.map(playerSeries => playerSeries.total));
           const yMax = Math.max(5, Math.ceil(maxWins / 5) * 5);
+          const startYear = new Date(minTime * 1000).getFullYear();
+          const endYear = new Date(maxTime * 1000).getFullYear();
+          const timelineStart = new Date(startYear, 0, 1).getTime() / 1000;
+          const timelineEnd = new Date(endYear + 1, 0, 1).getTime() / 1000;
 
           const xScale = timestamp => {
-            if (minTime === maxTime) return margin.left + plotWidth / 2;
-            return margin.left + ((timestamp - minTime) / (maxTime - minTime)) * plotWidth;
+            return margin.left + ((timestamp - timelineStart) / (timelineEnd - timelineStart)) * plotWidth;
           };
 
           const yScale = total => margin.top + plotHeight - (total / yMax) * plotHeight;
@@ -1369,6 +1372,26 @@
           }
           svg.appendChild(gridGroup);
 
+          const yearGridGroup = createSvgElement('g');
+          for (let year = startYear; year <= endYear; year += 1) {
+            const timestamp = new Date(year, 0, 1).getTime() / 1000;
+            const x = xScale(timestamp);
+            yearGridGroup.appendChild(createSvgElement('line', {
+              x1: x,
+              y1: margin.top,
+              x2: x,
+              y2: margin.top + plotHeight,
+              class: 'chart-grid',
+            }));
+            addSvgText(yearGridGroup, year, {
+              x,
+              y: margin.top + plotHeight + 24,
+              'text-anchor': 'middle',
+              class: 'chart-label',
+            });
+          }
+          svg.appendChild(yearGridGroup);
+
           svg.appendChild(createSvgElement('line', {
             x1: margin.left,
             y1: margin.top + plotHeight,
@@ -1383,28 +1406,6 @@
             y2: margin.top + plotHeight,
             class: 'chart-axis',
           }));
-
-          const startYear = new Date(minTime * 1000).getFullYear();
-          const endYear = new Date(maxTime * 1000).getFullYear();
-          const yearStep = Math.max(1, Math.ceil((endYear - startYear) / 5));
-          for (let year = startYear; year <= endYear; year += yearStep) {
-            const timestamp = new Date(year, 0, 1).getTime() / 1000;
-            if (timestamp < minTime || timestamp > maxTime) continue;
-            const x = xScale(timestamp);
-            svg.appendChild(createSvgElement('line', {
-              x1: x,
-              y1: margin.top + plotHeight,
-              x2: x,
-              y2: margin.top + plotHeight + 6,
-              class: 'chart-axis',
-            }));
-            addSvgText(svg, year, {
-              x,
-              y: margin.top + plotHeight + 24,
-              'text-anchor': 'middle',
-              class: 'chart-label',
-            });
-          }
 
           addSvgText(svg, yAxisLabel, {
             x: margin.left,
