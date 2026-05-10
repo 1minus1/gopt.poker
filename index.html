@@ -1547,12 +1547,15 @@
             class: 'chart-title-label chart-label',
           });
 
+          const topWinRate = Math.max(...rows.map(row => row.winRate));
+
           rows.forEach((row, index) => {
             const y = margin.top + index * rowHeight + 7;
             const barWidth = Math.max(2, xScale(row.winRate) - margin.left);
             const color = getPlayerColor(row.player);
+            const playerLabel = row.winRate === topWinRate ? `${row.player} 🐐` : row.player;
 
-            addSvgText(svg, row.player, {
+            addSvgText(svg, playerLabel, {
               x: margin.left - 10,
               y: y + 14,
               'text-anchor': 'end',
@@ -1574,7 +1577,10 @@
           });
 
           description.textContent = rows
-            .map(row => `${row.player} has a ${(row.winRate * 100).toFixed(1)} percent win rate with ${row.bracelets} bracelet wins in ${row.attendedEvents} attended events.`)
+            .map(row => {
+              const leaderLabel = row.winRate === topWinRate ? ' It is the best all-time win rate.' : '';
+              return `${row.player} has a ${(row.winRate * 100).toFixed(1)} percent win rate with ${row.bracelets} bracelet wins in ${row.attendedEvents} attended events.${leaderLabel}`;
+            })
             .join(' ');
         }
 
