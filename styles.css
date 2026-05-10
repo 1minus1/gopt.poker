@@ -484,6 +484,21 @@ button:disabled {
   cursor: pointer;
 }
 
+.matrix-create-disclosure {
+  margin-bottom: 2rem;
+}
+
+.matrix-create-disclosure summary {
+  cursor: pointer;
+  font-family: 'Cal Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.matrix-create-disclosure[open] summary {
+  margin-bottom: 1rem;
+}
+
 .matrix-card-actions {
   display: flex;
   justify-content: flex-end;
