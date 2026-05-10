@@ -499,6 +499,32 @@ button:disabled {
   margin-bottom: 1rem;
 }
 
+.matrix-save-bar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.55rem 0;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.matrix-save-button {
+  min-width: min(100%, 14rem);
+}
+
+.matrix-editor.has-unsaved-changes .matrix-save-bar {
+  background: #fff3c4;
+}
+
+.matrix-editor.has-unsaved-changes .matrix-save-button {
+  border-color: #9a5300;
+  background: #f28c00;
+  color: #111;
+}
+
 .matrix-card-actions {
   display: flex;
   justify-content: flex-end;

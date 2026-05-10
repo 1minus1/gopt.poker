@@ -507,11 +507,16 @@ function createMatrixCard(matrix, index) {
   tableWrap.className = 'matrix-table-wrap';
   tableWrap.appendChild(createMatrixTable(matrix, selectedPlayer));
 
+  const saveBar = document.createElement('div');
+  saveBar.className = 'matrix-save-bar';
+
   const save = document.createElement('button');
   save.type = 'submit';
+  save.className = 'matrix-save-button';
   save.textContent = 'Save Availability';
+  saveBar.appendChild(save);
 
-  form.append(label, tableWrap, save);
+  form.append(label, saveBar, tableWrap);
   details.appendChild(form);
 
   const actions = document.createElement('div');
@@ -527,6 +532,14 @@ function createMatrixCard(matrix, index) {
   details.appendChild(actions);
 
   return details;
+}
+
+function updateMatrixSaveState(form, isDirty) {
+  const saveButton = form?.querySelector('.matrix-save-button');
+  if (!saveButton) return;
+
+  form.classList.toggle('has-unsaved-changes', isDirty);
+  saveButton.textContent = isDirty ? 'Save Changes' : 'Save Availability';
 }
 
 function confirmMatrixDelete(matrix) {
@@ -599,10 +612,20 @@ els.createForm.addEventListener('submit', event => {
 
 els.list.addEventListener('change', event => {
   const playerSelect = event.target.closest('.matrix-player-select');
-  if (!playerSelect) return;
+  if (playerSelect) {
+    state.selectedPlayers[playerSelect.dataset.matrixId] = playerSelect.value;
+    renderMatrices();
+    return;
+  }
 
-  state.selectedPlayers[playerSelect.dataset.matrixId] = playerSelect.value;
-  renderMatrices();
+  const statusSelect = event.target.closest('select[data-date-id]');
+  if (!statusSelect) return;
+
+  const cell = statusSelect.closest('td');
+  if (cell) {
+    cell.className = getStatus(statusSelect.value).className;
+  }
+  updateMatrixSaveState(statusSelect.closest('.matrix-response-form'), true);
 });
 
 els.list.addEventListener('click', event => {
@@ -652,6 +675,7 @@ els.list.addEventListener('submit', event => {
 
   saveMatrixResponse(matrixId, player, responses)
     .then(() => {
+      updateMatrixSaveState(form, false);
       renderMatrices();
       showMessage('Availability saved.', 'success');
     })
