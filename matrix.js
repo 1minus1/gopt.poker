@@ -687,6 +687,7 @@ els.list.addEventListener('submit', event => {
   saveMatrixResponse(matrixId, player, responses)
     .then(() => {
       updateMatrixSaveState(form, false);
+      delete state.selectedPlayers[matrixId];
       renderMatrices();
       showMessage('Availability saved.', 'success');
     })
