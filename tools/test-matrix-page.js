@@ -59,6 +59,8 @@ function assertMatrixFiles() {
   assert(!js.includes("['No response', 'missing'"), 'Matrix totals should not render the no response row.');
   assert(js.includes('--matrix-table-min-width'), 'Matrix tables should size from their date count.');
   assert(js.includes('matrix-save-bar'), 'Matrix editor should keep the save control visible near the editing area.');
+  assert(js.includes('saveBar.hidden = true'), 'Matrix save control should be hidden until there are changes.');
+  assert(js.includes('saveBar.hidden = !isDirty'), 'Matrix save control should appear only for unsaved changes.');
   assert(js.includes('has-unsaved-changes'), 'Matrix editor should mark changed availability as unsaved.');
   assert(js.includes('Save Changes'), 'Matrix save button should change text when availability is dirty.');
   assert(js.includes('data-delete-matrix-id'), 'Matrix client should render a matrix delete control.');

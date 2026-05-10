@@ -509,6 +509,7 @@ function createMatrixCard(matrix, index) {
 
   const saveBar = document.createElement('div');
   saveBar.className = 'matrix-save-bar';
+  saveBar.hidden = true;
 
   const save = document.createElement('button');
   save.type = 'submit';
@@ -536,9 +537,13 @@ function createMatrixCard(matrix, index) {
 
 function updateMatrixSaveState(form, isDirty) {
   const saveButton = form?.querySelector('.matrix-save-button');
+  const saveBar = form?.querySelector('.matrix-save-bar');
   if (!saveButton) return;
 
   form.classList.toggle('has-unsaved-changes', isDirty);
+  if (saveBar) {
+    saveBar.hidden = !isDirty;
+  }
   saveButton.textContent = isDirty ? 'Save Changes' : 'Save Availability';
 }
 
