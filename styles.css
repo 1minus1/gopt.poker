@@ -572,7 +572,7 @@ button:disabled {
 }
 
 .matrix-table {
-  min-width: 720px;
+  min-width: max(100%, var(--matrix-table-min-width, 720px));
   width: 100%;
 }
 
@@ -588,6 +588,16 @@ button:disabled {
   z-index: 1;
   text-align: left;
   background: #fff;
+}
+
+.matrix-table th:first-child,
+.matrix-table td:first-child {
+  min-width: 8rem;
+}
+
+.matrix-table th:not(:first-child),
+.matrix-table td:not(:first-child) {
+  min-width: 9rem;
 }
 
 .matrix-table thead th:first-child,

@@ -46,13 +46,19 @@ function assertMatrixFiles() {
   const html = fs.readFileSync(path.join(ROOT, 'matrix.html'), 'utf8');
   const js = fs.readFileSync(path.join(ROOT, 'matrix.js'), 'utf8');
   const php = fs.readFileSync(path.join(ROOT, 'api', 'matrix.php'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
   assert(js.includes('Local preview mode'), 'Matrix client should have a static-server preview fallback.');
   assert(js.includes('matrix-status-probable'), 'Matrix client should render status-specific cells.');
+  assert(js.includes('Probables'), 'Matrix totals should use the shorter Probables label.');
+  assert(js.includes('Expected #'), 'Matrix totals should use the shorter Expected # label.');
+  assert(!js.includes("['No response', 'missing'"), 'Matrix totals should not render the no response row.');
+  assert(js.includes('--matrix-table-min-width'), 'Matrix tables should size from their date count.');
   assert(js.includes('data-delete-matrix-id'), 'Matrix client should render a matrix delete control.');
   assert(js.includes('Type the matrix name exactly'), 'Matrix deletion should require a harsh confirmation.');
+  assert(css.includes('var(--matrix-table-min-width'), 'Matrix CSS should use the dynamic table min-width.');
   assert(php.includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
   assert(php.includes('update_response'), 'Matrix API should support per-player response updates.');
   assert(php.includes('gopt_delete_matrix'), 'Matrix API should support matrix deletion.');

@@ -395,6 +395,7 @@ function createMatrixTable(matrix, selectedPlayer) {
   const totals = calculateDateTotals(matrix);
   const table = document.createElement('table');
   table.className = 'matrix-table';
+  table.style.setProperty('--matrix-table-min-width', `${9 + Math.max(dateIds.length, 1) * 9.5}rem`);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -429,9 +430,8 @@ function createMatrixTable(matrix, selectedPlayer) {
 
   const tfoot = document.createElement('tfoot');
   [
-    ['Probable attendees', 'probable', value => String(value)],
-    ['Expected players', 'expected', value => Number(value).toFixed(2)],
-    ['No response', 'missing', value => String(value)],
+    ['Probables', 'probable', value => String(value)],
+    ['Expected #', 'expected', value => Number(value).toFixed(2)],
   ].forEach(([label, field, formatter]) => {
     const tr = document.createElement('tr');
     const th = document.createElement('th');
