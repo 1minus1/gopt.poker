@@ -133,7 +133,26 @@
   function normalizeMajorName(value, isMajor) {
     const majorName = String(value || '').trim();
     if (isMajor !== 'YES') return '';
-    return majorName.toUpperCase() === 'NO' ? '' : majorName;
+    if (majorName.toUpperCase() === 'NO') return '';
+
+    const withoutYear = majorName
+      .replace(/\b(?:19|20)\d{2}\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const normalized = withoutYear || majorName;
+    const upper = normalized.toUpperCase();
+
+    if (upper === 'AC BABY') {
+      return 'AC Baby';
+    }
+    if (upper === 'DP OPEN' || upper === 'DELAWARE PARK' || upper === 'DELAWARE PARK OPEN') {
+      return 'Delaware Park Open';
+    }
+    if (upper === 'DNO' || upper === 'DOWNTOWN NEWARK OPEN') {
+      return 'Downtown Newark Open';
+    }
+
+    return normalized;
   }
 
   function parseLegacyHistory(text, options = {}) {

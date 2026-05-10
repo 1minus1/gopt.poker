@@ -263,8 +263,7 @@
   </div>
   <script src="gopt-data.js"></script>
   <script>
-    function fetchCurrentDataText(sources = ['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv', 'files/GOPThistory.txt']) {
-      const [source, ...remaining] = sources;
+    function fetchDataSource(source) {
       return fetch(source, { cache: 'no-store' })
         .then(response => {
           if (!response.ok) {
@@ -277,11 +276,41 @@
             throw new Error(`${source} did not return a supported GOPT data file.`);
           }
           return text;
-        })
-        .catch(error => {
-          if (!remaining.length) throw error;
-          return fetchCurrentDataText(remaining);
         });
+    }
+
+    function maybePreferStaticDataV2(apiText) {
+      const apiData = GoptData.parseDataFile(apiText);
+      if (apiData.format !== 'legacy') {
+        return Promise.resolve(apiText);
+      }
+
+      return fetchDataSource('data/GOPTdatav2.csv')
+        .then(staticText => {
+          const staticData = GoptData.parseDataFile(staticText);
+          if (
+            staticData.format === 'v2' &&
+            (staticData.versionNumber || 0) >= (apiData.versionNumber || 0)
+          ) {
+            return staticText;
+          }
+          return apiText;
+        })
+        .catch(() => apiText);
+    }
+
+    function fetchFirstAvailableDataText(sources) {
+      const [source, ...remaining] = sources;
+      return fetchDataSource(source).catch(error => {
+        if (!remaining.length) throw error;
+        return fetchFirstAvailableDataText(remaining);
+      });
+    }
+
+    function fetchCurrentDataText() {
+      return fetchFirstAvailableDataText(['api/history/current', 'api/history-current.php'])
+        .then(maybePreferStaticDataV2)
+        .catch(() => fetchFirstAvailableDataText(['data/GOPTdatav2.csv', 'files/GOPThistory.txt']));
     }
 
     function formatDisplayDate(timestamp) {
