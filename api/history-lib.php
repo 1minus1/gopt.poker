@@ -522,7 +522,7 @@ function gopt_ensure_history_store(): array
             gopt_write_index($index);
         }
 
-        return $index;
+        return gopt_sync_static_seed_history($index);
     }
 
     $seedPath = gopt_static_data_v2_path();
@@ -540,6 +540,71 @@ function gopt_ensure_history_store(): array
     ]);
 
     return $seeded['index'];
+}
+
+function gopt_sync_static_seed_history(array $index): array
+{
+    $seedPath = gopt_static_data_v2_path();
+    if (!is_file($seedPath)) {
+        return $index;
+    }
+
+    $seedText = file_get_contents($seedPath);
+    if ($seedText === false || $seedText === '') {
+        return $index;
+    }
+
+    $validation = gopt_validate_history($seedText);
+    if (count($validation['errors'])) {
+        return $index;
+    }
+
+    $seedIndex = null;
+    foreach ($index['versions'] as $position => $version) {
+        $sameVersion = intval($version['versionNumber'] ?? 0) === intval($validation['versionNumber']);
+        $isSeed = ($version['source'] ?? '') === 'seed-static-data-v2';
+        if ($sameVersion && $isSeed) {
+            $seedIndex = $position;
+            break;
+        }
+    }
+
+    if ($seedIndex === null) {
+        return $index;
+    }
+
+    $metadata = $index['versions'][$seedIndex];
+    $normalizedText = $validation['normalizedText'];
+    $sha256 = hash('sha256', $normalizedText);
+    if (($metadata['sha256'] ?? '') === $sha256) {
+        return $index;
+    }
+
+    $filename = (string)($metadata['filename'] ?? '');
+    if ($filename === '') {
+        return $index;
+    }
+
+    $filePath = gopt_history_version_dir() . DIRECTORY_SEPARATOR . $filename;
+    $tempPath = $filePath . '.tmp';
+    if (file_put_contents($tempPath, $normalizedText, LOCK_EX) === false) {
+        throw new GoptHistoryException('Could not refresh the protected seed data file.', 500);
+    }
+    if (!rename($tempPath, $filePath)) {
+        @unlink($tempPath);
+        throw new GoptHistoryException('Could not save the protected seed data file.', 500);
+    }
+
+    $metadata['rowCount'] = $validation['rowCount'];
+    $metadata['majorRows'] = $validation['majorRows'];
+    $metadata['format'] = 'v2';
+    $metadata['sha256'] = $sha256;
+    $metadata['label'] = $metadata['label'] ?? 'Imported from data/GOPTdatav2.csv';
+    $metadata['source'] = 'seed-static-data-v2';
+    $index['versions'][$seedIndex] = $metadata;
+    gopt_write_index($index);
+
+    return $index;
 }
 
 function gopt_get_oldest_history_version(array $index): ?array
