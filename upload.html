@@ -6,7 +6,7 @@
   <title>Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=mobile-logo-20260505" />
+  <link rel="stylesheet" href="styles.css?v=admin-text-edit-20260516" />
   <style>
     body {
       font-family: 'Roboto Serif', serif;
@@ -52,6 +52,36 @@
     </form>
 
     <section class="admin-section">
+      <h2>Edit Current Data Text</h2>
+      <p class="muted">Load the active data file, edit it directly, then save it as the next server version.</p>
+
+      <form id="history-text-form" class="admin-form">
+        <div class="admin-action-row">
+          <button type="button" id="load-current-history">Load Current Data</button>
+          <button type="button" id="validate-history-text">Validate Edited Text</button>
+        </div>
+        <p id="history-text-summary" class="muted"></p>
+
+        <label class="admin-editor-label">
+          GOPTdatav2.csv text
+          <textarea id="history-text-editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        </label>
+
+        <label>
+          Username
+          <input id="history-text-username" type="text" autocomplete="username" required />
+        </label>
+
+        <label>
+          Password
+          <input id="history-text-password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button type="submit">Save Edited Text as New Version</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
       <div class="section-heading-row">
         <div>
           <h2>Data Versions</h2>
@@ -88,10 +118,18 @@
     </section>
   </main>
 
+  <script src="gopt-data.js?v=admin-text-edit-20260516"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
     const message = document.getElementById('upload-message');
+    const historyTextEditor = document.getElementById('history-text-editor');
+    const historyTextForm = document.getElementById('history-text-form');
+    const historyTextPassword = document.getElementById('history-text-password');
+    const historyTextSummary = document.getElementById('history-text-summary');
+    const historyTextUsername = document.getElementById('history-text-username');
+    const loadCurrentHistory = document.getElementById('load-current-history');
+    const validateHistoryText = document.getElementById('validate-history-text');
     const versionSelect = document.getElementById('history-version-select');
     const versionSummary = document.getElementById('history-version-summary');
     const revertForm = document.getElementById('revert-history-form');
@@ -100,6 +138,7 @@
     const deleteVersion = document.getElementById('delete-history-version');
     const deleteNote = document.getElementById('delete-history-note');
     const adminApiUnavailableMessage = 'Admin needs the PHP data API. Open this page from the PHP local server, for example http://localhost:8000/upload.html, or use the deployed site. Opening upload.html directly as a file cannot run Admin actions.';
+    let allHistoryVersions = [];
     let selectableVersions = [];
     let adminFocusInteracted = false;
 
@@ -148,6 +187,10 @@
       return selectableVersions.find(version => version.id === versionSelect.value);
     }
 
+    function showHistoryTextSummary(text) {
+      historyTextSummary.textContent = text;
+    }
+
     function looksLikePhpSource(text) {
       return text.trimStart().startsWith('<?php');
     }
@@ -191,6 +234,130 @@
       throw lastError || new Error('Could not reach the data API.');
     }
 
+    async function fetchText(endpoints, options = {}) {
+      if (window.location.protocol === 'file:') {
+        throw new Error(adminApiUnavailableMessage);
+      }
+
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, options);
+          const text = await response.text();
+          if (looksLikePhpSource(text)) {
+            throw new Error(adminApiUnavailableMessage);
+          }
+          if (!response.ok) {
+            throw new Error(text || `Could not load ${endpoint}.`);
+          }
+          return text;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Could not load text from the server.');
+    }
+
+    async function uploadHistoryFormData(formData) {
+      let lastError = null;
+
+      for (const endpoint of ['upload-history', 'api/history-upload.php']) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: formData,
+          });
+          const result = await readJsonResponse(response, endpoint);
+          return { response, result };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Could not upload the edited data.');
+    }
+
+    function getLargestHistoryVersionNumber() {
+      const versionNumbers = allHistoryVersions
+        .map(version => Number.parseInt(version.versionNumber, 10))
+        .filter(Number.isInteger);
+
+      if (!versionNumbers.length) {
+        throw new Error('Could not determine the latest data version number.');
+      }
+
+      return Math.max(...versionNumbers);
+    }
+
+    function prepareEditedHistoryText() {
+      const sourceText = historyTextEditor.value.trim();
+      if (!sourceText) {
+        throw new Error('Load or paste GOPTdatav2.csv text before saving.');
+      }
+
+      const parsed = GoptData.parseDataFile(sourceText, { normalizePlayerName: true });
+      const nextVersion = getLargestHistoryVersionNumber() + 1;
+      const normalizedText = GoptData.serializeDataV2(parsed.rows, {
+        versionNumber: nextVersion,
+      });
+      const prepared = GoptData.parseDataFile(normalizedText, { normalizePlayerName: true });
+
+      return {
+        text: normalizedText,
+        nextVersion,
+        rowCount: prepared.rows.length,
+        majorRows: prepared.rows.filter(row => row.isMajor === 'YES').length,
+      };
+    }
+
+    async function loadCurrentHistoryText() {
+      const [text] = await Promise.all([
+        fetchText(['api/history/current', 'api/history-current.php'], { cache: 'no-store' }),
+        loadHistoryVersions(),
+      ]);
+      historyTextEditor.value = text.trim() + '\n';
+
+      const parsed = GoptData.parseDataFile(historyTextEditor.value, { normalizePlayerName: true });
+      showHistoryTextSummary(`Loaded current file v${parsed.versionNumber}. Saving edited text will create v${getLargestHistoryVersionNumber() + 1}.`);
+    }
+
+    async function validateEditedHistoryText() {
+      await loadHistoryVersions();
+      const prepared = prepareEditedHistoryText();
+      showHistoryTextSummary(`Looks valid: ${prepared.rowCount} rows, ${prepared.majorRows} major rows. Saving will upload file v${prepared.nextVersion}.`);
+    }
+
+    async function saveEditedHistoryText(event) {
+      event.preventDefault();
+
+      try {
+        await loadHistoryVersions();
+        const prepared = prepareEditedHistoryText();
+        const formData = new FormData();
+        formData.append('username', historyTextUsername.value);
+        formData.append('password', historyTextPassword.value);
+        formData.append('source', 'admin-text-edit');
+        formData.append('label', 'Edited in Admin text editor');
+        formData.append('historyFile', new File([prepared.text], `GOPTdatav2-v${prepared.nextVersion}.csv`, { type: 'text/csv' }));
+
+        const { response, result } = await uploadHistoryFormData(formData);
+        if (!response.ok || result.status !== 'success') {
+          throw new Error(result.message || 'Edited data upload failed.');
+        }
+
+        historyTextEditor.value = prepared.text;
+        historyTextPassword.value = '';
+        await loadHistoryVersions();
+        showHistoryTextSummary(`Saved edited data as file v${result.versionNumber}.`);
+        showUploadMessage(`Edited data uploaded. ${result.rows} tournament rows accepted. Current data is now version ${result.versionNumber}.`, 'success');
+      } catch (error) {
+        showUploadMessage(error.message, 'error');
+      }
+    }
+
     function updateDeleteVersionState() {
       const selected = getSelectedVersion();
       const isOldest = Boolean(selected?.isOldest);
@@ -207,6 +374,7 @@
       const data = await fetchJson(['api/history/versions', 'api/history-versions.php'], { cache: 'no-store' });
       const current = data.versions.find(version => version.isCurrent);
       const previous = data.versions.filter(version => !version.isCurrent);
+      allHistoryVersions = data.versions;
 
       versionSummary.textContent = current
         ? `Current: ${formatVersion(current, { showCurrent: false })}`
@@ -261,6 +429,28 @@
     });
 
     versionSelect.addEventListener('change', updateDeleteVersionState);
+
+    loadCurrentHistory.addEventListener('click', () => {
+      loadCurrentHistoryText()
+        .then(() => {
+          showUploadMessage('Current data loaded into the text editor.', 'success');
+        })
+        .catch(error => {
+          showUploadMessage(error.message, 'error');
+        });
+    });
+
+    validateHistoryText.addEventListener('click', () => {
+      validateEditedHistoryText()
+        .then(() => {
+          showUploadMessage('Edited data is valid.', 'success');
+        })
+        .catch(error => {
+          showUploadMessage(error.message, 'error');
+        });
+    });
+
+    historyTextForm.addEventListener('submit', saveEditedHistoryText);
 
     deleteVersion.addEventListener('click', () => {
       const versionId = versionSelect.value;

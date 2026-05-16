@@ -71,7 +71,7 @@ th {
 }
 
 .admin-panel {
-  width: min(560px, calc(100vw - 2rem));
+  width: min(960px, calc(100vw - 2rem));
   margin: 0 auto 3rem;
 }
 
@@ -93,11 +93,26 @@ th {
 }
 
 .admin-form input,
-.admin-form select {
+.admin-form select,
+.admin-form textarea {
   font: inherit;
   padding: 0.55rem 0.65rem;
   border: 1px solid #888;
   background: #fff;
+}
+
+.admin-editor-label {
+  grid-column: 1 / -1;
+}
+
+#history-text-editor {
+  min-height: 26rem;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre;
+  overflow: auto;
 }
 
 .admin-form button,
