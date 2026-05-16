@@ -32,6 +32,8 @@ the `1.1.1` patch.
 
 - Existing Matrix responses are preserved; stored `PROBABLE` responses now
   recalculate at 75%, while new `IN` responses count as 100%.
+- The season-ranking fix changed the recorded season champions for 2009-2010
+  from Coach to Moe, and for 2011-2012 from Moe to Screech.
 - The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
   Time ranking can still be revised based on that result.
 
@@ -58,6 +60,8 @@ the `1.1.1` patch.
 
 - Existing Matrix responses are preserved; stored `PROBABLE` responses now
   recalculate at 75%, while new `IN` responses count as 100%.
+- The season-ranking fix changed the recorded season champions for 2009-2010
+  from Coach to Moe, and for 2011-2012 from Moe to Screech.
 - The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
   Time ranking can still be revised based on that result.
 
