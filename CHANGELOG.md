@@ -10,11 +10,11 @@ the `1.1.1` patch.
 
 ### Changed
 
-- Re-ranked the All Time standings table by the new weighted formula:
+- Tentatively re-ranked the All Time standings table by the proposed GOAT stat:
   non-major bracelets + 2x major bracelets + 2x season championships.
 - Removed all-time points from the first All Time standings table.
-- Added the rightmost `🐐 stat` column to show the current weighted ranking
-  formula used for All Time ordering.
+- Added the rightmost `🐐 stat` column to show that proposed weighted ranking
+  formula while the GroupMe poll is still pending.
 - Updated completed-season ranking and season champion logic to use points,
   then bracelets, then finishing rank in the season's last event.
 - Updated Matrix probabilities: added `IN` as 100%, changed `PROBABLE` to 75%,
@@ -32,12 +32,14 @@ the `1.1.1` patch.
 
 - Existing Matrix responses are preserved; stored `PROBABLE` responses now
   recalculate at 75%, while new `IN` responses count as 100%.
+- The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
+  Time ranking can still be revised based on that result.
 
 ## [1.1.0] - 2026-05-16
 
 ### Changed
 
-- Re-ranked the All Time standings table by the new weighted formula:
+- Tentatively re-ranked the All Time standings table by the proposed GOAT stat:
   non-major bracelets + 2x major bracelets + 2x season championships.
 - Updated completed-season ranking and season champion logic to use points,
   then bracelets, then finishing rank in the season's last event.
@@ -56,6 +58,8 @@ the `1.1.1` patch.
 
 - Existing Matrix responses are preserved; stored `PROBABLE` responses now
   recalculate at 75%, while new `IN` responses count as 100%.
+- The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
+  Time ranking can still be revised based on that result.
 
 ## [1.0.0] - 2026-05-16
 
