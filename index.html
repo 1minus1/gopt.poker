@@ -1243,7 +1243,7 @@
         }
 
         function buildHostingDroughtRows() {
-          const excludedPlayers = new Set(['Norman', 'Princess Peach']);
+          const excludedPlayers = new Set(['Norman', 'Princess Peach', 'Stinky Pete']);
           const players = Array.from(getAllPlayers())
             .filter(player => !excludedPlayers.has(player));
           const playerSet = new Set(players);
@@ -1272,7 +1272,7 @@
               if (a.eventsSince !== b.eventsSince) return b.eventsSince - a.eventsSince;
               return a.player.localeCompare(b.player);
             })
-            .slice(0, 3);
+            .slice(0, 5);
         }
 
         function buildHostWinRateRows() {
