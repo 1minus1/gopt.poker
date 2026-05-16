@@ -18,12 +18,11 @@ public `v1.0` release.
 - Made the All Time standings table sortable by tapping any column header.
 - Restored Points to the All Time standings table and removed the fixed goat
   marker from Siri's name.
-- Added the proposed weighted all-time `⚖️` column and explainer:
+- Added the weighted all-time `⚖️` column and explainer:
   non-major bracelets + 2x major bracelets + 2x season championships.
 - Kept the default All Time standings order as descending total bracelets.
 - Centered the All Time table headers and numeric cells.
-- Reworked the all-time weighted-stat label away from `🐐 stat`; the `⚖️`
-  column remains tentative until the GroupMe poll closes.
+- Reworked the all-time weighted-stat label away from `🐐 stat` to `⚖️`.
 - Updated Matrix probabilities: added `IN` as 100%, changed `PROBABLE` to 75%,
   and updated the Rules page to match.
 - Changed the Matrix table count from probables only to `# (PROBABLE + IN)`,
@@ -47,8 +46,6 @@ public `v1.0` release.
 
 - Existing Matrix responses are preserved; stored `PROBABLE` responses now
   recalculate at 75%, while new `IN` responses count as 100%.
-- The `⚖️` ranking stat is tentative until the GroupMe poll closes; the All
-  Time ranking/stat display can still be revised based on that result.
 
 ## [1.1.1] - 2026-05-16
 
@@ -57,11 +54,10 @@ the `1.1.1` patch.
 
 ### Changed
 
-- Tentatively re-ranked the All Time standings table by the proposed GOAT stat:
+- Re-ranked the All Time standings table by the weighted all-time stat:
   non-major bracelets + 2x major bracelets + 2x season championships.
 - Removed all-time points from the first All Time standings table.
-- Added the rightmost `🐐 stat` column to show that proposed weighted ranking
-  formula while the GroupMe poll is still pending.
+- Added the rightmost `🐐 stat` column to show that weighted ranking formula.
 - Updated completed-season ranking and season champion logic to use points,
   then bracelets, then finishing rank in the season's last event.
 - Updated Matrix probabilities: added `IN` as 100%, changed `PROBABLE` to 75%,
@@ -82,14 +78,12 @@ the `1.1.1` patch.
 - The season-ranking fix changed the recorded season champions for 2009-2010
   from Coach to Moe, for 2010-2011 from Masta Pussy to Siri, and for
   2011-2012 from Moe to Screech.
-- The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
-  Time ranking can still be revised based on that result.
 
 ## [1.1.0] - 2026-05-16
 
 ### Changed
 
-- Tentatively re-ranked the All Time standings table by the proposed GOAT stat:
+- Re-ranked the All Time standings table by the weighted all-time stat:
   non-major bracelets + 2x major bracelets + 2x season championships.
 - Updated completed-season ranking and season champion logic to use points,
   then bracelets, then finishing rank in the season's last event.
@@ -111,8 +105,6 @@ the `1.1.1` patch.
 - The season-ranking fix changed the recorded season champions for 2009-2010
   from Coach to Moe, for 2010-2011 from Masta Pussy to Siri, and for
   2011-2012 from Moe to Screech.
-- The `🐐 stat` ranking is tentative until the GroupMe poll closes; the All
-  Time ranking can still be revised based on that result.
 
 ## [1.0.0] - 2026-05-16
 
