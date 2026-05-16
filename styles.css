@@ -721,7 +721,9 @@ button:disabled {
 }
 
 .matrix-status-in {
-  background: #a8dfb0;
+  background: #237a3b;
+  color: #fff;
+  font-weight: 700;
 }
 
 .matrix-editing-row td:first-child {
