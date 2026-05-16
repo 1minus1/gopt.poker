@@ -2,10 +2,11 @@ const MATRIX_STORAGE_KEY = 'gopt.matrix.localPreview.v1';
 
 const MATRIX_STATUSES = [
   { value: '', label: 'No response', shortLabel: '—', weight: 0, className: 'matrix-status-empty' },
-  { value: 'OUT', label: 'OUT (0%)', shortLabel: 'OUT', weight: 0, className: 'matrix-status-out' },
-  { value: 'DOUBTFUL', label: 'DOUBTFUL (25%)', shortLabel: 'DOUBTFUL', weight: 0.25, className: 'matrix-status-doubtful' },
+  { value: 'IN', label: 'IN (100%)', shortLabel: 'IN', weight: 1, className: 'matrix-status-in' },
+  { value: 'PROBABLE', label: 'PROBABLE (75%)', shortLabel: 'PROBABLE', weight: 0.75, className: 'matrix-status-probable' },
   { value: 'QUESTIONABLE', label: 'QUESTIONABLE (50%)', shortLabel: 'QUESTIONABLE', weight: 0.5, className: 'matrix-status-questionable' },
-  { value: 'PROBABLE', label: 'PROBABLE (100%)', shortLabel: 'PROBABLE', weight: 1, className: 'matrix-status-probable' },
+  { value: 'DOUBTFUL', label: 'DOUBTFUL (25%)', shortLabel: 'DOUBTFUL', weight: 0.25, className: 'matrix-status-doubtful' },
+  { value: 'OUT', label: 'OUT (0%)', shortLabel: 'OUT', weight: 0, className: 'matrix-status-out' },
 ];
 
 const state = {

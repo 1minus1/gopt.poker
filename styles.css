@@ -684,6 +684,10 @@ button:disabled {
 }
 
 .matrix-status-probable {
+  background: #c9eeb9;
+}
+
+.matrix-status-in {
   background: #a8dfb0;
 }
 

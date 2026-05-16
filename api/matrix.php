@@ -2,7 +2,7 @@
 
 require __DIR__ . '/history-lib.php';
 
-const GOPT_MATRIX_STATUSES = ['', 'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'];
+const GOPT_MATRIX_STATUSES = ['', 'IN', 'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'];
 
 function gopt_matrix_store_dir(): string
 {
