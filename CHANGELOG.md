@@ -3,6 +3,14 @@
 This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 `1.0.0` is the `v1.0` release shared with the group.
 
+## [1.1.1] - 2026-05-16
+
+### Changed
+
+- Removed all-time points from the first All Time standings table.
+- Added the rightmost `🐐 stat` column to show the current weighted ranking
+  formula used for All Time ordering.
+
 ## [1.1.0] - 2026-05-16
 
 ### Changed

@@ -841,10 +841,11 @@
                 <thead>
                   <tr>
                     <th>Player</th>
-                    <th>Points</th>
+                    ${showChampColumn ? '' : '<th>Points</th>'}
                     ${showChampColumn ? '<th>👑</th>' : ''}
                     <th>⭕</th>
                     <th>🎉</th>
+                    ${showChampColumn ? '<th>🐐 stat</th>' : ''}
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -1000,10 +1001,11 @@
               const displayPlayer = `${player}${seasonFilterValue === "All Time" && player === "Siri" ? ' 🐐' : ''}${player === selectedSeasonChampion ? ' 👑' : ''}`;
               tr.innerHTML = `
                 <td>${displayPlayer}</td>
-                <td>${points.toFixed(2)}</td>
+                ${showChampColumn ? '' : `<td>${points.toFixed(2)}</td>`}
                 ${showChampColumn ? `<td>${championCounts[player] || 0}</td>` : ''}
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
+                ${showChampColumn ? `<td>${getAllTimeRankingScore(player, { bracelets, majorBracelets })}</td>` : ''}
               `;
               standingsBody.appendChild(tr);
             });
@@ -1015,16 +1017,23 @@
           }, {
             champions: Object.values(championCounts).reduce((total, count) => total + count, 0),
             bracelets: 0,
-            majorBracelets: 0
+            majorBracelets: 0,
+            rankingScore: 0
           });
+          if (showChampColumn) {
+            standingsTotals.rankingScore = Object.entries(playerTotals).reduce((total, [player, playerTotals]) => {
+              return total + getAllTimeRankingScore(player, playerTotals);
+            }, 0);
+          }
 
           const totalRow = document.createElement('tr');
           totalRow.innerHTML = `
             <td>Totals</td>
-            <td></td>
+            ${showChampColumn ? '' : '<td></td>'}
             ${showChampColumn ? `<td>${standingsTotals.champions}</td>` : ''}
             <td>${standingsTotals.bracelets}</td>
             <td>${standingsTotals.majorBracelets}</td>
+            ${showChampColumn ? `<td>${standingsTotals.rankingScore}</td>` : ''}
           `;
           standingsFooter.appendChild(totalRow);
 
