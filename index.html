@@ -119,6 +119,11 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    #season-standings-table.all-time-standings th,
+    #season-standings-table.all-time-standings td:not(:first-child),
+    #season-standings-table.all-time-standings tfoot td:first-child {
+      text-align: center;
+    }
     .standings-explainer {
       box-sizing: border-box;
       color: #555;
@@ -903,7 +908,7 @@
           standingsSection.innerHTML = `
             <h2>Point and Bracelet Standings</h2>
             <div class="table-container">
-              <table id="season-standings-table">
+              <table id="season-standings-table" class="${showChampColumn ? 'all-time-standings' : ''}">
                 <thead>
                   <tr>
                     ${createStandingsHeader('Player', 'player')}
