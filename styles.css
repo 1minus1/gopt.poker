@@ -36,6 +36,28 @@ body {
   transform: rotate(-1deg) scale(1.015);
 }
 
+.hero-quote {
+  box-sizing: border-box;
+  margin: -0.25rem auto 1rem;
+  max-width: min(34rem, calc(100vw - 2rem));
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.hero-quote blockquote {
+  margin: 0;
+  font-size: clamp(1rem, 3.8vw, 1.35rem);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hero-quote figcaption {
+  margin-top: 0.35rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
 nav a {
   display: inline-block;
   line-height: 1.8;
