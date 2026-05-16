@@ -343,7 +343,7 @@ function calculateDateTotals(matrix) {
       if (!status.value) {
         totals[dateId].missing += 1;
       }
-      if (status.value === 'PROBABLE') {
+      if (status.value === 'PROBABLE' || status.value === 'IN') {
         totals[dateId].probable += 1;
       }
       totals[dateId].expected += status.weight;
@@ -431,7 +431,7 @@ function createMatrixTable(matrix, selectedPlayer) {
 
   const tfoot = document.createElement('tfoot');
   [
-    ['Probables', 'probable', value => String(value)],
+    ['# (PROBABLE + IN)', 'probable', value => String(value)],
     ['Expected #', 'expected', value => Number(value).toFixed(2)],
   ].forEach(([label, field, formatter]) => {
     const tr = document.createElement('tr');
@@ -496,7 +496,7 @@ function createMatrixCard(matrix, index) {
   const metrics = document.createElement('div');
   metrics.className = 'matrix-summary-metrics';
   appendMetric(metrics, 'Best expected players', bestExpected ? `${formatMatrixDate(bestExpected.dateId)}: ${bestExpected.value.toFixed(2)}` : '—');
-  appendMetric(metrics, 'Most probables', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
+  appendMetric(metrics, 'Most PROBABLE + IN', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
   details.appendChild(metrics);
 
   const selectedPlayer = state.selectedPlayers[matrix.id] || '';
