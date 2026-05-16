@@ -178,6 +178,10 @@ th {
   border-top: 1px solid #ccc;
 }
 
+.matrix-history-admin-form {
+  margin-top: 1.25rem;
+}
+
 .admin-form button.danger-action {
   border: 1px solid #8f1f1f;
   background: #b32626;
@@ -654,6 +658,13 @@ button:disabled {
   font-size: 0.85rem;
 }
 
+.matrix-readonly-note {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #9a5300;
+  background: #fff3c4;
+}
+
 .matrix-table-wrap {
   max-width: 100%;
   overflow-x: auto;
@@ -694,9 +705,52 @@ button:disabled {
   background: #111;
 }
 
+.matrix-date-label,
+.matrix-delta-lock-badge,
+.matrix-delta-lock-button {
+  display: block;
+  margin-inline: auto;
+}
+
+.matrix-date-label {
+  margin-bottom: 0.35rem;
+}
+
+.matrix-delta-lock-badge {
+  width: fit-content;
+  margin-bottom: 0.4rem;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #111;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.matrix-delta-lock-button {
+  min-height: 1.8rem;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matrix-delta-locked-date {
+  box-shadow: inset 0 -0.35rem 0 #f28c00;
+}
+
 .matrix-table select {
   min-width: 9rem;
   font: inherit;
+}
+
+.matrix-readonly-cell {
+  opacity: 0.72;
 }
 
 .matrix-status-empty {

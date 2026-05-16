@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=admin-text-edit-20260516" />
+  <link rel="stylesheet" href="styles.css?v=matrix-delta-lock-20260516" />
   <style>
     body {
       font-family: 'Roboto Serif', serif;
@@ -113,8 +114,37 @@
       </form>
 
       <div class="admin-archive-row">
-        <a id="download-history-archive" class="admin-link-button" href="api/history/versions.zip" download>Download All Versions (.zip)</a>
+        <a id="download-history-archive" class="admin-link-button" href="api/history/versions.zip" download>Download All Versions + Matrix Attendance Summary (.zip)</a>
       </div>
+    </section>
+
+    <section class="admin-section">
+      <h2>Matrix History</h2>
+      <p class="muted">Download or replace the public Matrix JSON store. The export includes locked and unlocked dates for every matrix.</p>
+
+      <div class="admin-action-row">
+        <a class="admin-link-button" href="api/matrix/export" download>Download Matrix History (.json)</a>
+        <a class="admin-link-button" href="api/matrix/attendance-summary" download>Download Matrix Attendance Summary (.csv)</a>
+      </div>
+
+      <form id="matrix-history-form" class="admin-form matrix-history-admin-form">
+        <label>
+          Matrix history JSON
+          <input id="matrix-history-file" name="matrixFile" type="file" accept=".json,application/json" required />
+        </label>
+
+        <label>
+          Username
+          <input id="matrix-history-username" name="username" type="text" autocomplete="username" required />
+        </label>
+
+        <label>
+          Password
+          <input id="matrix-history-password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button type="submit">Upload Matrix History</button>
+      </form>
     </section>
   </main>
 
@@ -137,6 +167,8 @@
     const revertPassword = document.getElementById('revert-password');
     const deleteVersion = document.getElementById('delete-history-version');
     const deleteNote = document.getElementById('delete-history-note');
+    const matrixHistoryForm = document.getElementById('matrix-history-form');
+    const matrixHistoryPassword = document.getElementById('matrix-history-password');
     const adminApiUnavailableMessage = 'Admin needs the PHP data API. Open this page from the PHP local server, for example http://localhost:8000/upload.html, or use the deployed site. Opening upload.html directly as a file cannot run Admin actions.';
     let allHistoryVersions = [];
     let selectableVersions = [];
@@ -278,6 +310,26 @@
       }
 
       throw lastError || new Error('Could not upload the edited data.');
+    }
+
+    async function uploadMatrixHistoryFormData(formData) {
+      let lastError = null;
+
+      for (const endpoint of ['upload-matrix-history', 'api/matrix-upload.php']) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: formData,
+          });
+          const result = await readJsonResponse(response, endpoint);
+          return { response, result };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Could not upload the matrix history.');
     }
 
     function getLargestHistoryVersionNumber() {
@@ -451,6 +503,23 @@
     });
 
     historyTextForm.addEventListener('submit', saveEditedHistoryText);
+
+    matrixHistoryForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const formData = new FormData(matrixHistoryForm);
+
+      uploadMatrixHistoryFormData(formData)
+        .then(({ response, result }) => {
+          if (!response.ok || result.status !== 'success') {
+            throw new Error(result.message || 'Matrix history upload failed.');
+          }
+          matrixHistoryPassword.value = '';
+          showUploadMessage(`Matrix history uploaded. ${result.matrices} matrices accepted.`, 'success');
+        })
+        .catch(error => {
+          showUploadMessage(error.message, 'error');
+        });
+    });
 
     deleteVersion.addEventListener('click', () => {
       const versionId = versionSelect.value;

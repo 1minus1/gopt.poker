@@ -28,18 +28,19 @@ function assertPlayersComeFromDataModel() {
 
 function assertExpectedAttendanceMath() {
   const weights = {
+    IN: 1,
     OUT: 0,
     DOUBTFUL: 0.25,
     QUESTIONABLE: 0.5,
-    PROBABLE: 1,
+    PROBABLE: 0.75,
     '': 0,
   };
-  const responses = ['PROBABLE', 'PROBABLE', 'DOUBTFUL', 'QUESTIONABLE', 'OUT', ''];
-  const probable = responses.filter(response => response === 'PROBABLE').length;
+  const responses = ['IN', 'PROBABLE', 'PROBABLE', 'DOUBTFUL', 'QUESTIONABLE', 'OUT', ''];
+  const probable = responses.filter(response => response === 'PROBABLE' || response === 'IN').length;
   const expected = responses.reduce((total, response) => total + weights[response], 0);
 
-  assert.strictEqual(probable, 2);
-  assert.strictEqual(expected, 2.75);
+  assert.strictEqual(probable, 3);
+  assert.strictEqual(expected, 3.25);
 }
 
 function assertMatrixFiles() {
@@ -49,18 +50,19 @@ function assertMatrixFiles() {
   const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
-  assert(html.includes('styles.css?v=matrix-20260510-cachefix'), 'Matrix stylesheet URL should be cache-busted.');
-  assert(html.includes('matrix.js?v=matrix-20260510-cleanstart'), 'Matrix script URL should be cache-busted.');
+  assert(html.includes('styles.css?v=matrix-delta-lock-20260516'), 'Matrix stylesheet URL should be cache-busted.');
+  assert(html.includes('matrix.js?v=matrix-delta-lock-20260516'), 'Matrix script URL should be cache-busted.');
   assert(html.includes('<details class="matrix-section matrix-create-disclosure">'), 'New Matrix form should be behind a disclosure.');
   assert(html.includes('<summary>New Matrix</summary>'), 'New Matrix disclosure should have a clear summary.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
   assert(js.includes('Local preview mode'), 'Matrix client should have a static-server preview fallback.');
   assert(js.includes('matrix-status-probable'), 'Matrix client should render status-specific cells.');
-  assert(js.includes('Probables'), 'Matrix totals should use the shorter Probables label.');
+  assert(js.includes('# (PROBABLE + IN)'), 'Matrix totals should count PROBABLE plus IN players.');
   assert(js.includes('Expected #'), 'Matrix totals should use the shorter Expected # label.');
   assert(js.includes('DOUBTFUL (25%)'), 'Matrix status selector should show percentage likelihoods.');
   assert(js.includes('QUESTIONABLE (50%)'), 'Matrix status selector should show percentage likelihoods.');
-  assert(js.includes('PROBABLE (100%)'), 'Matrix status selector should show percentage likelihoods.');
+  assert(js.includes('PROBABLE (75%)'), 'Matrix status selector should show percentage likelihoods.');
+  assert(js.includes('IN (100%)'), 'Matrix status selector should show percentage likelihoods.');
   assert(js.includes('Choose player'), 'Matrix player selector should start with no player selected.');
   assert(js.includes("state.selectedPlayers[matrix.id] || ''"), 'Matrix cards should start with a clean read-only table.');
   assert(!js.includes("['No response', 'missing'"), 'Matrix totals should not render the no response row.');
@@ -72,9 +74,13 @@ function assertMatrixFiles() {
   assert(js.includes('Save Changes'), 'Matrix save button should change text when availability is dirty.');
   assert(js.includes('data-delete-matrix-id'), 'Matrix client should render a matrix delete control.');
   assert(js.includes('Type the matrix name exactly'), 'Matrix deletion should require a harsh confirmation.');
+  assert(js.includes('set_delta_lock'), 'Matrix client should support delta locking one proposed date.');
+  assert(js.includes('deltaLockedDateId'), 'Matrix client should store the delta-locked date in the matrix data.');
+  assert(js.includes('This matrix is closed'), 'Matrix client should explain read-only past matrices.');
   assert(css.includes('var(--matrix-table-min-width'), 'Matrix CSS should use the dynamic table min-width.');
-  assert(php.includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
+  assert(fs.readFileSync(path.join(ROOT, 'api', 'matrix-lib.php'), 'utf8').includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
   assert(php.includes('update_response'), 'Matrix API should support per-player response updates.');
+  assert(php.includes('set_delta_lock'), 'Matrix API should support delta locking.');
   assert(php.includes('gopt_delete_matrix'), 'Matrix API should support matrix deletion.');
 }
 

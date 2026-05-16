@@ -80,6 +80,62 @@ function formatMatrixDate(value) {
   });
 }
 
+function getEasternDateKey(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function isFutureMatrixDate(dateId) {
+  const normalized = normalizeDateValue(dateId);
+  return normalized && normalized > getEasternDateKey();
+}
+
+function getDeltaLockedDateId(matrix) {
+  const locked = normalizeDateValue(matrix.deltaLockedDateId);
+  if (locked) return locked;
+
+  const legacyLockedDate = Array.isArray(matrix.dates)
+    ? matrix.dates.find(date => date?.deltaLocked || date?.locked)
+    : null;
+  return normalizeDateValue(legacyLockedDate?.id || legacyLockedDate?.date);
+}
+
+function getMatrixDateById(matrix, dateId) {
+  return Array.isArray(matrix.dates)
+    ? matrix.dates.find(date => (date.id || date.date) === dateId)
+    : null;
+}
+
+function isMatrixEditable(matrix) {
+  const lockedDateId = getDeltaLockedDateId(matrix);
+  if (lockedDateId) {
+    return isFutureMatrixDate(lockedDateId);
+  }
+
+  return matrixDateIds(matrix).some(dateId => isFutureMatrixDate(dateId));
+}
+
+function isMatrixDateEditable(matrix, dateId) {
+  return isMatrixEditable(matrix) && isFutureMatrixDate(dateId);
+}
+
+function getMatrixReadOnlyMessage(matrix) {
+  const lockedDateId = getDeltaLockedDateId(matrix);
+  if (lockedDateId && !isFutureMatrixDate(lockedDateId)) {
+    return `This matrix is closed because ${formatMatrixDate(lockedDateId)} is today or in the past.`;
+  }
+  if (!lockedDateId && !matrixDateIds(matrix).some(dateId => isFutureMatrixDate(dateId))) {
+    return 'This matrix is closed because all proposed dates are in the past.';
+  }
+  return '';
+}
+
 function getStatus(value) {
   const normalized = String(value || '').trim().toUpperCase();
   return MATRIX_STATUSES.find(status => status.value === normalized) || MATRIX_STATUSES[0];
@@ -152,6 +208,7 @@ function createLocalMatrix(name, dates) {
     createdAt,
     updatedAt: createdAt,
     dates: dates.map(date => ({ id: date, date })),
+    deltaLockedDateId: '',
     responses: {},
   };
 }
@@ -224,6 +281,46 @@ async function saveMatrixResponse(matrixId, player, responses) {
       ...matrix,
       updatedAt: new Date().toISOString(),
       responses: nextResponses,
+    };
+  });
+  writeLocalStore();
+}
+
+async function saveMatrixDeltaLock(matrixId, dateId) {
+  if (state.apiAvailable) {
+    try {
+      const result = await fetchMatrixJson(['api/matrix', 'api/matrix.php'], {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'set_delta_lock',
+          matrixId,
+          dateId,
+        }),
+      });
+      state.matrices = sortMatrices(result.matrices || []);
+      return;
+    } catch (error) {
+      state.apiAvailable = false;
+      showMessage('Local preview mode. Matrix changes are saved in this browser.', 'success');
+    }
+  }
+
+  state.matrices = state.matrices.map(matrix => {
+    if (matrix.id !== matrixId) return matrix;
+    if (!isMatrixEditable(matrix)) {
+      throw new Error('This matrix is no longer editable.');
+    }
+    if (dateId && !isFutureMatrixDate(dateId)) {
+      throw new Error('Past dates cannot be delta-locked.');
+    }
+    return {
+      ...matrix,
+      deltaLockedDateId: dateId,
+      updatedAt: new Date().toISOString(),
     };
   });
   writeLocalStore();
@@ -376,12 +473,17 @@ function createStatusSelect(value, dateId) {
   return select;
 }
 
-function createStatusCell(value, isEditing, dateId) {
+function createStatusCell(value, isEditing, dateId, isEditable) {
   const status = getStatus(value);
   const td = document.createElement('td');
   td.className = status.className;
 
-  if (isEditing) {
+  if (!isEditable) {
+    td.classList.add('matrix-readonly-cell');
+    td.title = 'This date is no longer editable.';
+  }
+
+  if (isEditing && isEditable) {
     td.appendChild(createStatusSelect(status.value, dateId));
   } else {
     td.textContent = status.shortLabel;
@@ -394,9 +496,11 @@ function createMatrixTable(matrix, selectedPlayer) {
   const responses = getMatrixResponses(matrix);
   const dateIds = matrixDateIds(matrix);
   const totals = calculateDateTotals(matrix);
+  const lockedDateId = getDeltaLockedDateId(matrix);
+  const matrixEditable = isMatrixEditable(matrix);
   const table = document.createElement('table');
-  table.className = 'matrix-table';
-  table.style.setProperty('--matrix-table-min-width', `${9 + Math.max(dateIds.length, 1) * 9.5}rem`);
+  table.className = `matrix-table${lockedDateId ? ' has-delta-lock' : ''}`;
+  table.style.setProperty('--matrix-table-min-width', `${9 + Math.max(dateIds.length, 1) * 10.5}rem`);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -404,8 +508,37 @@ function createMatrixTable(matrix, selectedPlayer) {
   playerHead.textContent = 'Player';
   headerRow.appendChild(playerHead);
   (matrix.dates || []).forEach(date => {
+    const dateId = date.id || date.date;
+    const isLocked = lockedDateId === dateId;
+    const canChangeLock = matrixEditable && isFutureMatrixDate(dateId);
     const th = document.createElement('th');
-    th.textContent = formatMatrixDate(date.date);
+    th.className = isLocked ? 'matrix-delta-locked-date' : '';
+
+    const dateLabel = document.createElement('span');
+    dateLabel.className = 'matrix-date-label';
+    dateLabel.textContent = formatMatrixDate(date.date);
+    th.appendChild(dateLabel);
+
+    if (isLocked) {
+      const badge = document.createElement('span');
+      badge.className = 'matrix-delta-lock-badge';
+      badge.textContent = 'Delta locked';
+      th.appendChild(badge);
+    }
+
+    const lockButton = document.createElement('button');
+    lockButton.type = 'button';
+    lockButton.className = 'matrix-delta-lock-button';
+    lockButton.dataset.deltaLockMatrixId = matrix.id;
+    lockButton.dataset.deltaLockDateId = dateId;
+    lockButton.textContent = isLocked ? 'Unlock' : 'Delta Lock';
+    lockButton.disabled = !canChangeLock;
+    lockButton.title = !canChangeLock
+      ? 'Past dates cannot be delta-locked.'
+      : isLocked
+        ? 'Remove this confirmed event date.'
+        : 'Set this as the confirmed event date.';
+    th.appendChild(lockButton);
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -423,7 +556,12 @@ function createMatrixTable(matrix, selectedPlayer) {
     tr.appendChild(playerCell);
 
     dateIds.forEach(dateId => {
-      tr.appendChild(createStatusCell(responses[player]?.[dateId], player === selectedPlayer, dateId));
+      tr.appendChild(createStatusCell(
+        responses[player]?.[dateId],
+        player === selectedPlayer,
+        dateId,
+        isMatrixDateEditable(matrix, dateId)
+      ));
     });
     tbody.appendChild(tr);
   });
@@ -486,9 +624,12 @@ function createMatrixCard(matrix, index) {
   const details = document.createElement('details');
   details.className = 'matrix-card';
   details.open = index === 0;
+  const lockedDateId = getDeltaLockedDateId(matrix);
+  const readOnlyMessage = getMatrixReadOnlyMessage(matrix);
+  const matrixEditable = isMatrixEditable(matrix);
 
   const summary = document.createElement('summary');
-  summary.textContent = `${matrix.name} (${matrixDateIds(matrix).length} dates)`;
+  summary.textContent = `${matrix.name} (${matrixDateIds(matrix).length} dates${lockedDateId ? `, delta locked ${formatMatrixDate(lockedDateId)}` : ''})`;
   details.appendChild(summary);
 
   const bestExpected = getBestDate(matrix, 'expected');
@@ -497,7 +638,15 @@ function createMatrixCard(matrix, index) {
   metrics.className = 'matrix-summary-metrics';
   appendMetric(metrics, 'Best expected players', bestExpected ? `${formatMatrixDate(bestExpected.dateId)}: ${bestExpected.value.toFixed(2)}` : '—');
   appendMetric(metrics, 'Most PROBABLE + IN', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
+  appendMetric(metrics, 'Delta lock', lockedDateId ? formatMatrixDate(lockedDateId) : 'Not set');
   details.appendChild(metrics);
+
+  if (readOnlyMessage) {
+    const readOnly = document.createElement('p');
+    readOnly.className = 'matrix-readonly-note';
+    readOnly.textContent = readOnlyMessage;
+    details.appendChild(readOnly);
+  }
 
   const selectedPlayer = state.selectedPlayers[matrix.id] || '';
   state.selectedPlayers[matrix.id] = selectedPlayer;
@@ -507,8 +656,10 @@ function createMatrixCard(matrix, index) {
   form.dataset.matrixId = matrix.id;
 
   const label = document.createElement('label');
-  label.textContent = 'Edit player';
-  label.appendChild(createPlayerSelect(matrix.id, selectedPlayer));
+  label.textContent = matrixEditable ? 'Edit player' : 'Player';
+  const playerSelect = createPlayerSelect(matrix.id, selectedPlayer);
+  playerSelect.disabled = !matrixEditable;
+  label.appendChild(playerSelect);
 
   const tableWrap = document.createElement('div');
   tableWrap.className = 'matrix-table-wrap';
@@ -617,7 +768,15 @@ els.createForm.addEventListener('submit', event => {
     .then(() => {
       resetCreateForm();
       renderMatrices();
-      showMessage('Matrix created.', 'success');
+      const today = getEasternDateKey();
+      const pastCount = dates.filter(date => date <= today).length;
+      if (pastCount === dates.length) {
+        showMessage('Matrix created, but it will not be editable because every proposed date is today or in the past.', 'success');
+      } else if (pastCount) {
+        showMessage('Matrix created. Proposed dates that are today or in the past will not be editable.', 'success');
+      } else {
+        showMessage('Matrix created.', 'success');
+      }
     })
     .catch(error => showMessage(error.message, 'error'));
 });
@@ -641,6 +800,31 @@ els.list.addEventListener('change', event => {
 });
 
 els.list.addEventListener('click', event => {
+  const deltaLockButton = event.target.closest('[data-delta-lock-matrix-id]');
+  if (deltaLockButton) {
+    const matrixId = deltaLockButton.dataset.deltaLockMatrixId;
+    const dateId = deltaLockButton.dataset.deltaLockDateId;
+    const matrix = state.matrices.find(item => item.id === matrixId);
+    if (!matrix) {
+      showMessage('Matrix not found.', 'error');
+      return;
+    }
+
+    const nextDateId = getDeltaLockedDateId(matrix) === dateId ? '' : dateId;
+    deltaLockButton.disabled = true;
+    clearMessage();
+    saveMatrixDeltaLock(matrixId, nextDateId)
+      .then(() => {
+        renderMatrices();
+        showMessage(nextDateId ? `Delta locked ${formatMatrixDate(nextDateId)}.` : 'Delta lock removed.', 'success');
+      })
+      .catch(error => {
+        deltaLockButton.disabled = false;
+        showMessage(error.message, 'error');
+      });
+    return;
+  }
+
   const deleteButton = event.target.closest('[data-delete-matrix-id]');
   if (!deleteButton) return;
 

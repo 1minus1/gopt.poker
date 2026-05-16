@@ -1,3 +1,3 @@
-<FilesMatch "^(admin-config|history-lib)\.php$">
+<FilesMatch "^(admin-config|history-lib|matrix-lib)\.php$">
   Require all denied
 </FilesMatch>

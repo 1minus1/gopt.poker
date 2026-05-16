@@ -828,7 +828,7 @@ function gopt_create_zip_buffer(array $entries): string
     return implode('', $localParts) . $centralDirectory . $endRecord;
 }
 
-function gopt_build_history_versions_zip(): string
+function gopt_build_history_versions_zip(array $extraEntries = []): string
 {
     $index = gopt_ensure_history_store();
     $entries = [];
@@ -844,6 +844,17 @@ function gopt_build_history_versions_zip(): string
             'name' => gopt_history_archive_filename($version, $index, $position),
             'data' => $text,
             'createdAt' => $version['createdAt'] ?? 'now',
+        ];
+    }
+
+    foreach ($extraEntries as $entry) {
+        if (!is_array($entry) || trim((string)($entry['name'] ?? '')) === '') {
+            continue;
+        }
+        $entries[] = [
+            'name' => (string)$entry['name'],
+            'data' => (string)($entry['data'] ?? ''),
+            'createdAt' => (string)($entry['createdAt'] ?? 'now'),
         ];
     }
 

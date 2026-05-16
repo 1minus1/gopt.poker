@@ -1,6 +1,7 @@
 <?php
 
 require __DIR__ . '/history-lib.php';
+require __DIR__ . '/matrix-lib.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if ($method !== 'GET' && $method !== 'HEAD') {
@@ -9,7 +10,14 @@ if ($method !== 'GET' && $method !== 'HEAD') {
 }
 
 try {
-    $zip = gopt_with_history_lock(true, fn() => gopt_build_history_versions_zip());
+    $matrixSummary = gopt_with_matrix_lock(false, fn() => gopt_build_matrix_attendance_summary_csv(gopt_read_matrix_store()));
+    $zip = gopt_with_history_lock(true, fn() => gopt_build_history_versions_zip([
+        [
+            'name' => 'matrix-attendance-summary.csv',
+            'data' => $matrixSummary,
+            'createdAt' => gmdate('c'),
+        ],
+    ]));
     $filename = 'gopt-data-versions-' . gmdate('Y-m-d') . '.zip';
 
     header('Cache-Control: no-store');

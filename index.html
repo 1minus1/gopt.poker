@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GOPT Standings</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=hero-quote-tight-20260516" />
+  <link rel="stylesheet" href="styles.css?v=matrix-delta-lock-20260516" />
   <style>
     body {
       font-family: 'Roboto Serif', serif;
@@ -91,6 +92,32 @@
       margin-left: 0.4em;
       vertical-align: -0.2em;
       width: 1.2em;
+    }
+    .attendance-projection-details {
+      margin: 0.6em auto 0;
+      text-align: center;
+    }
+    .attendance-projection-details summary {
+      color: #0645ad;
+      cursor: pointer;
+      display: list-item;
+      font-weight: 700;
+      margin: 0 auto;
+      text-decoration: underline;
+      width: max-content;
+    }
+    .attendance-projection-table {
+      white-space: nowrap;
+    }
+    .projection-accurate td:last-child {
+      background: #e6f5eb;
+    }
+    .projection-inaccurate td:last-child {
+      background: #fae2e2;
+    }
+    .projection-missing td:last-child {
+      background: #f2f2f2;
+      color: #555;
     }
     .season-filter-controls {
       display: flex;
@@ -340,6 +367,36 @@
       return fetchFirstAvailableDataText(['api/history/current', 'api/history-current.php', 'data/GOPTdatav2.csv']);
     }
 
+    function looksLikePhpSource(text) {
+      return text.trimStart().startsWith('<?php');
+    }
+
+    async function fetchJsonFromEndpoints(endpoints) {
+      let lastError = null;
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, { cache: 'no-store' });
+          const text = await response.text();
+          if (looksLikePhpSource(text)) {
+            throw new Error(`${endpoint} returned PHP source.`);
+          }
+          const result = JSON.parse(text);
+          if (!response.ok || result.status === 'error') {
+            throw new Error(result.message || `Could not load ${endpoint}.`);
+          }
+          return result;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error('Could not load JSON.');
+    }
+
+    function fetchMatrixHistory() {
+      return fetchJsonFromEndpoints(['api/matrix', 'api/matrix.php'])
+        .catch(() => ({ status: 'unavailable', matrices: [] }));
+    }
+
     function formatDisplayDate(timestamp) {
       return new Date(timestamp * 1000).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -348,9 +405,10 @@
       });
     }
 
-    fetchCurrentDataText()
-      .then(data => {
+    Promise.all([fetchCurrentDataText(), fetchMatrixHistory()])
+      .then(([data, matrixHistory]) => {
         const parsedData = GoptData.parseDataFile(data, { normalizePlayerName: true });
+        const matrixData = Array.isArray(matrixHistory.matrices) ? matrixHistory.matrices : [];
         const table = document.getElementById('standings-table');
         const thead = table.querySelector('thead');
         const tbody = table.querySelector('tbody');
@@ -578,6 +636,175 @@
           return marker;
         }
 
+        const MATRIX_STATUS_INFO = {
+          IN: { label: 'IN', weight: 1 },
+          PROBABLE: { label: 'PROBABLE', weight: 0.75 },
+          QUESTIONABLE: { label: 'QUESTIONABLE', weight: 0.5 },
+          DOUBTFUL: { label: 'DOUBTFUL', weight: 0.25 },
+          OUT: { label: 'OUT', weight: 0 },
+        };
+
+        function dateKeyFromDate(date) {
+          if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+          return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, '0'),
+            String(date.getDate()).padStart(2, '0'),
+          ].join('-');
+        }
+
+        function dateKeyFromDisplayDate(dateText) {
+          return dateKeyFromDate(new Date(dateText));
+        }
+
+        function formatMatrixDate(value) {
+          const date = new Date(`${value}T12:00:00`);
+          if (Number.isNaN(date.getTime())) return value || '';
+          return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }).format(date);
+        }
+
+        function getMatrixDeltaLockedDateId(matrix) {
+          const direct = String(matrix.deltaLockedDateId || '').trim();
+          if (direct) return direct;
+          const legacy = Array.isArray(matrix.dates)
+            ? matrix.dates.find(date => date?.deltaLocked || date?.locked)
+            : null;
+          return String(legacy?.id || legacy?.date || '').trim();
+        }
+
+        function buildMatrixProjectionByDate() {
+          const byDate = new Map();
+
+          matrixData.forEach(matrix => {
+            const dateId = getMatrixDeltaLockedDateId(matrix);
+            if (!dateId) return;
+
+            const projections = new Map();
+            const responses = matrix.responses && typeof matrix.responses === 'object' && !Array.isArray(matrix.responses)
+              ? matrix.responses
+              : {};
+            Object.entries(responses).forEach(([player, dateMap]) => {
+              const status = String(dateMap?.[dateId] || '').trim().toUpperCase();
+              if (MATRIX_STATUS_INFO[status]) {
+                projections.set(player, status);
+              }
+            });
+
+            const candidate = {
+              matrixId: matrix.id || '',
+              matrixName: matrix.name || 'Matrix',
+              dateId,
+              projections,
+              updatedAt: matrix.updatedAt || matrix.createdAt || '',
+            };
+            const existing = byDate.get(dateId);
+            if (!existing || String(candidate.updatedAt).localeCompare(String(existing.updatedAt)) > 0) {
+              byDate.set(dateId, candidate);
+            }
+          });
+
+          return byDate;
+        }
+
+        const matrixProjectionByDate = buildMatrixProjectionByDate();
+
+        function isProjectionAccurate(status, attended) {
+          if (!MATRIX_STATUS_INFO[status]) return null;
+          if (attended) {
+            return status === 'DOUBTFUL' || status === 'PROBABLE' || status === 'IN';
+          }
+          return status === 'OUT' || status === 'QUESTIONABLE' || status === 'DOUBTFUL';
+        }
+
+        function getProjectionAccuracyLabel(status, attended) {
+          const accurate = isProjectionAccurate(status, attended);
+          if (accurate === null) return 'No projection';
+          return accurate ? 'Accurate' : 'Inaccurate';
+        }
+
+        function getProjectionForDateKey(dateKey) {
+          return matrixProjectionByDate.get(dateKey) || null;
+        }
+
+        function buildProjectionRowsForNight(dateKey, attendees) {
+          const projection = getProjectionForDateKey(dateKey);
+          if (!projection) return [];
+
+          const attendeeSet = new Set(attendees);
+          const players = Array.from(new Set([
+            ...Array.from(projection.projections.keys()),
+            ...attendees,
+          ])).sort((a, b) => a.localeCompare(b));
+
+          return players.map(player => {
+            const status = projection.projections.get(player) || '';
+            const attended = attendeeSet.has(player);
+            const accurate = isProjectionAccurate(status, attended);
+            return {
+              player,
+              projection: status || 'No response',
+              actual: attended ? 'Yes' : 'No',
+              accuracy: getProjectionAccuracyLabel(status, attended),
+              accurate,
+            };
+          });
+        }
+
+        function createProjectionDetails(group) {
+          const dateKey = dateKeyFromDisplayDate(group.date);
+          const projection = getProjectionForDateKey(dateKey);
+          if (!projection) return null;
+
+          const details = document.createElement('details');
+          details.className = 'attendance-projection-details';
+          const summary = document.createElement('summary');
+          summary.textContent = 'Show attendance projection vs actual';
+          details.appendChild(summary);
+
+          const label = document.createElement('p');
+          label.className = 'muted';
+          label.textContent = `${projection.matrixName} delta-locked ${formatMatrixDate(projection.dateId)}.`;
+          details.appendChild(label);
+
+          const tableContainer = document.createElement('div');
+          tableContainer.className = 'table-container';
+          const table = document.createElement('table');
+          table.className = 'attendance-projection-table';
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Projection</th>
+                <th>Attended</th>
+                <th>Accuracy</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const body = table.querySelector('tbody');
+          buildProjectionRowsForNight(dateKey, group.entries.map(entry => entry.player)).forEach(row => {
+            const tr = document.createElement('tr');
+            tr.className = row.accurate === true
+              ? 'projection-accurate'
+              : row.accurate === false
+                ? 'projection-inaccurate'
+                : 'projection-missing';
+            ['player', 'projection', 'actual', 'accuracy'].forEach(field => {
+              const td = document.createElement('td');
+              td.textContent = row[field];
+              tr.appendChild(td);
+            });
+            body.appendChild(tr);
+          });
+          tableContainer.appendChild(table);
+          details.appendChild(tableContainer);
+          return details;
+        }
+
         function generateSummaryTable() {
           document.querySelectorAll('[data-generated-section="summary"]').forEach(section => {
             section.remove();
@@ -719,6 +946,10 @@
 
             tableContainer.appendChild(table);
             nightSection.append(nightHeading, tableContainer);
+            const projectionDetails = createProjectionDetails(group);
+            if (projectionDetails) {
+              nightSection.appendChild(projectionDetails);
+            }
             summaryList.appendChild(nightSection);
           });
 
@@ -985,6 +1216,9 @@
                           <th>Player</th>
                           <th>Nights</th>
                           <th>Majors</th>
+                          <th>Projection Checks</th>
+                          <th>Accurate</th>
+                          <th>Accuracy</th>
                         </tr>
                       </thead>
                       <tbody></tbody>
@@ -1438,6 +1672,40 @@
           renderRows('hosting-drought-table', buildHostingDroughtRows(), ['player', 'lastHosted', 'eventsSince']);
         }
 
+        function buildProjectionAccuracyByPlayer() {
+          const stats = new Map();
+
+          function ensurePlayer(player) {
+            if (!stats.has(player)) {
+              stats.set(player, {
+                player,
+                projectionChecks: 0,
+                accurateProjections: 0,
+              });
+            }
+            return stats.get(player);
+          }
+
+          buildAllTimeNights().forEach(night => {
+            const dateKey = GoptData.localDateKeyFromTimestamp(night.timestamp);
+            const projection = getProjectionForDateKey(dateKey);
+            if (!projection) return;
+
+            const attendees = new Set(GoptData.getNightAttendees(night));
+            projection.projections.forEach((status, player) => {
+              const accurate = isProjectionAccurate(status, attendees.has(player));
+              if (accurate === null) return;
+              const row = ensurePlayer(player);
+              row.projectionChecks += 1;
+              if (accurate) {
+                row.accurateProjections += 1;
+              }
+            });
+          });
+
+          return stats;
+        }
+
         function buildAllTimeAttendanceRows() {
           const attendance = {};
 
@@ -1453,10 +1721,32 @@
             });
           });
 
+          const accuracy = buildProjectionAccuracyByPlayer();
+          accuracy.forEach((row, player) => {
+            if (!attendance[player]) {
+              attendance[player] = { player, nights: 0, majors: 0 };
+            }
+            attendance[player].projectionChecks = row.projectionChecks;
+            attendance[player].accurateProjections = row.accurateProjections;
+          });
+
           return Object.values(attendance)
+            .map(row => {
+              const projectionChecks = row.projectionChecks || 0;
+              const accurateProjections = row.accurateProjections || 0;
+              return {
+                ...row,
+                projectionChecks,
+                accurateProjections,
+                accuracyDisplay: projectionChecks
+                  ? `${(100 * accurateProjections / projectionChecks).toFixed(1)}%`
+                  : '—',
+              };
+            })
             .sort((a, b) => {
               if (a.nights !== b.nights) return b.nights - a.nights;
               if (a.majors !== b.majors) return b.majors - a.majors;
+              if (a.projectionChecks !== b.projectionChecks) return b.projectionChecks - a.projectionChecks;
               return a.player.localeCompare(b.player);
             });
         }
@@ -1495,7 +1785,14 @@
         }
 
         function renderAllTimeAttendanceTable() {
-          renderRows('all-time-attendance-table', buildAllTimeAttendanceRows(), ['player', 'nights', 'majors']);
+          renderRows('all-time-attendance-table', buildAllTimeAttendanceRows(), [
+            'player',
+            'nights',
+            'majors',
+            'projectionChecks',
+            'accurateProjections',
+            'accuracyDisplay',
+          ]);
         }
 
         function getTopWinners(rows, shouldCountRow, limit = 8) {

@@ -9,6 +9,9 @@ $routes = [
     '/api/history/revert' => '/api/history-revert.php',
     '/api/history/delete' => '/api/history-delete.php',
     '/api/matrix' => '/api/matrix.php',
+    '/api/matrix/export' => '/api/matrix-export.php',
+    '/api/matrix/attendance-summary' => '/api/matrix-attendance-summary.php',
+    '/upload-matrix-history' => '/api/matrix-upload.php',
     '/upload-history' => '/api/history-upload.php',
 ];
 
