@@ -309,6 +309,13 @@ function renderSeasonOptions() {
 function renderHostOptions() {
   els.hostSelect.innerHTML = '';
 
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Choose host...';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  els.hostSelect.appendChild(placeholder);
+
   state.hosts.forEach(host => {
     const option = document.createElement('option');
     option.value = host;
