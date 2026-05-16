@@ -119,12 +119,16 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
-    #season-standings-table .standings-explainer td {
-      background: #f7f7f7;
+    .standings-explainer {
+      box-sizing: border-box;
+      color: #555;
       font-size: 0.9em;
       font-weight: 400;
       line-height: 1.35;
-      text-align: left;
+      margin: 0.35em auto 1em;
+      max-width: min(42rem, 100%);
+      padding: 0 1em;
+      text-align: center;
     }
     #season-standings-table th[data-sort-key] {
       cursor: pointer;
@@ -907,13 +911,14 @@
                     ${showChampColumn ? createStandingsHeader('👑', 'champions') : ''}
                     ${createStandingsHeader('⭕', 'bracelets')}
                     ${createStandingsHeader('🎉', 'majorBracelets')}
-                    ${showChampColumn ? createStandingsHeader('⚖️ stat', 'balanceStat') : ''}
+                    ${showChampColumn ? createStandingsHeader('⚖️', 'balanceStat') : ''}
                   </tr>
                 </thead>
                 <tbody></tbody>
                 <tfoot></tfoot>
               </table>
             </div>
+            ${showChampColumn ? '<p class="standings-explainer">👑 season championships. ⭕ total bracelets. 🎉 major bracelets. ⚖️ = non-major bracelets + 2 × major bracelets + 2 × season championships.</p>' : ''}
             ${showChampColumn ? `
               <details class="standings-chart-disclosure">
                 <summary>Show all-time plots</summary>
@@ -1115,14 +1120,6 @@
             ${showChampColumn ? '<td></td>' : ''}
           `;
           standingsFooter.appendChild(totalRow);
-          if (showChampColumn) {
-            const explainerRow = document.createElement('tr');
-            explainerRow.className = 'standings-explainer';
-            explainerRow.innerHTML = `
-              <td colspan="6">👑 season championships. ⭕ total bracelets. 🎉 major bracelets. ⚖️ stat = non-major bracelets + 2 × major bracelets + 2 × season championships.</td>
-            `;
-            standingsFooter.appendChild(explainerRow);
-          }
 
           if (showChampColumn) {
             document.querySelectorAll('#season-standings-table th[data-sort-key]').forEach(th => {
