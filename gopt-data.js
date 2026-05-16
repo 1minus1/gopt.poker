@@ -116,7 +116,6 @@
 
   function normalizePlayerNameForDisplay(value) {
     const player = String(value || '').trim();
-    if (player === 'Masta Pu$$y') return 'Masta Pussy';
     return player === 'Mrs. Clay Matthews' ? 'Mrs. Clay' : player;
   }
 

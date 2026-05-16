@@ -310,7 +310,7 @@
       </section>
     </main>
   </div>
-  <script src="gopt-data.js?v=attendance-20260510"></script>
+  <script src="gopt-data.js?v=display-names-20260516"></script>
   <script>
     function fetchDataSource(source) {
       return fetch(source, { cache: 'no-store' })
@@ -544,8 +544,7 @@
         }
 
         function formatHostName(host) {
-          return GoptData.normalizePlayerNameForDisplay(String(host || '').trim())
-            .replace(/^Masta Pu\$\$y$/i, 'Masta Pussy');
+          return GoptData.normalizePlayerNameForDisplay(String(host || '').trim());
         }
 
         function getSummaryNightHeading(group, seasonFilterValue) {
