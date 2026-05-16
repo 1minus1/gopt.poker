@@ -119,6 +119,13 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    #season-standings-table .standings-explainer td {
+      background: #f7f7f7;
+      font-size: 0.9em;
+      font-weight: 400;
+      line-height: 1.35;
+      text-align: left;
+    }
     #season-standings-table th[data-sort-key] {
       cursor: pointer;
     }
@@ -852,7 +859,14 @@
             champions: { type: 'number', defaultDirection: 'desc' },
             bracelets: { type: 'number', defaultDirection: 'desc' },
             majorBracelets: { type: 'number', defaultDirection: 'desc' },
+            balanceStat: { type: 'number', defaultDirection: 'desc' },
           };
+
+          function getBalanceStat(player, totals) {
+            const seasonChampionships = championCounts[player] || 0;
+            const nonMajorBracelets = totals.bracelets - totals.majorBracelets;
+            return nonMajorBracelets + (2 * totals.majorBracelets) + (2 * seasonChampionships);
+          }
 
           function createStandingsHeader(label, sortKey) {
             if (!showChampColumn || !sortKey) {
@@ -893,6 +907,7 @@
                     ${showChampColumn ? createStandingsHeader('👑', 'champions') : ''}
                     ${createStandingsHeader('⭕', 'bracelets')}
                     ${createStandingsHeader('🎉', 'majorBracelets')}
+                    ${showChampColumn ? createStandingsHeader('⚖️ stat', 'balanceStat') : ''}
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -1042,6 +1057,7 @@
               champions: championCounts[player] || 0,
               bracelets: totals.bracelets,
               majorBracelets: totals.majorBracelets,
+              balanceStat: getBalanceStat(player, totals),
               lastEventRank: totals.lastEventRank,
             }));
 
@@ -1062,7 +1078,7 @@
               ? [...standingsRows].sort(compareAllTimeRows)
               : [...standingsRows].sort((a, b) => compareSeasonRankings(a, b));
 
-            sortedRows.forEach(({ player, points, champions, bracelets, majorBracelets }) => {
+            sortedRows.forEach(({ player, points, champions, bracelets, majorBracelets, balanceStat }) => {
               const tr = document.createElement('tr');
               const displayPlayer = `${player}${player === selectedSeasonChampion ? ' 👑' : ''}`;
               tr.innerHTML = `
@@ -1071,6 +1087,7 @@
                 ${showChampColumn ? `<td>${champions}</td>` : ''}
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
+                ${showChampColumn ? `<td>${balanceStat}</td>` : ''}
               `;
               standingsBody.appendChild(tr);
             });
@@ -1095,8 +1112,17 @@
             ${showChampColumn ? `<td>${standingsTotals.champions}</td>` : ''}
             <td>${standingsTotals.bracelets}</td>
             <td>${standingsTotals.majorBracelets}</td>
+            ${showChampColumn ? '<td></td>' : ''}
           `;
           standingsFooter.appendChild(totalRow);
+          if (showChampColumn) {
+            const explainerRow = document.createElement('tr');
+            explainerRow.className = 'standings-explainer';
+            explainerRow.innerHTML = `
+              <td colspan="6">👑 season championships. ⭕ total bracelets. 🎉 major bracelets. ⚖️ stat = non-major bracelets + 2 × major bracelets + 2 × season championships.</td>
+            `;
+            standingsFooter.appendChild(explainerRow);
+          }
 
           if (showChampColumn) {
             document.querySelectorAll('#season-standings-table th[data-sort-key]').forEach(th => {
