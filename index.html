@@ -819,6 +819,19 @@
           const championCounts = showChampColumn ? getChampionCounts() : {};
           const selectedSeasonChampion = getSelectedSeasonChampion();
 
+          function getAllTimeRankingScore(player, totals) {
+            const seasonChampionships = championCounts[player] || 0;
+            const nonMajorBracelets = totals.bracelets - totals.majorBracelets;
+            return nonMajorBracelets + (2 * totals.majorBracelets) + (2 * seasonChampionships);
+          }
+
+          function compareAllTimeRankings(playerA, totalsA, playerB, totalsB) {
+            const scoreA = getAllTimeRankingScore(playerA, totalsA);
+            const scoreB = getAllTimeRankingScore(playerB, totalsB);
+            if (scoreA !== scoreB) return scoreB - scoreA;
+            return playerA.localeCompare(playerB);
+          }
+
           const standingsSection = document.createElement('section');
           standingsSection.dataset.generatedSection = 'season-standings';
           standingsSection.innerHTML = `
@@ -977,8 +990,7 @@
           Object.entries(playerTotals)
             .sort(([playerA, a], [playerB, b]) => {
               if (seasonFilterValue === "All Time") {
-                if (b.bracelets !== a.bracelets) return b.bracelets - a.bracelets;
-                return playerA.localeCompare(playerB);
+                return compareAllTimeRankings(playerA, a, playerB, b);
               }
 
               return compareSeasonRankings(a, b);
