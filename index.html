@@ -932,6 +932,20 @@
                       <tbody></tbody>
                     </table>
                   </div>
+                  <h3>Host Win Rate</h3>
+                  <div class="table-container">
+                    <table id="host-win-rate-table">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Hosted</th>
+                          <th>Won as Host</th>
+                          <th>Host Win %</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
                   <h3>Longest Since Hosting</h3>
                   <div class="table-container">
                     <table id="hosting-drought-table">
@@ -1236,6 +1250,41 @@
             .slice(0, 3);
         }
 
+        function buildHostWinRateRows() {
+          const players = getAllPlayers();
+          const stats = new Map(Array.from(players, player => [player, {
+            player,
+            hosted: 0,
+            wonAsHost: 0,
+            winRate: null,
+          }]));
+
+          getHostedNights().forEach(night => {
+            if (!players.has(night.displayHost)) return;
+
+            const row = stats.get(night.displayHost);
+            row.hosted += 1;
+            if (night.winner === night.displayHost) {
+              row.wonAsHost += 1;
+            }
+          });
+
+          return Array.from(stats.values())
+            .map(row => ({
+              ...row,
+              winRate: row.hosted ? row.wonAsHost / row.hosted : null,
+              winRateDisplay: row.hosted ? `${(100 * row.wonAsHost / row.hosted).toFixed(1)}%` : '—',
+            }))
+            .sort((a, b) => {
+              const rateA = a.winRate ?? -1;
+              const rateB = b.winRate ?? -1;
+              if (rateA !== rateB) return rateB - rateA;
+              if (a.wonAsHost !== b.wonAsHost) return b.wonAsHost - a.wonAsHost;
+              if (a.hosted !== b.hosted) return b.hosted - a.hosted;
+              return a.player.localeCompare(b.player);
+            });
+        }
+
         function renderRows(tableId, rows, fields) {
           const body = document.querySelector(`#${tableId} tbody`);
           if (!body) return;
@@ -1255,6 +1304,7 @@
         function renderHostingDataTables() {
           renderRows('recent-hosting-table', buildRecentHostingRows(), ['date', 'event', 'host']);
           renderRows('host-count-table', buildHostCountRows(), ['player', 'count']);
+          renderRows('host-win-rate-table', buildHostWinRateRows(), ['player', 'hosted', 'wonAsHost', 'winRateDisplay']);
           renderRows('hosting-drought-table', buildHostingDroughtRows(), ['player', 'lastHosted', 'eventsSince']);
         }
 
