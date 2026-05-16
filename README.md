@@ -36,7 +36,7 @@ The `record.html` page records a currently played night. It downloads a generate
 
 ## Versioning
 
-The current site release is stored in `VERSION` using semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so `1.0.0` is the `v1.0` release.
+The current site release is stored in `VERSION` using semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so `1.1.0` is the `v1.1` release.
 
 Record release notes in `CHANGELOG.md` before tagging or deploying a versioned release.
 
