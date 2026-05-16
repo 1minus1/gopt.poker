@@ -691,6 +691,76 @@
             return row.dataset.player || row.cells[1]?.textContent.trim() || '';
           }
 
+          function getSummaryRowDateMs(row) {
+            const dateText = row.cells[0]?.textContent.trim() || '';
+            const dateMs = new Date(dateText).getTime();
+            return Number.isFinite(dateMs) ? dateMs : 0;
+          }
+
+          function getSummaryRowFinalRank(row) {
+            const rank = parseInt(row.cells[4]?.textContent.trim(), 10);
+            return Number.isFinite(rank) ? rank : Number.POSITIVE_INFINITY;
+          }
+
+          function buildSeasonRankingBuckets(summaryRows) {
+            const buckets = {};
+
+            summaryRows.forEach(row => {
+              const season = row.dataset.season;
+              const player = getSummaryRowPlayer(row);
+              const points = parseFloat(row.cells[2]?.textContent.trim());
+              const bracelet = row.cells[5]?.textContent.trim() === '1' ? 1 : 0;
+              const dateMs = getSummaryRowDateMs(row);
+
+              if (!season || !player || !Number.isFinite(points)) return;
+
+              if (!buckets[season]) {
+                buckets[season] = {
+                  lastEventDateMs: Number.NEGATIVE_INFINITY,
+                  players: {},
+                };
+              }
+              if (dateMs > buckets[season].lastEventDateMs) {
+                buckets[season].lastEventDateMs = dateMs;
+              }
+
+              if (!buckets[season].players[player]) {
+                buckets[season].players[player] = {
+                  player,
+                  points: 0,
+                  bracelets: 0,
+                  lastEventRank: Number.POSITIVE_INFINITY,
+                };
+              }
+
+              buckets[season].players[player].points += points;
+              buckets[season].players[player].bracelets += bracelet;
+            });
+
+            summaryRows.forEach(row => {
+              const season = row.dataset.season;
+              const player = getSummaryRowPlayer(row);
+              if (!season || !player || !buckets[season]) return;
+              if (getSummaryRowDateMs(row) !== buckets[season].lastEventDateMs) return;
+
+              const playerRanking = buckets[season].players[player];
+              if (playerRanking) {
+                playerRanking.lastEventRank = Math.min(playerRanking.lastEventRank, getSummaryRowFinalRank(row));
+              }
+            });
+
+            return buckets;
+          }
+
+          function compareSeasonRankings(a, b) {
+            const pointsA = parseFloat(a.points.toFixed(2));
+            const pointsB = parseFloat(b.points.toFixed(2));
+            if (pointsA !== pointsB) return pointsB - pointsA;
+            if (a.bracelets !== b.bracelets) return b.bracelets - a.bracelets;
+            if (a.lastEventRank !== b.lastEventRank) return a.lastEventRank - b.lastEventRank;
+            return a.player.localeCompare(b.player);
+          }
+
           rows.forEach(row => {
             const player = getSummaryRowPlayer(row);
             const points = parseFloat(row.cells[2]?.textContent.trim());
@@ -698,7 +768,13 @@
             const isMajor = row.dataset.isMajor?.trim().toUpperCase() === 'YES';
 
             if (!playerTotals[player]) {
-              playerTotals[player] = { points: 0, bracelets: 0, majorBracelets: 0 };
+              playerTotals[player] = {
+                player,
+                points: 0,
+                bracelets: 0,
+                majorBracelets: 0,
+                lastEventRank: Number.POSITIVE_INFINITY,
+              };
             }
             playerTotals[player].points += points;
             playerTotals[player].bracelets += bracelet;
@@ -707,30 +783,19 @@
             }
           });
 
-          function getChampionCounts() {
-            const seasonTotals = {};
-            rows.forEach(row => {
-              const season = row.dataset.season;
-              const player = getSummaryRowPlayer(row);
-              const points = parseFloat(row.cells[2]?.textContent.trim());
-              if (!season || season === currentSeason || !player || !Number.isFinite(points)) return;
-
-              if (!seasonTotals[season]) {
-                seasonTotals[season] = {};
-              }
-              seasonTotals[season][player] = (seasonTotals[season][player] || 0) + points;
+          const seasonRankingBuckets = buildSeasonRankingBuckets(rows);
+          if (seasonFilterValue !== "All Time") {
+            const selectedBucket = seasonRankingBuckets[seasonFilterValue];
+            Object.entries(playerTotals).forEach(([player, totals]) => {
+              totals.lastEventRank = selectedBucket?.players[player]?.lastEventRank ?? Number.POSITIVE_INFINITY;
             });
+          }
 
+          function getChampionCounts() {
             const championCounts = {};
-            Object.values(seasonTotals).forEach(totals => {
-              let champion = '';
-              let championPoints = -Infinity;
-              Object.entries(totals).forEach(([player, points]) => {
-                if (points > championPoints) {
-                  champion = player;
-                  championPoints = points;
-                }
-              });
+            Object.entries(seasonRankingBuckets).forEach(([season, bucket]) => {
+              if (season === currentSeason) return;
+              const champion = Object.values(bucket.players).sort(compareSeasonRankings)[0]?.player || '';
               if (champion) {
                 championCounts[champion] = (championCounts[champion] || 0) + 1;
               }
@@ -744,16 +809,7 @@
               return '';
             }
 
-            let champion = '';
-            let championPoints = -Infinity;
-            Object.entries(playerTotals).forEach(([player, totals]) => {
-              if (totals.points > championPoints) {
-                champion = player;
-                championPoints = totals.points;
-              }
-            });
-
-            return champion;
+            return Object.values(playerTotals).sort(compareSeasonRankings)[0]?.player || '';
           }
 
           const championCounts = showChampColumn ? getChampionCounts() : {};
@@ -901,10 +957,13 @@
           const standingsBody = document.querySelector('#season-standings-table tbody');
           const standingsFooter = document.querySelector('#season-standings-table tfoot');
           Object.entries(playerTotals)
-            .sort(([, a], [, b]) => {
-              return seasonFilterValue === "All Time"
-                ? b.bracelets - a.bracelets
-                : b.points - a.points;
+            .sort(([playerA, a], [playerB, b]) => {
+              if (seasonFilterValue === "All Time") {
+                if (b.bracelets !== a.bracelets) return b.bracelets - a.bracelets;
+                return playerA.localeCompare(playerB);
+              }
+
+              return compareSeasonRankings(a, b);
             })
             .forEach(([player, { points, bracelets, majorBracelets }]) => {
               const tr = document.createElement('tr');
