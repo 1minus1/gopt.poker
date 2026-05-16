@@ -39,23 +39,34 @@ body {
 .hero-quote {
   box-sizing: border-box;
   margin: -0.25rem auto 1rem;
-  max-width: min(34rem, calc(100vw - 2rem));
-  padding: 0 1rem;
+  max-width: min(48rem, calc(100vw - 1rem));
+  padding: 0 0.5rem;
   text-align: center;
 }
 
 .hero-quote blockquote {
   margin: 0;
-  font-size: clamp(1rem, 3.8vw, 1.35rem);
+  font-size: 1rem;
   font-style: italic;
   font-weight: 700;
   line-height: 1.25;
+  white-space: nowrap;
 }
 
 .hero-quote figcaption {
   margin-top: 0.35rem;
   color: #555;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 430px) {
+  .hero-quote blockquote {
+    font-size: 0.82rem;
+  }
+
+  .hero-quote figcaption {
+    font-size: 0.78rem;
+  }
 }
 
 nav a {
