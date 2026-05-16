@@ -34,6 +34,12 @@ The built-in admin password is stored as a hash in `api/admin-config.php`; set `
 
 The `record.html` page records a currently played night. It downloads a generated `GOPTdatav2.csv` file when results are finished and can create a new current server data version after the same admin authentication used by Admin.
 
+## Versioning
+
+The current site release is stored in `VERSION` using semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so `1.0.0` is the `v1.0` release.
+
+Record release notes in `CHANGELOG.md` before tagging or deploying a versioned release.
+
 Local-only cleanup already applied:
 
 - Logo references point at `assets/logo.GIF` instead of hotlinking `scottzero.co`.
