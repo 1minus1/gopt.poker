@@ -119,6 +119,32 @@
     #season-standings-table tfoot {
       font-weight: 700;
     }
+    #season-standings-table th[data-sort-key] {
+      cursor: pointer;
+    }
+    .table-sort-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      font: inherit;
+      font-weight: inherit;
+      gap: 0.25em;
+      justify-content: center;
+      padding: 0;
+      width: 100%;
+    }
+    .sort-indicator {
+      min-width: 1em;
+    }
+    #season-standings-table th[aria-sort="ascending"] .sort-indicator::after {
+      content: "▲";
+    }
+    #season-standings-table th[aria-sort="descending"] .sort-indicator::after {
+      content: "▼";
+    }
     .all-time-disclosure {
       margin: 1.5em auto 0;
       max-width: 100%;
@@ -819,17 +845,39 @@
           const championCounts = showChampColumn ? getChampionCounts() : {};
           const selectedSeasonChampion = getSelectedSeasonChampion();
 
-          function getAllTimeRankingScore(player, totals) {
-            const seasonChampionships = championCounts[player] || 0;
-            const nonMajorBracelets = totals.bracelets - totals.majorBracelets;
-            return nonMajorBracelets + (2 * totals.majorBracelets) + (2 * seasonChampionships);
+          const allTimeSortState = { key: 'points', direction: 'desc' };
+          const allTimeSortColumns = {
+            player: { type: 'text', defaultDirection: 'asc' },
+            points: { type: 'number', defaultDirection: 'desc' },
+            champions: { type: 'number', defaultDirection: 'desc' },
+            bracelets: { type: 'number', defaultDirection: 'desc' },
+            majorBracelets: { type: 'number', defaultDirection: 'desc' },
+          };
+
+          function createStandingsHeader(label, sortKey) {
+            if (!showChampColumn || !sortKey) {
+              return `<th>${label}</th>`;
+            }
+
+            return `<th data-sort-key="${sortKey}" aria-sort="none"><button type="button" class="table-sort-button">${label}<span class="sort-indicator" aria-hidden="true"></span></button></th>`;
           }
 
-          function compareAllTimeRankings(playerA, totalsA, playerB, totalsB) {
-            const scoreA = getAllTimeRankingScore(playerA, totalsA);
-            const scoreB = getAllTimeRankingScore(playerB, totalsB);
-            if (scoreA !== scoreB) return scoreB - scoreA;
-            return playerA.localeCompare(playerB);
+          function compareAllTimeRows(a, b) {
+            const column = allTimeSortColumns[allTimeSortState.key] || allTimeSortColumns.points;
+            const direction = allTimeSortState.direction === 'asc' ? 1 : -1;
+            let comparison = 0;
+
+            if (column.type === 'text') {
+              comparison = a[allTimeSortState.key].localeCompare(b[allTimeSortState.key]);
+            } else {
+              comparison = a[allTimeSortState.key] - b[allTimeSortState.key];
+            }
+
+            if (comparison !== 0) {
+              return comparison * direction;
+            }
+
+            return a.player.localeCompare(b.player);
           }
 
           const standingsSection = document.createElement('section');
@@ -840,12 +888,11 @@
               <table id="season-standings-table">
                 <thead>
                   <tr>
-                    <th>Player</th>
-                    ${showChampColumn ? '' : '<th>Points</th>'}
-                    ${showChampColumn ? '<th>👑</th>' : ''}
-                    <th>⭕</th>
-                    <th>🎉</th>
-                    ${showChampColumn ? '<th>🐐 stat</th>' : ''}
+                    ${createStandingsHeader('Player', 'player')}
+                    ${createStandingsHeader('Points', 'points')}
+                    ${showChampColumn ? createStandingsHeader('👑', 'champions') : ''}
+                    ${createStandingsHeader('⭕', 'bracelets')}
+                    ${createStandingsHeader('🎉', 'majorBracelets')}
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -988,27 +1035,48 @@
 
           const standingsBody = document.querySelector('#season-standings-table tbody');
           const standingsFooter = document.querySelector('#season-standings-table tfoot');
-          Object.entries(playerTotals)
-            .sort(([playerA, a], [playerB, b]) => {
-              if (seasonFilterValue === "All Time") {
-                return compareAllTimeRankings(playerA, a, playerB, b);
-              }
+          const standingsRows = Object.entries(playerTotals)
+            .map(([player, totals]) => ({
+              player,
+              points: totals.points,
+              champions: championCounts[player] || 0,
+              bracelets: totals.bracelets,
+              majorBracelets: totals.majorBracelets,
+              lastEventRank: totals.lastEventRank,
+            }));
 
-              return compareSeasonRankings(a, b);
-            })
-            .forEach(([player, { points, bracelets, majorBracelets }]) => {
+          function updateAllTimeSortHeaders() {
+            document.querySelectorAll('#season-standings-table th[data-sort-key]').forEach(th => {
+              th.setAttribute(
+                'aria-sort',
+                th.dataset.sortKey === allTimeSortState.key
+                  ? allTimeSortState.direction === 'asc' ? 'ascending' : 'descending'
+                  : 'none'
+              );
+            });
+          }
+
+          function renderStandingsRows() {
+            standingsBody.innerHTML = '';
+            const sortedRows = showChampColumn
+              ? [...standingsRows].sort(compareAllTimeRows)
+              : [...standingsRows].sort((a, b) => compareSeasonRankings(a, b));
+
+            sortedRows.forEach(({ player, points, champions, bracelets, majorBracelets }) => {
               const tr = document.createElement('tr');
-              const displayPlayer = `${player}${seasonFilterValue === "All Time" && player === "Siri" ? ' 🐐' : ''}${player === selectedSeasonChampion ? ' 👑' : ''}`;
+              const displayPlayer = `${player}${player === selectedSeasonChampion ? ' 👑' : ''}`;
               tr.innerHTML = `
                 <td>${displayPlayer}</td>
-                ${showChampColumn ? '' : `<td>${points.toFixed(2)}</td>`}
-                ${showChampColumn ? `<td>${championCounts[player] || 0}</td>` : ''}
+                <td>${points.toFixed(2)}</td>
+                ${showChampColumn ? `<td>${champions}</td>` : ''}
                 <td>${bracelets}</td>
                 <td>${majorBracelets}</td>
-                ${showChampColumn ? `<td>${getAllTimeRankingScore(player, { bracelets, majorBracelets })}</td>` : ''}
               `;
               standingsBody.appendChild(tr);
             });
+            updateAllTimeSortHeaders();
+            applyStripingByDate('season-standings-table');
+          }
 
           const standingsTotals = Object.values(playerTotals).reduce((totals, player) => {
             totals.bracelets += player.bracelets;
@@ -1017,27 +1085,37 @@
           }, {
             champions: Object.values(championCounts).reduce((total, count) => total + count, 0),
             bracelets: 0,
-            majorBracelets: 0,
-            rankingScore: 0
+            majorBracelets: 0
           });
-          if (showChampColumn) {
-            standingsTotals.rankingScore = Object.entries(playerTotals).reduce((total, [player, playerTotals]) => {
-              return total + getAllTimeRankingScore(player, playerTotals);
-            }, 0);
-          }
 
           const totalRow = document.createElement('tr');
           totalRow.innerHTML = `
             <td>Totals</td>
-            ${showChampColumn ? '' : '<td></td>'}
+            <td></td>
             ${showChampColumn ? `<td>${standingsTotals.champions}</td>` : ''}
             <td>${standingsTotals.bracelets}</td>
             <td>${standingsTotals.majorBracelets}</td>
-            ${showChampColumn ? `<td>${standingsTotals.rankingScore}</td>` : ''}
           `;
           standingsFooter.appendChild(totalRow);
 
-          applyStripingByDate('season-standings-table');
+          if (showChampColumn) {
+            document.querySelectorAll('#season-standings-table th[data-sort-key]').forEach(th => {
+              th.addEventListener('click', () => {
+                const sortKey = th.dataset.sortKey;
+                if (!allTimeSortColumns[sortKey]) return;
+
+                if (allTimeSortState.key === sortKey) {
+                  allTimeSortState.direction = allTimeSortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                  allTimeSortState.key = sortKey;
+                  allTimeSortState.direction = allTimeSortColumns[sortKey].defaultDirection;
+                }
+
+                renderStandingsRows();
+              });
+            });
+          }
+          renderStandingsRows();
           if (showChampColumn) {
             renderAllTimeMajorSummaryTable();
             renderHostingDataTables();
