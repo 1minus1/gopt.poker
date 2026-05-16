@@ -73,6 +73,60 @@ function gopt_matrix_date_is_editable(string $dateText): bool
     return gopt_matrix_date_is_valid($dateText) && strcmp($dateText, gopt_eastern_today_key()) > 0;
 }
 
+function gopt_history_event_date_ids(): array
+{
+    static $eventDateIds = null;
+    if ($eventDateIds !== null) {
+        return $eventDateIds;
+    }
+
+    $eventDateIds = [];
+    try {
+        $current = gopt_get_current_history();
+        $rows = gopt_csv_rows($current['text']);
+        $headers = array_map(fn($header) => strtolower(trim((string)$header)), $rows[0] ?? []);
+        $dateIndex = array_search('date', $headers, true);
+        if ($dateIndex === false) {
+            return $eventDateIds;
+        }
+
+        for ($index = 1; $index < count($rows); $index += 1) {
+            $dateText = trim((string)($rows[$index][$dateIndex] ?? ''));
+            if (!preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/', $dateText, $matches)) {
+                continue;
+            }
+            $year = intval($matches[3]);
+            if ($year < 100) {
+                $year += 2000;
+            }
+            if (!checkdate(intval($matches[1]), intval($matches[2]), $year)) {
+                continue;
+            }
+            $eventDateIds[sprintf('%04d-%02d-%02d', $year, intval($matches[1]), intval($matches[2]))] = true;
+        }
+    } catch (Throwable $error) {
+        $eventDateIds = [];
+    }
+
+    return $eventDateIds;
+}
+
+function gopt_find_auto_delta_lock_date_id(array $dateIds): string
+{
+    $eventDateIds = gopt_history_event_date_ids();
+    if (!count($eventDateIds)) {
+        return '';
+    }
+
+    $today = gopt_eastern_today_key();
+    $matches = array_values(array_filter($dateIds, function ($dateId) use ($eventDateIds, $today) {
+        return isset($eventDateIds[$dateId]) && strcmp($dateId, $today) < 0;
+    }));
+    sort($matches);
+
+    return count($matches) ? $matches[count($matches) - 1] : '';
+}
+
 function gopt_status_is_valid(string $status): bool
 {
     return in_array($status, GOPT_MATRIX_STATUSES, true);
@@ -193,6 +247,9 @@ function gopt_normalize_matrix(array $matrix): array
     $lockedDateId = gopt_get_delta_locked_date_id($matrix);
     if ($lockedDateId !== '' && !in_array($lockedDateId, $dateIds, true)) {
         $lockedDateId = '';
+    }
+    if ($lockedDateId === '') {
+        $lockedDateId = gopt_find_auto_delta_lock_date_id($dateIds);
     }
     $responses = gopt_normalize_matrix_responses($matrix['responses'] ?? [], $dateIds);
 

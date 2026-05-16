@@ -11,6 +11,7 @@ const MATRIX_STATUSES = [
 
 const state = {
   apiAvailable: true,
+  eventDateIds: new Set(),
   matrices: [],
   players: [],
   selectedPlayers: {},
@@ -103,7 +104,13 @@ function getDeltaLockedDateId(matrix) {
   const legacyLockedDate = Array.isArray(matrix.dates)
     ? matrix.dates.find(date => date?.deltaLocked || date?.locked)
     : null;
-  return normalizeDateValue(legacyLockedDate?.id || legacyLockedDate?.date);
+  const legacyLockedDateId = normalizeDateValue(legacyLockedDate?.id || legacyLockedDate?.date);
+  if (legacyLockedDateId) return legacyLockedDateId;
+
+  const autoLockedDateIds = matrixDateIds(matrix)
+    .filter(dateId => state.eventDateIds.has(dateId) && dateId < getEasternDateKey())
+    .sort();
+  return autoLockedDateIds[autoLockedDateIds.length - 1] || '';
 }
 
 function getMatrixDateById(matrix, dateId) {
@@ -358,6 +365,7 @@ async function loadPlayers() {
   const text = await fetchCurrentDataText();
   const parsed = GoptData.parseDataFile(text, { normalizePlayerName: true });
   const players = new Set();
+  state.eventDateIds = new Set(GoptData.buildNights(parsed.rows).map(night => GoptData.localDateKeyFromTimestamp(night.timestamp)));
 
   parsed.rows.forEach(row => {
     row.finishers.forEach(player => {

@@ -76,9 +76,12 @@ function assertMatrixFiles() {
   assert(js.includes('Type the matrix name exactly'), 'Matrix deletion should require a harsh confirmation.');
   assert(js.includes('set_delta_lock'), 'Matrix client should support delta locking one proposed date.');
   assert(js.includes('deltaLockedDateId'), 'Matrix client should store the delta-locked date in the matrix data.');
+  assert(js.includes('state.eventDateIds.has(dateId)'), 'Matrix client should auto-lock past candidate dates that match completed events.');
   assert(js.includes('This matrix is closed'), 'Matrix client should explain read-only past matrices.');
   assert(css.includes('var(--matrix-table-min-width'), 'Matrix CSS should use the dynamic table min-width.');
-  assert(fs.readFileSync(path.join(ROOT, 'api', 'matrix-lib.php'), 'utf8').includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
+  const matrixLib = fs.readFileSync(path.join(ROOT, 'api', 'matrix-lib.php'), 'utf8');
+  assert(matrixLib.includes('gopt-matrix-store'), 'Matrix API should store JSON separately from history data.');
+  assert(matrixLib.includes('gopt_find_auto_delta_lock_date_id'), 'Matrix API should auto-lock past candidate dates that match completed events.');
   assert(php.includes('update_response'), 'Matrix API should support per-player response updates.');
   assert(php.includes('set_delta_lock'), 'Matrix API should support delta locking.');
   assert(php.includes('gopt_delete_matrix'), 'Matrix API should support matrix deletion.');
