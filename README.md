@@ -37,7 +37,7 @@ The Matrix page stores public-editable availability matrices separately in:
 ../gopt-matrix-store/matrices.json
 ```
 
-The built-in admin password is stored as a hash in `api/admin-config.php`; set `GOPT_ADMIN_USERNAME` and `GOPT_ADMIN_PASSWORD_HASH` in the server environment if you want to override the defaults without editing code. Use HTTPS when this is deployed publicly, because Admin and Record submit credentials.
+Admin credentials are loaded from a private file outside the web root or from `GOPT_ADMIN_USERNAME` and `GOPT_ADMIN_PASSWORD_HASH` environment settings. No built-in login is stored in Git. See `DREAMHOST_DEPLOY.md` for configuration. Use HTTPS when this is deployed publicly, because Admin and Record submit credentials.
 
 The `record.html` page records a currently played night. It downloads a generated `GOPTdatav2.csv` file when results are finished and can create a new current server data version after the same admin authentication used by Admin.
 

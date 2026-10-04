@@ -1,4 +1,7 @@
 RewriteEngine On
+<Files ".admin.local.php">
+  Require all denied
+</Files>
 RewriteRule ^api/history/current$ api/history-current.php [L]
 RewriteRule ^api/history/versions$ api/history-versions.php [L]
 RewriteRule ^api/history/versions\.zip$ api/history-versions-zip.php [L]

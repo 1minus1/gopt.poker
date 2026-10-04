@@ -19,7 +19,7 @@ python3 tools/deploy.py --apply
 
 If `.deploy.local.json` already exists, keep it rather than copying over it.
 The local configuration is Git-ignored. The migrated machine has a known-host
-entry for `server.example.com`; confirm that it is still your server.
+entry for `YOUR_DREAMHOST_HOST`; confirm that it is still your server.
 The configured account needs DreamHost shell access and rsync, as well as SSH
 key authentication or an available SSH agent. An optional `identity_file` in
 the JSON configuration selects an existing private key. Passwords are never
@@ -31,7 +31,7 @@ by its local config. Install its public half once from your terminal, entering
 the DreamHost account password at the SSH prompt:
 
 ```sh
-ssh-copy-id -i ~/.ssh/gopt_dreamhost_ed25519.pub YOUR_USERNAME@server.example.com
+ssh-copy-id -i ~/.ssh/gopt_dreamhost_ed25519.pub YOUR_USERNAME@YOUR_DREAMHOST_HOST
 ```
 
 The key has no passphrase to support unattended deployments. Keep its private
@@ -49,9 +49,9 @@ Uploads always use `gopt-site-production/`, never `rebrands/` or the workspace
 landing page. The manifest includes the PHP API, `.htaccess`, published pages,
 JavaScript, CSS, public assets/files, VERSION, and `data/GOPTdatav2.csv`. It
 excludes local tools, migration notes, page backups, spreadsheets, night-summary
-evidence, Git metadata, and runtime stores. `api/admin-config.php` is included:
-its local fallback hashes will replace the server copy, so keep server-specific
-credentials in the documented environment overrides. Review the dry run first.
+evidence, Git metadata, private credential files, and runtime stores.
+`api/admin-config.php` is a credential-free loader; deployment preserves the
+private server configuration outside the web root. Review the dry run first.
 
 The script does not delete remote files. Replaced files are saved outside the
 web root under `/home/USERNAME/gopt-code-backups/TIMESTAMP/`. These are code
@@ -133,15 +133,25 @@ over SSH/SFTP and make sure PHP can write to it.
 
 ## Admin password
 
-The default admin username and hashed password are in `api/admin-config.php`.
-For production, prefer replacing the hash or setting environment variables:
+No default admin usernames or password hashes are stored in Git. On production,
+`api/admin-config.php` loads `/home/USERNAME/gopt-admin-config.php`, outside the
+web root (permissions `0600`). The private file returns an `admins` array of
+`username` and `password_hash` pairs. It must never be committed or uploaded as
+a public asset. Locally, the loader can use Git-ignored `.admin.local.php`.
+`GOPT_ADMIN_CONFIG_FILE` can select another private file. Environment overrides
+remain available:
 
 ```text
 GOPT_ADMIN_USERNAME
 GOPT_ADMIN_PASSWORD_HASH
+GOPT_SECONDARY_ADMIN_USERNAME
+GOPT_SECONDARY_ADMIN_PASSWORD_HASH
 ```
 
-`GOPT_ADMIN_PASSWORD_HASH` may be either the existing `pbkdf2_sha256$...` format
+With no private configuration or environment settings, admin authentication
+is disabled. Tests generate temporary random credentials each run.
+
+`GOPT_ADMIN_PASSWORD_HASH` may be either the supported `pbkdf2_sha256$...` format
 or a PHP `password_hash()` value. Use HTTPS for the public site because Admin and
 Record submit credentials.
 
@@ -161,3 +171,14 @@ https://gopt.poker/upload.html
 
 The direct PHP files such as `/api/history-current.php` also work, but the site
 uses the cleaner API routes above.
+
+## Credential cleanup
+
+Embedded admin settings and shared test logins were removed from all branches
+and release tags. DreamHost connection details were replaced with placeholders.
+Existing clones must be replaced with a fresh clone of the rewritten history
+before contributing, to avoid restoring removed credentials. Production admin
+settings live only in the private server configuration. GitHub may retain old
+commit URLs or cached copies after a rewrite; rotate affected admin passwords
+if those hashes have been shared, and contact GitHub Support for cached sensitive
+data removal when needed.

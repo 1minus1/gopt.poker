@@ -7,11 +7,12 @@ const os = require('os');
 const path = require('path');
 const { File } = require('node:buffer');
 const GoptData = require('../gopt-data.js');
+const { randomBytes } = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_PATH = path.join(ROOT, 'data', 'GOPTdatav2.csv');
-const ADMIN_USER = require('crypto').randomBytes(16).toString('hex');
-const ADMIN_PASSWORD = require('crypto').randomBytes(32).toString('hex');
+const ADMIN_USER = randomBytes(16).toString('hex');
+const ADMIN_PASSWORD = randomBytes(32).toString('hex');
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
