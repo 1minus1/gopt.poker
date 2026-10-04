@@ -2,7 +2,7 @@
 
 This folder is a local copy of the public `gopt.poker` site and browsable `/files/` assets.
 
-The Git repository lives in this directory. Its private GitHub remote is
+The Git repository lives in this directory. Its public GitHub remote is
 [1minus1/gopt.poker](https://github.com/1minus1/gopt.poker), configured as
 `origin`; `main` tracks `origin/main`. Commit local changes before pushing them
 with `git push`. Release tags can be uploaded with `git push origin --tags`.
