@@ -2,6 +2,13 @@
 
 This folder is a local copy of the public `gopt.poker` site and browsable `/files/` assets.
 
+The Git repository lives in this directory. Its private GitHub remote is
+[1minus1/gopt.poker](https://github.com/1minus1/gopt.poker), configured as
+`origin`; `main` tracks `origin/main`. Commit local changes before pushing them
+with `git push`. Release tags can be uploaded with `git push origin --tags`.
+GitHub pushes do not deploy the live site. See
+[DREAMHOST_DEPLOY.md](DREAMHOST_DEPLOY.md) for SSH/rsync deployment.
+
 Run the full test site from this directory with PHP:
 
 ```sh

@@ -71,8 +71,9 @@ curl --fail --silent --show-error https://gopt.poker/api/matrix
 ## Migration findings (2026-10-04)
 
 The canonical directory retained its original `.git` history (93 commits at
-inspection), despite the workspace parent not being a repository. No Git
-remote is configured. Old deployment ZIPs remain under `deploy/`. Migration
+inspection), despite the workspace parent not being a repository. The private
+GitHub remote is now `https://github.com/1minus1/gopt.poker.git` (`origin`), with
+`main` and release tags pushed. Old deployment ZIPs remain under `deploy/`. Migration
 notes and these DreamHost instructions survived, but no old deployment script,
 SSH config, or private key file was found in the project or `~/.ssh/`.
 
