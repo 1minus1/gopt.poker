@@ -36,8 +36,10 @@ ssh-copy-id -i ~/.ssh/gopt_dreamhost_ed25519.pub YOUR_USERNAME@server.example.co
 
 The key has no passphrase to support unattended deployments. Keep its private
 file on this machine; the `.pub` file is the part installed on the server. The
-initial server connection succeeded, but authentication failed before key
-installation, so the account and destination directory remain unverified.
+public key was installed on 2026-10-04. Key-only authentication, the writable
+`/home/USERNAME/gopt.poker/` destination, and remote rsync were verified. A full
+53-file deployment dry run succeeded; it reported timestamp differences only,
+with no file-content differences or missing files. No upload was performed.
 
 `--plan` lists files without connecting. `--check` checks SSH authentication,
 directory writability, and remote rsync. With no action flag, the script runs an
