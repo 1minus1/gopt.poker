@@ -3,6 +3,19 @@
 This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 `1.0.0` is the `v1.0` release shared with the group.
 
+## Unreleased - 2026-10-04
+
+### Changed
+
+- Matrix deletion now asks users to type `Yes`, preserving the named-matrix
+  warning, permanent-deletion warning, and Cancel behavior. Resolves #1.
+- Added guest-eligibility clarification to the October 4th Rules Update:
+  standard-night guests should be approved by the host and an unofficial GOPT
+  vote; Major guests are welcome and encouraged. Any suggestion that Major
+  guests are required must be clarified at the SOBO vote before becoming a
+  formal requirement. The entire eligibility provision remains a proposal,
+  with existing bracelet and statistics wording preserved. Resolves #2.
+
 ## [1.2.0] - 2026-05-16
 
 This is the consolidated `v1.2` changelog, capturing all changes since the

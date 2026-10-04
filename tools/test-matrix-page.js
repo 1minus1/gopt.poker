@@ -3,6 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const GoptData = require('../gopt-data.js');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -51,7 +52,7 @@ function assertMatrixFiles() {
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
   assert(html.includes('styles.css?v=matrix-delta-lock-20260516'), 'Matrix stylesheet URL should be cache-busted.');
-  assert(html.includes('matrix.js?v=matrix-delta-lock-20260516'), 'Matrix script URL should be cache-busted.');
+  assert(html.includes('matrix.js?v=delete-confirmation-20261004'), 'Matrix script URL should be cache-busted.');
   assert(html.includes('<details class="matrix-section matrix-create-disclosure">'), 'New Matrix form should be behind a disclosure.');
   assert(html.includes('<summary>New Matrix</summary>'), 'New Matrix disclosure should have a clear summary.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
@@ -73,7 +74,6 @@ function assertMatrixFiles() {
   assert(js.includes('has-unsaved-changes'), 'Matrix editor should mark changed availability as unsaved.');
   assert(js.includes('Save Changes'), 'Matrix save button should change text when availability is dirty.');
   assert(js.includes('data-delete-matrix-id'), 'Matrix client should render a matrix delete control.');
-  assert(js.includes('Type the matrix name exactly'), 'Matrix deletion should require a harsh confirmation.');
   assert(js.includes('set_delta_lock'), 'Matrix client should support delta locking one proposed date.');
   assert(js.includes('deltaLockedDateId'), 'Matrix client should store the delta-locked date in the matrix data.');
   assert(js.includes('state.eventDateIds.has(dateId)'), 'Matrix client should auto-lock past candidate dates that match completed events.');
@@ -87,11 +87,31 @@ function assertMatrixFiles() {
   assert(php.includes('gopt_delete_matrix'), 'Matrix API should support matrix deletion.');
 }
 
+function assertDeleteConfirmation() {
+  const source = fs.readFileSync(path.join(ROOT, 'matrix.js'), 'utf8');
+  const confirmation = source.match(/function confirmMatrixDelete\(matrix\) \{[\s\S]*?\n\}(?=\n\nfunction renderMatrices)/)?.[0];
+  assert(confirmation, 'Expected the production deletion confirmation function.');
+  const matrix = { name: 'Saturday Poker' };
+  for (const input of [null, '', matrix.name, 'yes', 'YES', 'Yes']) {
+    let prompt;
+    const confirm = vm.runInNewContext(`(${confirmation})`, {
+      window: { prompt: message => { prompt = message; return input; } },
+    });
+    const result = confirm(matrix);
+    assert.strictEqual(result.confirmed, input === 'Yes', 'Only submitted Yes confirms deletion.');
+    assert(prompt.includes(matrix.name), 'Warning must identify the matrix.');
+    assert(prompt.includes('every availability response') && prompt.includes('There is no undo.'), 'Warning must explain permanent data loss.');
+    assert(prompt.includes("Type 'Yes' to confirm"));
+    if (input === null) assert.strictEqual(result.message, '', 'Cancel must not show an error.');
+  }
+}
+
 function main() {
   assertNav();
   assertPlayersComeFromDataModel();
   assertExpectedAttendanceMath();
   assertMatrixFiles();
+  assertDeleteConfirmation();
   console.log('Matrix page checks passed.');
 }
 

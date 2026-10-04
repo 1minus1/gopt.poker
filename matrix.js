@@ -716,14 +716,14 @@ function updateMatrixSaveState(form, isDirty) {
 function confirmMatrixDelete(matrix) {
   const matrixName = String(matrix.name || '').trim();
   const entered = window.prompt(
-    `PERMANENT DELETE\n\nThis will delete "${matrixName}" and every availability response in it. There is no undo.\n\nType the matrix name exactly to delete it:`
+    `PERMANENT DELETE\n\nThis will delete "${matrixName}" and every availability response in it. There is no undo.\n\nType 'Yes' to confirm:`
   );
 
   if (entered === null) {
     return { confirmed: false, message: '' };
   }
-  if (entered !== matrixName) {
-    return { confirmed: false, message: 'Matrix was not deleted. The typed name did not match.' };
+  if (entered !== 'Yes') {
+    return { confirmed: false, message: 'Matrix was not deleted. Type "Yes" to confirm deletion.' };
   }
   return { confirmed: true, message: '' };
 }
