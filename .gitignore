@@ -1,4 +1,6 @@
 .DS_Store
+.deploy.local.json
+__pycache__/
 deploy/
 gopt-history-store/
 gopt-matrix-store/
@@ -9,4 +11,3 @@ gopt-matrix-store/
 ~$*.xlsx
 !files/GOPTpayouttechnote.pdf
 .admin.local.php
-.deploy.local.json

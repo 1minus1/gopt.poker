@@ -1,0 +1,6 @@
+{
+  "host": "server.example.com",
+  "user": "YOUR_USERNAME",
+  "port": 22,
+  "remote_dir": "/home/YOUR_USERNAME/gopt.poker/"
+}
