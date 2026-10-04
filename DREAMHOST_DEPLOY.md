@@ -26,6 +26,19 @@ the JSON configuration selects an existing private key. Passwords are never
 stored by the script. If you have only an SFTP account, enable shell access for
 this workflow, or upload the files listed by `--plan` with an SFTP client.
 
+This machine now has a dedicated key at `~/.ssh/gopt_dreamhost_ed25519`, selected
+by its local config. Install its public half once from your terminal, entering
+the DreamHost account password at the SSH prompt:
+
+```sh
+ssh-copy-id -i ~/.ssh/gopt_dreamhost_ed25519.pub YOUR_USERNAME@server.example.com
+```
+
+The key has no passphrase to support unattended deployments. Keep its private
+file on this machine; the `.pub` file is the part installed on the server. The
+initial server connection succeeded, but authentication failed before key
+installation, so the account and destination directory remain unverified.
+
 `--plan` lists files without connecting. `--check` checks SSH authentication,
 directory writability, and remote rsync. With no action flag, the script runs an
 rsync dry run; only `--apply` uploads. Host-key verification remains enabled.

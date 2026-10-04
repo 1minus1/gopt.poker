@@ -56,7 +56,7 @@ def configuration(path):
     ssh = ['ssh', '-p', str(port), '-o', 'BatchMode=yes',
            '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=15']
     if config.get('identity_file'):
-        ssh += ['-i', str(Path(config['identity_file']).expanduser())]
+        ssh += ['-o', 'IdentitiesOnly=yes', '-i', str(Path(config['identity_file']).expanduser())]
     return host, user, directory.rstrip('/'), ssh
 
 
