@@ -637,8 +637,7 @@
         }
 
         const MATRIX_STATUS_INFO = {
-          IN: { label: 'IN', weight: 1 },
-          PROBABLE: { label: 'PROBABLE', weight: 0.75 },
+          PROBABLE: { label: 'PROBABLE', weight: 1 },
           QUESTIONABLE: { label: 'QUESTIONABLE', weight: 0.5 },
           DOUBTFUL: { label: 'DOUBTFUL', weight: 0.25 },
           OUT: { label: 'OUT', weight: 0 },
@@ -688,7 +687,8 @@
               ? matrix.responses
               : {};
             Object.entries(responses).forEach(([player, dateMap]) => {
-              const status = String(dateMap?.[dateId] || '').trim().toUpperCase();
+              const rawStatus = String(dateMap?.[dateId] || '').trim().toUpperCase();
+              const status = rawStatus === 'IN' ? 'PROBABLE' : rawStatus;
               if (MATRIX_STATUS_INFO[status]) {
                 projections.set(player, status);
               }
@@ -715,7 +715,7 @@
         function isProjectionAccurate(status, attended) {
           if (!MATRIX_STATUS_INFO[status]) return null;
           if (attended) {
-            return status === 'DOUBTFUL' || status === 'PROBABLE' || status === 'IN';
+            return status === 'DOUBTFUL' || status === 'PROBABLE';
           }
           return status === 'OUT' || status === 'QUESTIONABLE' || status === 'DOUBTFUL';
         }

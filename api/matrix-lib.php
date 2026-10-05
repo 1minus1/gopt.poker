@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/history-lib.php';
 
-const GOPT_MATRIX_STATUSES = ['', 'IN', 'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'];
+const GOPT_MATRIX_STATUSES = ['', 'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'];
 
 function gopt_matrix_store_dir(): string
 {
@@ -127,6 +127,12 @@ function gopt_find_auto_delta_lock_date_id(array $dateIds): string
     return count($matches) ? $matches[count($matches) - 1] : '';
 }
 
+function gopt_normalize_matrix_status(string $status): string
+{
+    $status = strtoupper(trim($status));
+    return $status === 'IN' ? 'PROBABLE' : $status;
+}
+
 function gopt_status_is_valid(string $status): bool
 {
     return in_array($status, GOPT_MATRIX_STATUSES, true);
@@ -225,7 +231,7 @@ function gopt_normalize_matrix_responses($responses, array $dateIds): array
         $cleanDateMap = [];
         foreach ($dateMap as $dateId => $status) {
             $dateKey = trim((string)$dateId);
-            $statusValue = strtoupper(trim((string)$status));
+            $statusValue = gopt_normalize_matrix_status((string)$status);
             if (!isset($allowedDates[$dateKey]) || !gopt_status_is_valid($statusValue) || $statusValue === '') {
                 continue;
             }
@@ -385,7 +391,7 @@ function gopt_update_matrix_response(array $store, array $data): array
     $cleanResponses = [];
     foreach ($responses as $dateId => $status) {
         $dateKey = (string)$dateId;
-        $statusValue = strtoupper(trim((string)$status));
+        $statusValue = gopt_normalize_matrix_status((string)$status);
         if (!isset($dateIds[$dateKey])) {
             continue;
         }
@@ -468,11 +474,9 @@ function gopt_sort_matrices(array $store): array
 
 function gopt_matrix_projection_weight(string $status): string
 {
-    switch ($status) {
-        case 'IN':
-            return '1';
+    switch (gopt_normalize_matrix_status($status)) {
         case 'PROBABLE':
-            return '0.75';
+            return '1';
         case 'QUESTIONABLE':
             return '0.5';
         case 'DOUBTFUL':

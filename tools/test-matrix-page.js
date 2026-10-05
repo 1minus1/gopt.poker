@@ -28,20 +28,49 @@ function assertPlayersComeFromDataModel() {
 }
 
 function assertExpectedAttendanceMath() {
-  const weights = {
-    IN: 1,
-    OUT: 0,
-    DOUBTFUL: 0.25,
-    QUESTIONABLE: 0.5,
-    PROBABLE: 0.75,
-    '': 0,
+  const source = fs.readFileSync(path.join(ROOT, 'matrix.js'), 'utf8');
+  const context = vm.createContext({});
+  vm.runInContext(source.slice(0, source.indexOf('const els =')), context);
+  for (const name of ['getStatus', 'getMatrixResponses', 'normalizeLegacyMatrixStatuses', 'readLocalStore', 'matrixDateIds', 'calculateDateTotals']) {
+    const match = source.match(new RegExp(`function ${name}\\([^]*?\\n}\\n`));
+    assert(match, name);
+    vm.runInContext(match[0], context);
+  }
+  const matrix = { id: 'keep', createdAt: 'keep', deltaLockedDateId: 'd', dates: [{ id: 'd' }], responses: {} };
+  const statuses = ['IN', 'PROBABLE', 'QUESTIONABLE', 'DOUBTFUL', 'OUT', ''];
+  statuses.forEach((status, i) => { matrix.responses[`p${i}`] = { d: status }; });
+  context.matrix = matrix;
+  vm.runInContext("state.players = ['p0','p1','p2','p3','p4','p5']", context);
+  const totals = vm.runInContext('calculateDateTotals(matrix).d', context);
+  assert.strictEqual(totals.probable, 2);
+  assert.strictEqual(totals.expected, 2.75);
+  assert.strictEqual(totals.missing, 1);
+  let saved = JSON.stringify({ matrices: [matrix], extra: 'preserved' });
+  let writes = 0;
+  context.localStorage = {
+    getItem(key) { assert.strictEqual(key, 'gopt.matrix.localPreview.v1'); return saved; },
+    setItem(key, value) { assert.strictEqual(key, 'gopt.matrix.localPreview.v1'); saved = value; writes++; },
   };
-  const responses = ['IN', 'PROBABLE', 'PROBABLE', 'DOUBTFUL', 'QUESTIONABLE', 'OUT', ''];
-  const probable = responses.filter(response => response === 'PROBABLE' || response === 'IN').length;
-  const expected = responses.reduce((total, response) => total + weights[response], 0);
+  const migrated = vm.runInContext('readLocalStore()', context);
+  assert.strictEqual(migrated.matrices[0].responses.p0.d, 'PROBABLE');
+  assert.strictEqual(migrated.matrices[0].deltaLockedDateId, 'd');
+  assert.strictEqual(migrated.matrices[0].createdAt, 'keep');
+  assert.strictEqual(migrated.extra, 'preserved');
+  vm.runInContext('readLocalStore()', context);
+  assert.strictEqual(writes, 1, 'Preview migration must be idempotent');
+  assert.strictEqual(vm.runInContext("getStatus(' in ').value", context), 'PROBABLE');
+  const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  vm.runInContext(index.match(/const MATRIX_STATUS_INFO = {[^]*?\n        };/)[0], context);
+  vm.runInContext(index.match(/function getMatrixDeltaLockedDateId\([^]*?\n        }/)[0], context);
+  vm.runInContext(index.match(/function buildMatrixProjectionByDate\([^]*?\n        }/)[0], context);
+  vm.runInContext(index.match(/function isProjectionAccurate\([^]*?\n        }/)[0], context);
+  context.matrixData = [matrix];
+  const projections = vm.runInContext('buildMatrixProjectionByDate().get("d").projections', context);
+  assert.strictEqual(projections.get('p0'), 'PROBABLE');
+  assert.strictEqual(vm.runInContext('MATRIX_STATUS_INFO.PROBABLE.weight', context), 1);
+  assert.strictEqual(vm.runInContext('MATRIX_STATUS_INFO.IN', context), undefined);
+  assert.strictEqual(vm.runInContext("isProjectionAccurate('PROBABLE', true)", context), true);
 
-  assert.strictEqual(probable, 3);
-  assert.strictEqual(expected, 3.25);
 }
 
 function assertMatrixFiles() {
@@ -51,19 +80,19 @@ function assertMatrixFiles() {
   const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
-  assert(html.includes('styles.css?v=matrix-delta-lock-20260516'), 'Matrix stylesheet URL should be cache-busted.');
-  assert(html.includes('matrix.js?v=delete-confirmation-20261004'), 'Matrix script URL should be cache-busted.');
+  assert(html.includes('styles.css?v=probable-maximum-20261005'), 'Matrix stylesheet URL should be cache-busted.');
+  assert(html.includes('matrix.js?v=probable-maximum-20261005'), 'Matrix script URL should be cache-busted.');
   assert(html.includes('<details class="matrix-section matrix-create-disclosure">'), 'New Matrix form should be behind a disclosure.');
   assert(html.includes('<summary>New Matrix</summary>'), 'New Matrix disclosure should have a clear summary.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');
   assert(js.includes('Local preview mode'), 'Matrix client should have a static-server preview fallback.');
   assert(js.includes('matrix-status-probable'), 'Matrix client should render status-specific cells.');
-  assert(js.includes('# (PROBABLE + IN)'), 'Matrix totals should count PROBABLE plus IN players.');
+  assert(js.includes('# PROBABLE'), 'Matrix totals should count PROBABLE players.');
   assert(js.includes('Expected #'), 'Matrix totals should use the shorter Expected # label.');
   assert(js.includes('DOUBTFUL (25%)'), 'Matrix status selector should show percentage likelihoods.');
   assert(js.includes('QUESTIONABLE (50%)'), 'Matrix status selector should show percentage likelihoods.');
-  assert(js.includes('PROBABLE (75%)'), 'Matrix status selector should show percentage likelihoods.');
-  assert(js.includes('IN (100%)'), 'Matrix status selector should show percentage likelihoods.');
+  assert(js.includes('PROBABLE (100%)'), 'Matrix status selector should show percentage likelihoods.');
+  assert(!js.includes('IN (100%)'), 'IN must not be selectable.');
   assert(js.includes('Choose player'), 'Matrix player selector should start with no player selected.');
   assert(js.includes("state.selectedPlayers[matrix.id] || ''"), 'Matrix cards should start with a clean read-only table.');
   assert(!js.includes("['No response', 'missing'"), 'Matrix totals should not render the no response row.');

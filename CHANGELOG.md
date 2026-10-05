@@ -3,9 +3,15 @@
 This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 `1.0.0` is the `v1.0` release shared with the group.
 
-## Unreleased - 2026-10-04
+## Unreleased - 2026-10-05
 
 ### Changed
+
+- Removed IN attendance status; PROBABLE is the maximum and contributes 1 player
+  to expected attendance. Updated Rules, Matrix totals, selectors, and styling.
+  Legacy responses, imports, stale clients, and local previews normalize IN to
+  PROBABLE. Added a locked, backed-up, idempotent migration of the live store
+  that preserves matrix metadata and selected dates. Resolves #3.
 
 - Matrix deletion now asks users to type `Yes`, preserving the named-matrix
   warning, permanent-deletion warning, and Cancel behavior. Resolves #1.

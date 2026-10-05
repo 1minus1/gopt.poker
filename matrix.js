@@ -2,8 +2,7 @@ const MATRIX_STORAGE_KEY = 'gopt.matrix.localPreview.v1';
 
 const MATRIX_STATUSES = [
   { value: '', label: 'No response', shortLabel: '—', weight: 0, className: 'matrix-status-empty' },
-  { value: 'IN', label: 'IN (100%)', shortLabel: 'IN', weight: 1, className: 'matrix-status-in' },
-  { value: 'PROBABLE', label: 'PROBABLE (75%)', shortLabel: 'PROBABLE', weight: 0.75, className: 'matrix-status-probable' },
+  { value: 'PROBABLE', label: 'PROBABLE (100%)', shortLabel: 'PROBABLE', weight: 1, className: 'matrix-status-probable' },
   { value: 'QUESTIONABLE', label: 'QUESTIONABLE (50%)', shortLabel: 'QUESTIONABLE', weight: 0.5, className: 'matrix-status-questionable' },
   { value: 'DOUBTFUL', label: 'DOUBTFUL (25%)', shortLabel: 'DOUBTFUL', weight: 0.25, className: 'matrix-status-doubtful' },
   { value: 'OUT', label: 'OUT (0%)', shortLabel: 'OUT', weight: 0, className: 'matrix-status-out' },
@@ -144,7 +143,8 @@ function getMatrixReadOnlyMessage(matrix) {
 }
 
 function getStatus(value) {
-  const normalized = String(value || '').trim().toUpperCase();
+  const raw = String(value || '').trim().toUpperCase();
+  const normalized = raw === 'IN' ? 'PROBABLE' : raw;
   return MATRIX_STATUSES.find(status => status.value === normalized) || MATRIX_STATUSES[0];
 }
 
@@ -154,14 +154,35 @@ function getMatrixResponses(matrix) {
     : {};
 }
 
+function normalizeLegacyMatrixStatuses(matrices) {
+  let changed = false;
+  for (const matrix of matrices) {
+    for (const dateMap of Object.values(getMatrixResponses(matrix))) {
+      if (!dateMap || typeof dateMap !== 'object' || Array.isArray(dateMap)) continue;
+      for (const [dateId, value] of Object.entries(dateMap)) {
+        if (typeof value === 'string' && value.trim().toUpperCase() === 'IN') {
+          dateMap[dateId] = 'PROBABLE';
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed;
+}
+
 function sortMatrices(matrices) {
+  normalizeLegacyMatrixStatuses(matrices);
   return [...matrices].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 }
 
 function readLocalStore() {
   try {
     const parsed = JSON.parse(localStorage.getItem(MATRIX_STORAGE_KEY) || '{}');
-    return Array.isArray(parsed.matrices) ? parsed : { matrices: [] };
+    if (!Array.isArray(parsed.matrices)) return { matrices: [] };
+    if (normalizeLegacyMatrixStatuses(parsed.matrices)) {
+      try { localStorage.setItem(MATRIX_STORAGE_KEY, JSON.stringify(parsed)); } catch { /* Keep migrated data in memory if storage is full. */ }
+    }
+    return parsed;
   } catch {
     return { matrices: [] };
   }
@@ -275,7 +296,7 @@ async function saveMatrixResponse(matrixId, player, responses) {
     if (matrix.id !== matrixId) return matrix;
     const nextResponses = { ...getMatrixResponses(matrix) };
     const cleanResponses = Object.fromEntries(
-      Object.entries(responses).filter(([, status]) => status)
+      Object.entries(responses).map(([dateId, status]) => [dateId, getStatus(status).value]).filter(([, status]) => status)
     );
 
     if (Object.keys(cleanResponses).length) {
@@ -448,7 +469,7 @@ function calculateDateTotals(matrix) {
       if (!status.value) {
         totals[dateId].missing += 1;
       }
-      if (status.value === 'PROBABLE' || status.value === 'IN') {
+      if (status.value === 'PROBABLE') {
         totals[dateId].probable += 1;
       }
       totals[dateId].expected += status.weight;
@@ -577,7 +598,7 @@ function createMatrixTable(matrix, selectedPlayer) {
 
   const tfoot = document.createElement('tfoot');
   [
-    ['# (PROBABLE + IN)', 'probable', value => String(value)],
+    ['# PROBABLE', 'probable', value => String(value)],
     ['Expected #', 'expected', value => Number(value).toFixed(2)],
   ].forEach(([label, field, formatter]) => {
     const tr = document.createElement('tr');
@@ -645,7 +666,7 @@ function createMatrixCard(matrix, index) {
   const metrics = document.createElement('div');
   metrics.className = 'matrix-summary-metrics';
   appendMetric(metrics, 'Best expected players', bestExpected ? `${formatMatrixDate(bestExpected.dateId)}: ${bestExpected.value.toFixed(2)}` : '—');
-  appendMetric(metrics, 'Most PROBABLE + IN', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
+  appendMetric(metrics, 'Most PROBABLE', bestProbable ? `${formatMatrixDate(bestProbable.dateId)}: ${bestProbable.value}` : '—');
   appendMetric(metrics, 'Delta lock', lockedDateId ? formatMatrixDate(lockedDateId) : 'Not set');
   details.appendChild(metrics);
 

@@ -182,3 +182,34 @@ settings live only in the private server configuration. GitHub may retain old
 commit URLs or cached copies after a rewrite; rotate affected admin passwords
 if those hashes have been shared, and contact GitHub Support for cached sensitive
 data removal when needed.
+
+### PROBABLE maximum attendance migration (issue #3)
+
+Deploy `api/matrix-lib.php` first: legacy `IN` is accepted as an input alias,
+while all reads, imports, writes and attendance exports use `PROBABLE` with
+weight 1. Then deploy `matrix.js`, `matrix.html`, `styles.css`, `index.html` and `rules.html`.
+The Matrix HTML cache versions ensure browsers fetch the new selector and styles.
+Browser previews retain `gopt.matrix.localPreview.v1` and migrate its saved
+responses in place; their matrix metadata and unanswered entries are preserved.
+
+Install `tools/migrate-matrix-statuses.php` in a maintenance directory **outside
+the public site**. Set `GOPT_SITE_ROOT` to the site's absolute server path and
+optionally `GOPT_MATRIX_STORE_DIR` to the existing store directory. Run with PHP
+without arguments for a dry run, then with `--apply` to persist the conversion.
+It reads under the same exclusive `matrices.lock` as normal writes, creates a
+private byte-for-byte `.before-probable-*.bak` beside `matrices.json`, and replaces
+the store atomically. It changes only legacy IN response values, including closed
+and locked matrices. Re-running after conversion changes nothing. The result
+reports counts and the backup path, without printing player data.
+
+For rollback, pause Matrix writes, take the same exclusive lock and atomically
+restore that backup; restoring a backup after later edits would discard those
+edits. Roll back site code from its deployment backup if restoring the old status
+model. History stores and archival backups are never rewritten by this migration.
+
+Validate with `node tools/test-matrix-page.js`,
+`php tools/test-matrix-status-migration.php`, and
+`python3 tools/test-matrix-api.py`. These cover real client calculations and saved
+previews, import normalization, stale HTTP requests and persisted output, invalid
+status rejection, metadata preservation, backup integrity, idempotence and a
+concurrent writer holding the existing store lock.
