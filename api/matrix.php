@@ -26,6 +26,8 @@ try {
             array_unshift($store['matrices'], gopt_create_matrix($data));
         } elseif ($action === 'update_response') {
             $store = gopt_update_matrix_response($store, $data);
+        } elseif ($action === 'update_visibility') {
+            $store = gopt_update_matrix_visibility($store, $data);
         } elseif ($action === 'set_delta_lock') {
             $store = gopt_set_matrix_delta_lock($store, $data);
         } elseif ($action === 'delete') {

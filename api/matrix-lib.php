@@ -246,6 +246,14 @@ function gopt_normalize_matrix_responses($responses, array $dateIds): array
     return $clean;
 }
 
+function gopt_matrix_hidden_players($players): array
+{
+    if (!is_array($players)) return [];
+    return array_values(array_unique(array_filter(array_map(function ($player) {
+        return is_string($player) && strlen(trim($player)) <= 80 ? trim($player) : '';
+    }, $players), fn($player) => $player !== '')));
+}
+
 function gopt_normalize_matrix(array $matrix): array
 {
     $dates = gopt_normalize_matrix_dates(is_array($matrix['dates'] ?? null) ? $matrix['dates'] : []);
@@ -258,6 +266,8 @@ function gopt_normalize_matrix(array $matrix): array
         $lockedDateId = gopt_find_auto_delta_lock_date_id($dateIds);
     }
     $responses = gopt_normalize_matrix_responses($matrix['responses'] ?? [], $dateIds);
+    $hiddenDates = is_array($matrix['hiddenDateIds'] ?? null) ? array_filter($matrix['hiddenDateIds'], 'is_string') : [];
+    $hiddenDates = count($dateIds) > 2 ? array_slice(array_values(array_intersect($dateIds, $hiddenDates)), 0, count($dateIds) - 1) : [];
 
     return [
         'id' => trim((string)($matrix['id'] ?? '')),
@@ -267,6 +277,8 @@ function gopt_normalize_matrix(array $matrix): array
         'dates' => $dates,
         'deltaLockedDateId' => $lockedDateId,
         'responses' => count($responses) ? $responses : new stdClass(),
+        'hiddenDateIds' => $hiddenDates,
+        'hiddenPlayers' => gopt_matrix_hidden_players($matrix['hiddenPlayers'] ?? []),
     ];
 }
 
@@ -388,7 +400,8 @@ function gopt_update_matrix_response(array $store, array $data): array
     }
 
     $dateIds = array_fill_keys(gopt_matrix_date_ids($matrix), true);
-    $cleanResponses = [];
+    $existingResponses = is_array($matrix['responses']) ? $matrix['responses'] : [];
+    $cleanResponses = $existingResponses[$player] ?? [];
     foreach ($responses as $dateId => $status) {
         $dateKey = (string)$dateId;
         $statusValue = gopt_normalize_matrix_status((string)$status);
@@ -403,6 +416,8 @@ function gopt_update_matrix_response(array $store, array $data): array
         }
         if ($statusValue !== '') {
             $cleanResponses[$dateKey] = $statusValue;
+        } else {
+            unset($cleanResponses[$dateKey]);
         }
     }
 
@@ -417,6 +432,39 @@ function gopt_update_matrix_response(array $store, array $data): array
     $matrix['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z');
     $store['matrices'][$index] = $matrix;
 
+    return $store;
+}
+
+function gopt_update_matrix_visibility(array $store, array $data): array
+{
+    $index = gopt_find_matrix_index($store, trim((string)($data['matrixId'] ?? '')));
+    $matrix = gopt_normalize_matrix($store['matrices'][$index]);
+    $operation = $data['operation'] ?? '';
+    if ($operation === 'hide_date') {
+        $dateId = (string)($data['dateId'] ?? '');
+        $dates = gopt_matrix_date_ids($matrix);
+        if (count($dates) <= 2 || !in_array($dateId, $dates, true)) {
+            throw new GoptHistoryException('Only matrices with more than two dates can hide proposed dates.', 400);
+        }
+        if (!in_array($dateId, $matrix['hiddenDateIds'], true)) {
+            if (count($matrix['hiddenDateIds']) >= count($dates) - 1) {
+                throw new GoptHistoryException('Keep at least one date visible.', 409);
+            }
+            $matrix['hiddenDateIds'][] = $dateId;
+        }
+    } elseif ($operation === 'unhide_dates') {
+        $matrix['hiddenDateIds'] = [];
+    } elseif ($operation === 'hide_player') {
+        $player = trim((string)($data['player'] ?? ''));
+        if ($player === '' || strlen($player) > 80) throw new GoptHistoryException('Choose a player.', 400);
+        if (!in_array($player, $matrix['hiddenPlayers'], true)) $matrix['hiddenPlayers'][] = $player;
+    } elseif ($operation === 'unhide_players') {
+        $matrix['hiddenPlayers'] = [];
+    } else {
+        throw new GoptHistoryException('Unsupported visibility operation.', 400);
+    }
+    // Visibility is presentation metadata: do not change response timestamps or locks.
+    $store['matrices'][$index] = $matrix;
     return $store;
 }
 

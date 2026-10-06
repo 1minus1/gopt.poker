@@ -213,3 +213,28 @@ Validate with `node tools/test-matrix-page.js`,
 previews, import normalization, stale HTTP requests and persisted output, invalid
 status rejection, metadata preservation, backup integrity, idempotence and a
 concurrent writer holding the existing store lock.
+
+### Shared Matrix visibility (issue #5)
+
+Matrices now include `hiddenDateIds` and `hiddenPlayers`. Older stores and
+backups default to empty lists; exports and restores retain these settings.
+No runtime-store migration is required. Deploy both `api/matrix-lib.php` and
+`api/matrix.php` before the updated Matrix client, HTML and stylesheet.
+
+Any visitor may hide or restore dates and players. Dates can be hidden only in
+matrices with more than two proposed dates, and one must remain visible. The
+`update_visibility` API applies individual hide/restore operations under the
+existing exclusive store lock, preserving concurrent changes. Visibility may
+be changed on closed matrices and never changes attendance timestamps, responses,
+or delta locks. All totals, best dates, Standings projections and attendance CSV
+exports continue to include hidden rows and columns.
+
+`update_response` now patches submitted dates: omitted dates remain unchanged;
+an explicit empty status clears that date. This preserves hidden and past-date
+responses while the client submits only changed draft values. Shared visibility
+errors remain errors, rather than silently falling back to browser-only saving.
+
+Validation: run the existing Matrix page, migration and HTTP tests plus
+`php tools/test-matrix-visibility.php` and `node tools/test-matrix-visibility.js`.
+Browser verification should cover hiding to one column, hiding players, restoring
+all, persisted visibility on reload, and unsaved drafts surviving hide/restore.

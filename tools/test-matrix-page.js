@@ -80,8 +80,8 @@ function assertMatrixFiles() {
   const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
   assert(html.includes('matrix.js'), 'Matrix page should load matrix.js.');
-  assert(html.includes('styles.css?v=probable-maximum-20261005'), 'Matrix stylesheet URL should be cache-busted.');
-  assert(html.includes('matrix.js?v=probable-maximum-20261005'), 'Matrix script URL should be cache-busted.');
+  assert(html.includes('styles.css?v=shared-visibility-20261006'), 'Matrix stylesheet URL should be cache-busted.');
+  assert(html.includes('matrix.js?v=shared-visibility-20261006'), 'Matrix script URL should be cache-busted.');
   assert(html.includes('<details class="matrix-section matrix-create-disclosure">'), 'New Matrix form should be behind a disclosure.');
   assert(html.includes('<summary>New Matrix</summary>'), 'New Matrix disclosure should have a clear summary.');
   assert(js.includes('api/matrix'), 'Matrix client should use the Matrix API route.');

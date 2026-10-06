@@ -14,6 +14,7 @@ const state = {
   matrices: [],
   players: [],
   selectedPlayers: {},
+  drafts: {},
 };
 
 const els = {
@@ -295,9 +296,11 @@ async function saveMatrixResponse(matrixId, player, responses) {
   state.matrices = state.matrices.map(matrix => {
     if (matrix.id !== matrixId) return matrix;
     const nextResponses = { ...getMatrixResponses(matrix) };
-    const cleanResponses = Object.fromEntries(
-      Object.entries(responses).map(([dateId, status]) => [dateId, getStatus(status).value]).filter(([, status]) => status)
-    );
+    const cleanResponses = { ...(nextResponses[player] || {}) };
+    for (const [dateId, status] of Object.entries(responses)) {
+      if (getStatus(status).value) cleanResponses[dateId] = getStatus(status).value;
+      else delete cleanResponses[dateId];
+    }
 
     if (Object.keys(cleanResponses).length) {
       nextResponses[player] = cleanResponses;
@@ -312,6 +315,53 @@ async function saveMatrixResponse(matrixId, player, responses) {
     };
   });
   writeLocalStore();
+}
+
+function matrixVisibility(matrix) {
+  const dates = matrixDateIds(matrix);
+  const savedHiddenDates = Array.isArray(matrix.hiddenDateIds) ? matrix.hiddenDateIds : [];
+  const hiddenDateIds = dates.length > 2
+    ? dates.filter(dateId => savedHiddenDates.includes(dateId)).slice(0, dates.length - 1)
+    : [];
+  return { hiddenDateIds, hiddenPlayers: Array.isArray(matrix.hiddenPlayers) ? matrix.hiddenPlayers : [] };
+}
+
+async function saveMatrixVisibility(matrixId, operation, value) {
+  const data = { action: 'update_visibility', matrixId, operation, dateId: value, player: value };
+  if (state.apiAvailable) {
+    // A failed shared save must stay an error, never silently become a local change.
+    const result = await fetchMatrixJson(['api/matrix', 'api/matrix.php'], {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
+    });
+    state.matrices = sortMatrices(result.matrices || []);
+    return;
+  }
+  state.matrices = state.matrices.map(matrix => {
+    if (matrix.id !== matrixId) return matrix;
+    const visibility = matrixVisibility(matrix);
+    if (operation === 'hide_date') {
+      if (matrixDateIds(matrix).length <= 2 || !matrixDateIds(matrix).includes(value)) throw new Error('Choose a proposed date in a matrix with more than two dates.');
+      if (matrixDateIds(matrix).length - visibility.hiddenDateIds.length <= 1) throw new Error('Keep at least one date visible.');
+      visibility.hiddenDateIds = [...new Set([...visibility.hiddenDateIds, value])];
+    } else if (operation === 'hide_player') {
+      visibility.hiddenPlayers = [...new Set([...visibility.hiddenPlayers, value])];
+    } else if (operation === 'unhide_dates') visibility.hiddenDateIds = [];
+    else if (operation === 'unhide_players') visibility.hiddenPlayers = [];
+    return { ...matrix, ...visibility };
+  });
+  writeLocalStore();
+}
+
+function createVisibilityButton(matrixId, operation, label, value = '') {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'matrix-visibility-button';
+  button.dataset.visibilityMatrixId = matrixId;
+  button.dataset.visibilityOperation = operation;
+  button.dataset.visibilityValue = value;
+  button.textContent = label;
+  return button;
 }
 
 async function saveMatrixDeltaLock(matrixId, dateId) {
@@ -522,6 +572,8 @@ function createStatusCell(value, isEditing, dateId, isEditable) {
 }
 
 function createMatrixTable(matrix, selectedPlayer) {
+  const visibility = matrixVisibility(matrix);
+  const visibleDateCount = matrixDateIds(matrix).length - visibility.hiddenDateIds.length;
   const responses = getMatrixResponses(matrix);
   const dateIds = matrixDateIds(matrix);
   const totals = calculateDateTotals(matrix);
@@ -529,7 +581,7 @@ function createMatrixTable(matrix, selectedPlayer) {
   const matrixEditable = isMatrixEditable(matrix);
   const table = document.createElement('table');
   table.className = `matrix-table${lockedDateId ? ' has-delta-lock' : ''}`;
-  table.style.setProperty('--matrix-table-min-width', `${9 + Math.max(dateIds.length, 1) * 10.5}rem`);
+  table.style.setProperty('--matrix-table-min-width', `${14 + Math.max(visibleDateCount, 1) * 10.5}rem`);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -542,6 +594,13 @@ function createMatrixTable(matrix, selectedPlayer) {
     const canChangeLock = matrixEditable && isFutureMatrixDate(dateId);
     const th = document.createElement('th');
     th.className = isLocked ? 'matrix-delta-locked-date' : '';
+    th.hidden = visibility.hiddenDateIds.includes(dateId);
+    if (dateIds.length > 2) {
+      const hide = createVisibilityButton(matrix.id, 'hide_date', 'Hide date', dateId);
+      hide.disabled = visibleDateCount <= 1;
+      hide.setAttribute('aria-label', `Hide ${formatMatrixDate(date.date)}`);
+      th.appendChild(hide);
+    }
 
     const dateLabel = document.createElement('span');
     dateLabel.className = 'matrix-date-label';
@@ -570,12 +629,17 @@ function createMatrixTable(matrix, selectedPlayer) {
     th.appendChild(lockButton);
     headerRow.appendChild(th);
   });
+  const actionHead = document.createElement('th');
+  actionHead.textContent = 'Hide player';
+  actionHead.className = 'matrix-row-action';
+  headerRow.appendChild(actionHead);
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
   state.players.forEach(player => {
     const tr = document.createElement('tr');
+    tr.hidden = visibility.hiddenPlayers.includes(player);
     if (player === selectedPlayer) {
       tr.className = 'matrix-editing-row';
     }
@@ -585,13 +649,21 @@ function createMatrixTable(matrix, selectedPlayer) {
     tr.appendChild(playerCell);
 
     dateIds.forEach(dateId => {
-      tr.appendChild(createStatusCell(
-        responses[player]?.[dateId],
+      const cell = createStatusCell(
+        state.drafts[matrix.id]?.[player]?.[dateId] ?? responses[player]?.[dateId],
         player === selectedPlayer,
         dateId,
         isMatrixDateEditable(matrix, dateId)
-      ));
+      );
+      cell.hidden = visibility.hiddenDateIds.includes(dateId);
+      tr.appendChild(cell);
     });
+    const actionCell = document.createElement('td');
+    actionCell.className = 'matrix-row-action';
+    const hide = createVisibilityButton(matrix.id, 'hide_player', 'Hide', player);
+    hide.setAttribute('aria-label', `Hide ${player}`);
+    actionCell.appendChild(hide);
+    tr.appendChild(actionCell);
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
@@ -609,8 +681,10 @@ function createMatrixTable(matrix, selectedPlayer) {
     dateIds.forEach(dateId => {
       const td = document.createElement('td');
       td.textContent = formatter(totals[dateId]?.[field] || 0);
+      td.hidden = visibility.hiddenDateIds.includes(dateId);
       tr.appendChild(td);
     });
+    tr.appendChild(document.createElement('td'));
     tfoot.appendChild(tr);
   });
   table.appendChild(tfoot);
@@ -652,6 +726,7 @@ function appendMetric(parent, label, value) {
 function createMatrixCard(matrix, index) {
   const details = document.createElement('details');
   details.className = 'matrix-card';
+  details.dataset.matrixId = matrix.id;
   details.open = index === 0;
   const lockedDateId = getDeltaLockedDateId(matrix);
   const readOnlyMessage = getMatrixReadOnlyMessage(matrix);
@@ -704,7 +779,13 @@ function createMatrixCard(matrix, index) {
   save.textContent = 'Save Availability';
   saveBar.appendChild(save);
 
-  form.append(label, saveBar, tableWrap);
+  const visibilityControls = document.createElement('div');
+  visibilityControls.className = 'matrix-visibility-controls';
+  const visibility = matrixVisibility(matrix);
+  if (visibility.hiddenDateIds.length) visibilityControls.appendChild(createVisibilityButton(matrix.id, 'unhide_dates', `Unhide dates (${visibility.hiddenDateIds.length})`));
+  if (visibility.hiddenPlayers.length) visibilityControls.appendChild(createVisibilityButton(matrix.id, 'unhide_players', `Unhide players (${visibility.hiddenPlayers.length})`));
+  form.append(label, saveBar, tableWrap, visibilityControls);
+  updateMatrixSaveState(form, Object.keys(state.drafts[matrix.id]?.[selectedPlayer] || {}).length > 0);
   details.appendChild(form);
 
   const actions = document.createElement('div');
@@ -750,6 +831,8 @@ function confirmMatrixDelete(matrix) {
 }
 
 function renderMatrices() {
+  const previousCards = Array.from(els.list.querySelectorAll('.matrix-card'));
+  const openIds = new Set(previousCards.filter(card => card.open).map(card => card.dataset.matrixId));
   els.list.innerHTML = '';
 
   if (!state.players.length) {
@@ -769,7 +852,9 @@ function renderMatrices() {
   }
 
   sortMatrices(state.matrices).forEach((matrix, index) => {
-    els.list.appendChild(createMatrixCard(matrix, index));
+    const card = createMatrixCard(matrix, index);
+    if (previousCards.some(previous => previous.dataset.matrixId === matrix.id)) card.open = openIds.has(matrix.id);
+    els.list.appendChild(card);
   });
 }
 
@@ -821,6 +906,12 @@ els.list.addEventListener('change', event => {
   const statusSelect = event.target.closest('select[data-date-id]');
   if (!statusSelect) return;
 
+  const form = statusSelect.closest('.matrix-response-form');
+  const matrixId = form.dataset.matrixId;
+  const player = form.querySelector('.matrix-player-select').value;
+  state.drafts[matrixId] ||= {};
+  state.drafts[matrixId][player] ||= {};
+  state.drafts[matrixId][player][statusSelect.dataset.dateId] = statusSelect.value;
   const cell = statusSelect.closest('td');
   if (cell) {
     cell.className = getStatus(statusSelect.value).className;
@@ -829,6 +920,15 @@ els.list.addEventListener('change', event => {
 });
 
 els.list.addEventListener('click', event => {
+  const visibilityButton = event.target.closest('[data-visibility-matrix-id]');
+  if (visibilityButton) {
+    visibilityButton.disabled = true;
+    clearMessage();
+    saveMatrixVisibility(visibilityButton.dataset.visibilityMatrixId, visibilityButton.dataset.visibilityOperation, visibilityButton.dataset.visibilityValue)
+      .then(() => { renderMatrices(); showMessage(state.apiAvailable ? 'Table visibility saved for everyone.' : 'Local preview: table visibility saved in this browser.'); })
+      .catch(error => { visibilityButton.disabled = false; showMessage(error.message, 'error'); });
+    return;
+  }
   const deltaLockButton = event.target.closest('[data-delta-lock-matrix-id]');
   if (deltaLockButton) {
     const matrixId = deltaLockButton.dataset.deltaLockMatrixId;
@@ -893,13 +993,11 @@ els.list.addEventListener('submit', event => {
 
   const matrixId = form.dataset.matrixId;
   const player = form.querySelector('.matrix-player-select')?.value || '';
-  const responses = {};
-  form.querySelectorAll('select[data-date-id]').forEach(select => {
-    responses[select.dataset.dateId] = select.value;
-  });
+  const responses = { ...(state.drafts[matrixId]?.[player] || {}) };
 
   saveMatrixResponse(matrixId, player, responses)
     .then(() => {
+      if (state.drafts[matrixId]) delete state.drafts[matrixId][player];
       updateMatrixSaveState(form, false);
       delete state.selectedPlayers[matrixId];
       renderMatrices();

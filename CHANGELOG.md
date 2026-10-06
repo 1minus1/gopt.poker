@@ -3,9 +3,17 @@
 This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 `1.0.0` is the `v1.0` release shared with the group.
 
-## Unreleased - 2026-10-05
+## Unreleased - 2026-10-06
 
 ### Changed
+
+- Added shared Matrix row and column visibility controls. Any visitor can hide
+  dates in matrices with more than two proposed dates, keeping at least one
+  visible, and hide individual players. Restore buttons show below the table.
+  Visibility persists for all visitors without changing responses, calculations,
+  locks, or attendance timestamps. Availability saves patch only changed dates
+  and preserve hidden and past responses; drafts survive visibility changes.
+  Resolves #5.
 
 - Removed IN attendance status; PROBABLE is the maximum and contributes 1 player
   to expected attendance. Updated Rules, Matrix totals, selectors, and styling.
