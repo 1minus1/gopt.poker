@@ -7,6 +7,9 @@ This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 
 ### Changed
 
+- Prevented hiding delta-locked dates in the UI and API. Previously hidden locked
+  dates are shown, and locking a hidden date reveals it without changing responses.
+
 - Moved Matrix date controls below their dates and gave them distinct bordered
   buttons. A locked matrix shows only Unlock on its selected date; other dates
   cannot be delta-locked until it is unlocked, including stale API requests.

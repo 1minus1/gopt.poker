@@ -69,13 +69,14 @@ with tempfile.TemporaryDirectory(prefix='gopt-matrix-api-') as temp:
         def visibility(operation, **values):
             return request(dict(action='update_visibility', matrixId='fixture', operation=operation, **values))
         assert visibility('hide_date', dateId='2000-01-01')[0] == 200
-        assert visibility('hide_date', dateId='2099-01-02')[0] == 200
-        assert visibility('hide_date', dateId='2099-01-01')[0] == 409
+        assert visibility('hide_date', dateId='2099-01-02')[0] == 409
+        assert visibility('hide_date', dateId='2099-01-01')[0] == 200
+        assert visibility('hide_date', dateId='2099-01-02')[0] == 409
         assert visibility('hide_date', dateId='missing')[0] == 400
         assert visibility('hide_player', player='legacy')[0] == 200
         # A separate HTTP read (another visitor) sees the persisted view.
         hidden = request()[1]['matrices'][0]
-        assert hidden['hiddenDateIds'] == ['2000-01-01', '2099-01-02']
+        assert hidden['hiddenDateIds'] == ['2000-01-01', '2099-01-01']
         assert hidden['hiddenPlayers'] == ['legacy']
         assert {k: v for k, v in hidden.items() if k not in ['hiddenDateIds', 'hiddenPlayers']} == {
             k: v for k, v in before.items() if k not in ['hiddenDateIds', 'hiddenPlayers']}

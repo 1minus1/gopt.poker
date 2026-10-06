@@ -13,7 +13,11 @@ try {
     $canonical = gopt_normalize_matrix_store($store);
     expect($canonical['matrices'][0]['hiddenDateIds'] === [] && $canonical['matrices'][0]['hiddenPlayers'] === [], 'Old backups default to visible');
     $summary = gopt_build_matrix_attendance_summary_csv($canonical);
-    $hidden = gopt_update_matrix_visibility($canonical,['matrixId'=>'closed','operation'=>'hide_date','dateId'=>'2000-01-01']);
+    try { gopt_update_matrix_visibility($canonical,['matrixId'=>'closed','operation'=>'hide_date','dateId'=>'2000-01-01']); throw new RuntimeException('Hid locked date'); }
+    catch(GoptHistoryException $expected) { expect(str_contains($expected->getMessage(),'Unlock'), 'Wrong hide error'); }
+    $old = $canonical; $old['matrices'][0]['hiddenDateIds'] = ['2000-01-01','2000-01-02'];
+    expect(gopt_normalize_matrix_store($old)['matrices'][0]['hiddenDateIds'] === ['2000-01-02'], 'Legacy hidden lock not revealed');
+    $hidden = gopt_update_matrix_visibility($canonical,['matrixId'=>'closed','operation'=>'hide_date','dateId'=>'2000-01-02']);
     $hidden = gopt_update_matrix_visibility($hidden,['matrixId'=>'closed','operation'=>'hide_player','player'=>'player']);
     expect(gopt_build_matrix_attendance_summary_csv($hidden) === $summary, 'Hiding changed attendance export');
     foreach(['responses','dates','createdAt','updatedAt','deltaLockedDateId'] as $field) {
@@ -30,8 +34,10 @@ try {
     try { gopt_set_matrix_delta_lock($future,['matrixId'=>'closed','dateId'=>'2099-01-02']); throw new RuntimeException('Switched lock without unlocking'); }
     catch(GoptHistoryException $expected) { expect(str_contains($expected->getMessage(),'Unlock'), 'Wrong lock error'); }
     $unlocked = gopt_set_matrix_delta_lock($future,['matrixId'=>'closed','dateId'=>'']);
+    $unlocked = gopt_update_matrix_visibility($unlocked,['matrixId'=>'closed','operation'=>'hide_date','dateId'=>'2099-01-02']);
     $relocked = gopt_set_matrix_delta_lock($unlocked,['matrixId'=>'closed','dateId'=>'2099-01-02']);
     expect($relocked['matrices'][0]['deltaLockedDateId'] === '2099-01-02', 'Could not relock after unlocking');
+    expect($relocked['matrices'][0]['hiddenDateIds'] === [], 'Locking did not reveal date');
     echo "Matrix visibility, closed/locked preservation and backup checks passed.\n";
 } finally {
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);

@@ -321,7 +321,7 @@ function matrixVisibility(matrix) {
   const dates = matrixDateIds(matrix);
   const savedHiddenDates = Array.isArray(matrix.hiddenDateIds) ? matrix.hiddenDateIds : [];
   const hiddenDateIds = dates.length > 2
-    ? dates.filter(dateId => savedHiddenDates.includes(dateId)).slice(0, dates.length - 1)
+    ? dates.filter(dateId => dateId !== getDeltaLockedDateId(matrix) && savedHiddenDates.includes(dateId)).slice(0, dates.length - 1)
     : [];
   return { hiddenDateIds, hiddenPlayers: Array.isArray(matrix.hiddenPlayers) ? matrix.hiddenPlayers : [] };
 }
@@ -341,6 +341,7 @@ async function saveMatrixVisibility(matrixId, operation, value) {
     if (matrix.id !== matrixId) return matrix;
     const visibility = matrixVisibility(matrix);
     if (operation === 'hide_date') {
+      if (value === getDeltaLockedDateId(matrix)) throw new Error('Unlock this date before hiding it.');
       if (matrixDateIds(matrix).length <= 2 || !matrixDateIds(matrix).includes(value)) throw new Error('Choose a proposed date in a matrix with more than two dates.');
       if (matrixDateIds(matrix).length - visibility.hiddenDateIds.length <= 1) throw new Error('Keep at least one date visible.');
       visibility.hiddenDateIds = [...new Set([...visibility.hiddenDateIds, value])];
@@ -401,6 +402,7 @@ async function saveMatrixDeltaLock(matrixId, dateId) {
     return {
       ...matrix,
       deltaLockedDateId: dateId,
+      hiddenDateIds: matrixVisibility(matrix).hiddenDateIds.filter(hiddenId => hiddenId !== dateId),
       updatedAt: new Date().toISOString(),
     };
   });
@@ -616,7 +618,8 @@ function createMatrixTable(matrix, selectedPlayer) {
     dateActions.className = 'matrix-date-actions';
     if (dateIds.length > 2) {
       const hide = createVisibilityButton(matrix.id, 'hide_date', 'Hide date', dateId);
-      hide.disabled = visibleDateCount <= 1;
+      hide.disabled = isLocked || visibleDateCount <= 1;
+      if (isLocked) hide.title = 'Unlock this date before hiding it.';
       hide.setAttribute('aria-label', `Hide ${formatMatrixDate(date.date)}`);
       dateActions.appendChild(hide);
     }

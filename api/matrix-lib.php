@@ -267,6 +267,7 @@ function gopt_normalize_matrix(array $matrix): array
     }
     $responses = gopt_normalize_matrix_responses($matrix['responses'] ?? [], $dateIds);
     $hiddenDates = is_array($matrix['hiddenDateIds'] ?? null) ? array_filter($matrix['hiddenDateIds'], 'is_string') : [];
+    $hiddenDates = array_filter($hiddenDates, fn($dateId) => $dateId !== $lockedDateId);
     $hiddenDates = count($dateIds) > 2 ? array_slice(array_values(array_intersect($dateIds, $hiddenDates)), 0, count($dateIds) - 1) : [];
 
     return [
@@ -446,6 +447,9 @@ function gopt_update_matrix_visibility(array $store, array $data): array
         if (count($dates) <= 2 || !in_array($dateId, $dates, true)) {
             throw new GoptHistoryException('Only matrices with more than two dates can hide proposed dates.', 400);
         }
+        if ($dateId === gopt_get_delta_locked_date_id($matrix)) {
+            throw new GoptHistoryException('Unlock this date before hiding it.', 409);
+        }
         if (!in_array($dateId, $matrix['hiddenDateIds'], true)) {
             if (count($matrix['hiddenDateIds']) >= count($dates) - 1) {
                 throw new GoptHistoryException('Keep at least one date visible.', 409);
@@ -498,6 +502,7 @@ function gopt_set_matrix_delta_lock(array $store, array $data): array
     }
 
     $matrix['deltaLockedDateId'] = $dateId;
+    $matrix['hiddenDateIds'] = array_values(array_filter($matrix['hiddenDateIds'], fn($hiddenId) => $hiddenId !== $dateId));
     $matrix['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z');
     $store['matrices'][$index] = $matrix;
 
