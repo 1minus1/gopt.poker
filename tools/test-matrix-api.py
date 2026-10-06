@@ -56,6 +56,15 @@ with tempfile.TemporaryDirectory(prefix='gopt-matrix-api-') as temp:
         status, response = request(data)
         assert status == 400
         assert (store / 'matrices.json').read_text() == persisted
+        lock = dict(action='set_delta_lock', matrixId='fixture', dateId='2099-01-01')
+        assert request(lock)[0] == 200
+        lock['dateId'] = '2099-01-02'
+        assert request(lock)[0] == 409
+        assert request()[1]['matrices'][0]['deltaLockedDateId'] == '2099-01-01'
+        lock['dateId'] = ''
+        assert request(lock)[0] == 200
+        lock['dateId'] = '2099-01-02'
+        assert request(lock)[0] == 200
         before = request()[1]['matrices'][0]
         def visibility(operation, **values):
             return request(dict(action='update_visibility', matrixId='fixture', operation=operation, **values))

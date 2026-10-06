@@ -938,3 +938,30 @@ body.wachs-modal-open {
 .matrix-table thead .matrix-visibility-button { display: block; margin: 0 auto 0.4rem; }
 .matrix-table .matrix-row-action { min-width: 4rem; width: 4rem; }
 .matrix-visibility-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+
+.matrix-date-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+.matrix-editor .matrix-date-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.2rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border: 2px solid #bbb;
+  border-radius: 5px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 2px 0 #999;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.matrix-editor .matrix-date-actions button:hover:not(:disabled) { background: #e7f0ff; border-color: #7aa7e7; }
+.matrix-editor .matrix-date-actions button:focus-visible { outline: 3px solid #8cbcff; outline-offset: 3px; }
+.matrix-editor .matrix-date-actions button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }

@@ -482,6 +482,11 @@ function gopt_set_matrix_delta_lock(array $store, array $data): array
         throw new GoptHistoryException('This matrix is no longer editable.', 409);
     }
 
+    $lockedDateId = gopt_get_delta_locked_date_id($matrix);
+    if ($dateId !== '' && $lockedDateId !== '' && $lockedDateId !== $dateId) {
+        throw new GoptHistoryException('Unlock the current date before locking another date.', 409);
+    }
+
     if ($dateId !== '') {
         $dateIds = gopt_matrix_date_ids($matrix);
         if (!in_array($dateId, $dateIds, true)) {

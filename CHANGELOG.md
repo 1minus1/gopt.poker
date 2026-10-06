@@ -7,6 +7,10 @@ This site uses semantic versioning. Public shorthand can use `vMAJOR.MINOR`, so
 
 ### Changed
 
+- Moved Matrix date controls below their dates and gave them distinct bordered
+  buttons. A locked matrix shows only Unlock on its selected date; other dates
+  cannot be delta-locked until it is unlocked, including stale API requests.
+
 - Added shared Matrix row and column visibility controls. Any visitor can hide
   dates in matrices with more than two proposed dates, keeping at least one
   visible, and hide individual players. Restore buttons show below the table.

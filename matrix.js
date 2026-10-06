@@ -392,6 +392,9 @@ async function saveMatrixDeltaLock(matrixId, dateId) {
     if (!isMatrixEditable(matrix)) {
       throw new Error('This matrix is no longer editable.');
     }
+    if (dateId && getDeltaLockedDateId(matrix) && getDeltaLockedDateId(matrix) !== dateId) {
+      throw new Error('Unlock the current date before locking another date.');
+    }
     if (dateId && !isFutureMatrixDate(dateId)) {
       throw new Error('Past dates cannot be delta-locked.');
     }
@@ -595,12 +598,7 @@ function createMatrixTable(matrix, selectedPlayer) {
     const th = document.createElement('th');
     th.className = isLocked ? 'matrix-delta-locked-date' : '';
     th.hidden = visibility.hiddenDateIds.includes(dateId);
-    if (dateIds.length > 2) {
-      const hide = createVisibilityButton(matrix.id, 'hide_date', 'Hide date', dateId);
-      hide.disabled = visibleDateCount <= 1;
-      hide.setAttribute('aria-label', `Hide ${formatMatrixDate(date.date)}`);
-      th.appendChild(hide);
-    }
+
 
     const dateLabel = document.createElement('span');
     dateLabel.className = 'matrix-date-label';
@@ -614,19 +612,30 @@ function createMatrixTable(matrix, selectedPlayer) {
       th.appendChild(badge);
     }
 
-    const lockButton = document.createElement('button');
-    lockButton.type = 'button';
-    lockButton.className = 'matrix-delta-lock-button';
-    lockButton.dataset.deltaLockMatrixId = matrix.id;
-    lockButton.dataset.deltaLockDateId = dateId;
-    lockButton.textContent = isLocked ? 'Unlock' : 'Delta Lock';
-    lockButton.disabled = !canChangeLock;
-    lockButton.title = !canChangeLock
-      ? 'Past dates cannot be delta-locked.'
-      : isLocked
-        ? 'Remove this confirmed event date.'
-        : 'Set this as the confirmed event date.';
-    th.appendChild(lockButton);
+    const dateActions = document.createElement('div');
+    dateActions.className = 'matrix-date-actions';
+    if (dateIds.length > 2) {
+      const hide = createVisibilityButton(matrix.id, 'hide_date', 'Hide date', dateId);
+      hide.disabled = visibleDateCount <= 1;
+      hide.setAttribute('aria-label', `Hide ${formatMatrixDate(date.date)}`);
+      dateActions.appendChild(hide);
+    }
+    if (!lockedDateId || isLocked) {
+      const lockButton = document.createElement('button');
+      lockButton.type = 'button';
+      lockButton.className = 'matrix-delta-lock-button';
+      lockButton.dataset.deltaLockMatrixId = matrix.id;
+      lockButton.dataset.deltaLockDateId = dateId;
+      lockButton.textContent = isLocked ? 'Unlock' : 'Delta Lock';
+      lockButton.disabled = !canChangeLock;
+      lockButton.title = !canChangeLock
+        ? 'Past dates cannot be delta-locked.'
+        : isLocked
+          ? 'Remove this confirmed event date.'
+          : 'Set this as the confirmed event date.';
+      dateActions.appendChild(lockButton);
+    }
+    th.appendChild(dateActions);
     headerRow.appendChild(th);
   });
   const actionHead = document.createElement('th');

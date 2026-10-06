@@ -24,8 +24,17 @@ try {
     array_pop($two['matrices'][0]['dates']);
     try { gopt_update_matrix_visibility($two,['matrixId'=>'closed','operation'=>'hide_date','dateId'=>'2000-01-01']); throw new RuntimeException('Two-date hiding allowed'); }
     catch(GoptHistoryException $expected) {}
+    $future = $canonical;
+    $future['matrices'][0]['dates'] = array_map(fn($date) => ['id'=>$date,'date'=>$date], ['2099-01-01','2099-01-02','2099-01-03']);
+    $future['matrices'][0]['deltaLockedDateId'] = '2099-01-01';
+    try { gopt_set_matrix_delta_lock($future,['matrixId'=>'closed','dateId'=>'2099-01-02']); throw new RuntimeException('Switched lock without unlocking'); }
+    catch(GoptHistoryException $expected) { expect(str_contains($expected->getMessage(),'Unlock'), 'Wrong lock error'); }
+    $unlocked = gopt_set_matrix_delta_lock($future,['matrixId'=>'closed','dateId'=>'']);
+    $relocked = gopt_set_matrix_delta_lock($unlocked,['matrixId'=>'closed','dateId'=>'2099-01-02']);
+    expect($relocked['matrices'][0]['deltaLockedDateId'] === '2099-01-02', 'Could not relock after unlocking');
     echo "Matrix visibility, closed/locked preservation and backup checks passed.\n";
 } finally {
-    foreach(new DirectoryIterator($dir) as $file) if($file->isFile()) unlink($file->getPathname());
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($files as $file) { if ($file->isDir()) rmdir($file->getPathname()); else unlink($file->getPathname()); }
     rmdir($dir);
 }
