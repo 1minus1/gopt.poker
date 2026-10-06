@@ -639,7 +639,7 @@ function createMatrixTable(matrix, selectedPlayer) {
     headerRow.appendChild(th);
   });
   const actionHead = document.createElement('th');
-  actionHead.textContent = 'Hide player';
+  actionHead.setAttribute('aria-label', 'Player visibility controls');
   actionHead.className = 'matrix-row-action';
   headerRow.appendChild(actionHead);
   thead.appendChild(headerRow);
